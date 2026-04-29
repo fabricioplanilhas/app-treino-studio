@@ -18,7 +18,7 @@ export default function Home() {
         </Link>
         <Link href="/tv" className="premium-btn-outline" style={{ padding: '16px 24px', fontSize: '1.1rem' }}>
           <Dumbbell size={24} />
-          Tela da TV (1080p)
+          Tela da TV
         </Link>
       </div>
     </div>
