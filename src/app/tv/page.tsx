@@ -1,0 +1,238 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import { mockDb, Aluno, Exercicio } from "@/lib/mockData";
+import { Dumbbell } from "lucide-react";
+
+export default function TVPage() {
+  const [alunosAtivos, setAlunosAtivos] = useState<(Aluno & { treinoAtualId: string })[]>([]);
+
+  const carregarDados = async () => {
+    const [session, todosAlunos] = await Promise.all([
+      mockDb.getTvSession(),
+      mockDb.getAlunos(),
+    ]);
+    
+    const ativos = session.map(s => {
+      const dbAluno = todosAlunos.find(a => a.id === s.alunoId);
+      if(dbAluno) {
+        return { ...dbAluno, treinoAtualId: s.treinoAtivoId };
+      }
+      return null;
+    }).filter(Boolean) as (Aluno & { treinoAtualId: string })[];
+
+    setAlunosAtivos(ativos);
+  };
+
+  useEffect(() => {
+    carregarDados();
+    // Polling contínuo p/ buscar se o professor ligou um aluno novo
+    const interval = setInterval(carregarDados, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCampoChange = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series', valor: string) => {
+    await mockDb.updateCampoExercicio(alunoId, treinoId, exercicioId, campo, valor);
+    await carregarDados();
+  };
+
+  // Se não tem ninguém
+  if (alunosAtivos.length === 0) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
+        <Dumbbell size={80} color="var(--border-medium)" />
+        <h1 style={{ color: 'var(--text-secondary)', marginTop: '20px' }}>Rumpel Training</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Aguardando o professor enviar os treinos...</p>
+      </div>
+    );
+  }
+
+  // Dinâmica de Grid para TV
+  const cols = alunosAtivos.length > 5 ? 5 : alunosAtivos.length;
+
+  const renderExercicioRow = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }, ex: Exercicio, badgeColor: string, isLast: boolean) => (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '2px 0',
+      borderBottom: isLast ? 'none' : '1px solid var(--border-light)',
+    }}>
+      <div style={{ flex: 1, paddingRight: '4px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ marginBottom: '1px' }}>
+          <span style={{
+            fontSize: '0.6rem', textTransform: 'uppercase', fontWeight: 700,
+            color: badgeColor, border: `1px solid ${badgeColor}`,
+            padding: '0px 3px', borderRadius: '3px'
+          }}>
+            {ex.categoria.toUpperCase() === 'FORCA' ? 'FORÇA' : ex.categoria.toUpperCase() === 'POTENCIA' ? 'POTÊNCIA' : ex.categoria}
+          </span>
+        </div>
+        <div style={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+          {ex.nome}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '130px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '1px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
+          <input
+            value={ex.series}
+            onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'series', e.target.value)}
+            style={{
+              background: 'transparent', border: 'none', color: 'var(--text-primary)',
+              fontSize: '0.95rem', fontWeight: 700, width: '30px', textAlign: 'right', outline: 'none'
+            }}
+          />
+        </div>
+        <div style={{
+          display: 'flex',
+          background: '#f3f4f6',
+          border: '1px solid #e5e7eb',
+          padding: '1px 3px',
+          borderRadius: '5px',
+          width: '100%',
+          justifyContent: 'space-around',
+          alignItems: 'center'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
+            <input
+              value={ex.carga}
+              onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', color: 'var(--accent-primary)',
+                fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
+                width: '60px', outline: 'none'
+              }}
+              placeholder="-"
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
+            <input
+              value={ex.reps}
+              onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', color: 'var(--accent-primary)',
+                fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
+                width: '60px', outline: 'none'
+              }}
+              placeholder="-"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderExercicios = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }) => {
+    const nonForca: React.JSX.Element[] = [];
+    const forcaExs: Exercicio[] = [];
+
+    treino.exercicios.forEach(ex => {
+      const catUpper = (ex.categoria || '').toUpperCase();
+      const isForca = catUpper.includes('FORC') || catUpper.includes('FORÇ');
+      if (isForca) {
+        forcaExs.push(ex);
+      } else {
+        let badgeColor = 'var(--text-secondary)';
+        if (catUpper.includes('CORE')) badgeColor = 'var(--cat-core)';
+        if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) badgeColor = 'var(--cat-explosao)';
+        nonForca.push(
+          <div key={ex.id}>
+            {renderExercicioRow(aluno, treino, ex, badgeColor, false)}
+          </div>
+        );
+      }
+    });
+
+    const bloco1 = forcaExs.slice(0, 3);
+    const bloco2 = forcaExs.slice(3);
+
+    return (
+      <>
+        {nonForca}
+        {bloco1.length > 0 && (
+          <div style={{ border: '1.5px solid var(--accent-primary)', borderRadius: '8px', padding: '4px 6px', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
+              Bloco 1
+            </div>
+            {bloco1.map((ex, i) => (
+              <div key={ex.id}>
+                {renderExercicioRow(aluno, treino, ex, 'var(--cat-forca)', i === bloco1.length - 1)}
+              </div>
+            ))}
+          </div>
+        )}
+        {bloco2.length > 0 && (
+          <div style={{ border: '1.5px solid var(--accent-primary)', borderRadius: '8px', padding: '4px 6px', marginTop: '6px' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
+              Bloco 2
+            </div>
+            {bloco2.map((ex, i) => (
+              <div key={ex.id}>
+                {renderExercicioRow(aluno, treino, ex, 'var(--cat-forca)', i === bloco2.length - 1)}
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      padding: '20px',
+      background: 'var(--bg-main)',
+      display: 'grid',
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gap: '20px',
+      alignItems: 'stretch'
+    }}>
+      {alunosAtivos.map(aluno => {
+        const treino = aluno.treinos.find(t => t.id === aluno.treinoAtualId) || aluno.treinos[0];
+        if (!treino) return null;
+
+        return (
+          <div key={aluno.id} style={{
+            background: 'var(--bg-card)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-light)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header do Card */}
+            <div style={{
+              background: '#ffffff',
+              padding: '6px',
+              borderBottom: '3px solid var(--accent-primary)',
+              textAlign: 'center'
+            }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {aluno.nome}
+              </h2>
+              <div style={{
+                display: 'inline-block', background: 'var(--accent-primary)',
+                color: 'white', padding: '1px 6px', borderRadius: '4px',
+                fontSize: '0.7rem', fontWeight: 600, marginTop: '3px'
+              }}>
+                {treino.nomeTreino}
+              </div>
+            </div>
+
+            {/* Lista de Exercicios */}
+            <div style={{ padding: '4px 8px', flex: 1, overflowY: 'auto' }}>
+              {renderExercicios(aluno, treino)}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Rumpel Training Watermark */}
+      <div style={{ position: 'fixed', bottom: '15px', right: '20px', color: 'var(--text-secondary)', opacity: 0.15, fontSize: '1.4rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'none', zIndex: 100 }}>
+        <Dumbbell size={24} color="var(--accent-primary)" />
+        <span>RUMPEL <span style={{ color: 'var(--accent-primary)' }}>TRAINING</span></span>
+      </div>
+    </div>
+  );
+}
