@@ -247,6 +247,22 @@ export default function TreinosPage() {
     });
   })();
 
+  const handleLixeira = async () => {
+    if (!alunoAtual) return;
+    if (confirm(`Tem certeza que deseja mover ${alunoAtual.nome} para a lixeira? (Ele pode ser restaurado em até 60 dias)`)) {
+      await mockDb.moverParaLixeira(alunoAtual.id);
+      const updatedAlunos = await mockDb.getAlunos();
+      setAlunos(updatedAlunos);
+      if (updatedAlunos.length > 0) {
+        selecionarAluno(updatedAlunos[0].id, updatedAlunos);
+      } else {
+        setAlunoAtual(null);
+        setSelectedAlunoId("");
+      }
+      alert("Aluno movido para a lixeira.");
+    }
+  };
+
   if (loading) return (
     <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>Carregando dados do Supabase...</p>
@@ -273,9 +289,16 @@ export default function TreinosPage() {
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>Planilhas dos Alunos</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Gerencie as planilhas de treinamento individuais para cada aluno do estúdio.</p>
         </div>
-        <button onClick={saveAluno} className="premium-btn">
-          <Save size={20} /> Salvar Ficha do Aluno
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {alunoAtual && (
+            <button onClick={handleLixeira} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
+              <Trash2 size={20} /> Excluir Aluno
+            </button>
+          )}
+          <button onClick={saveAluno} className="premium-btn">
+            <Save size={20} /> Salvar Ficha do Aluno
+          </button>
+        </div>
       </header>
 
       {alunosVencidos.length > 0 && (

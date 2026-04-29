@@ -16,9 +16,18 @@ CREATE TABLE IF NOT EXISTS alunos (
   observacoes TEXT DEFAULT '',
   fase_treinamento TEXT DEFAULT '',
   data_ficha_atual TEXT DEFAULT '',
+  status TEXT DEFAULT 'ativo',
+  deleted_at TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- =============================================================
+-- SCRIPT DE ATUALIZAÇÃO PARA BASES EXISTENTES
+-- Se você já rodou o script acima anteriormente, rode apenas isto:
+-- ALTER TABLE alunos ADD COLUMN status TEXT DEFAULT 'ativo';
+-- ALTER TABLE alunos ADD COLUMN deleted_at TEXT;
+-- =============================================================
 
 -- 2. Tabela de Sessão da TV
 -- Armazena quais alunos estão ativos na TV agora

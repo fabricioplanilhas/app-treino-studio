@@ -40,6 +40,8 @@ export type Aluno = {
   observacoes?: string;
   faseTreinamento?: string;
   dataFichaAtual?: string;
+  status?: string;
+  deletedAt?: string;
 };
 
 export type TVStatus = {
@@ -110,6 +112,8 @@ function rowToAluno(row: Record<string, unknown>): Aluno {
     observacoes: (row.observacoes as string) || '',
     faseTreinamento: (row.fase_treinamento as string) || '',
     dataFichaAtual: (row.data_ficha_atual as string) || '',
+    status: (row.status as string) || 'ativo',
+    deletedAt: (row.deleted_at as string) || undefined,
   };
 }
 
@@ -126,6 +130,8 @@ function alunoToRow(aluno: Aluno) {
     observacoes: aluno.observacoes || '',
     fase_treinamento: aluno.faseTreinamento || '',
     data_ficha_atual: aluno.dataFichaAtual || '',
+    status: aluno.status || 'ativo',
+    deleted_at: aluno.deletedAt || null,
   };
 }
 
@@ -143,7 +149,19 @@ export const mockDb = {
       console.error('Erro ao buscar alunos:', error);
       return [];
     }
-    return (data || []).map(rowToAluno);
+    return (data || []).map(rowToAluno).filter(a => a.status !== 'deletado');
+  },
+
+  getAlunosLixeira: async (): Promise<Aluno[]> => {
+    const { data, error } = await supabase
+      .from('alunos')
+      .select('*')
+      .order('nome');
+    if (error) {
+      console.error('Erro ao buscar alunos da lixeira:', error);
+      return [];
+    }
+    return (data || []).map(rowToAluno).filter(a => a.status === 'deletado');
   },
 
   getAlunoById: async (id: string): Promise<Aluno | null> => {
@@ -175,6 +193,22 @@ export const mockDb = {
       console.error('Erro ao deletar aluno:', error);
       throw error;
     }
+  },
+
+  moverParaLixeira: async (id: string): Promise<void> => {
+    const aluno = await mockDb.getAlunoById(id);
+    if (!aluno) return;
+    aluno.status = 'deletado';
+    aluno.deletedAt = new Date().toISOString();
+    await mockDb.saveAluno(aluno);
+  },
+
+  restaurarAluno: async (id: string): Promise<void> => {
+    const aluno = await mockDb.getAlunoById(id);
+    if (!aluno) return;
+    aluno.status = 'ativo';
+    aluno.deletedAt = undefined;
+    await mockDb.saveAluno(aluno);
   },
 
   // ─── TEMPLATES (local only — não salva no Supabase) ─────────

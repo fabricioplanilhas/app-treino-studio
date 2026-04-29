@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, TVStatus, Treino } from "@/lib/mockData";
-import { Dumbbell, MonitorPlay } from "lucide-react";
+import { Dumbbell, MonitorPlay, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminPage() {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -146,6 +147,11 @@ export default function AdminPage() {
               outline: 'none', background: 'var(--bg-card)', color: 'var(--text-primary)', width: '200px'
             }}
           />
+
+          <Link href="/lixeira" className="premium-btn-outline" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-medium)', textDecoration: 'none' }}>
+            <Trash2 size={20} />
+            Lixeira
+          </Link>
 
           <button className="premium-btn-outline" onClick={handleLimparTV} style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
             Limpar a TV
