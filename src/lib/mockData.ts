@@ -96,7 +96,19 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   "Introdutório Atleta C": [],
   "Fase 2 Atleta A": [],
   "Fase 2 Atleta B": [],
-  "Fase 2 Atleta C": []
+  "Fase 2 Atleta C": [],
+  "Complex": [
+    { id: 'mod_cx_1', nome: 'CORE', categoria: 'Core', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_2', nome: 'CORE', categoria: 'Core', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_3', nome: 'FRONT SQUAT', categoria: 'Forca', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_4', nome: 'ARRANQUE', categoria: 'Potencia', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_5', nome: 'SUPINO BARRA', categoria: 'Forca', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_6', nome: 'BOLA LATERAL COM PASSO', categoria: 'Potencia', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_7', nome: 'TERRA TPBR', categoria: 'Forca', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_8', nome: 'PULO 1P DIRETO ROSA', categoria: 'Potencia', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_9', nome: 'SERROTE', categoria: 'Forca', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_10', nome: '1DB PRESSÃO V 1P', categoria: 'Forca', carga: '', reps: '', series: '' }
+  ]
 };
 
 // ── Helper: convert DB row → Aluno object ──────────────────────

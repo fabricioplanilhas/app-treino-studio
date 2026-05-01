@@ -85,9 +85,10 @@ export default function TreinosPage() {
   const getPesoCategoria = (cat: string) => {
     const upper = (cat || '').toUpperCase();
     if (upper.includes('CORE')) return 1;
-    if (upper.includes('POTENCIA') || upper.includes('POTÊNCIA')) return 2;
-    if (upper.includes('FORCA') || upper.includes('FORÇA')) return 3;
-    return 4;
+    // Força e Potência agrupados com mesmo peso para permitir intercalar no modelo Complex
+    // O sort estável manterá a ordem manual definida pelo usuário.
+    if (upper.includes('POTENCIA') || upper.includes('POTÊNCIA') || upper.includes('FORCA') || upper.includes('FORÇA')) return 2;
+    return 3;
   };
 
   const handleExercicioChange = (treinoIndex: number, exIndex: number, field: keyof Exercicio, value: string) => {
@@ -501,20 +502,48 @@ export default function TreinosPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {(() => {
                         let forcaCounter = 0;
-                        return alunoAtual.treinos[activeTab].exercicios.map((ex, exIdx) => {
-                            const isForca = (ex.categoria || '').toUpperCase().includes('FORC') || (ex.categoria || '').toUpperCase().includes('FORÇ');
-                            if (isForca) forcaCounter++;
+                        let complexBlockCounter = 0;
+                        
+                        const isComplex = alunoAtual.treinos[activeTab].exercicios.some((ex, i, arr) => {
+                            const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
+                            if (!isPot) return false;
+                            return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
+                        });
+
+                        return alunoAtual.treinos[activeTab].exercicios.map((ex, exIdx, arr) => {
+                            const upperCat = (ex.categoria || '').toUpperCase();
+                            const isForca = upperCat.includes('FORC') || upperCat.includes('FORÇ');
+                            const prevEx = exIdx > 0 ? arr[exIdx - 1] : null;
+                            const prevCat = prevEx ? (prevEx.categoria || '').toUpperCase() : '';
+                            const prevIsForca = prevCat.includes('FORC') || prevCat.includes('FORÇ');
+
+                            let showBlock = false;
+                            let blockLabel = '';
+
+                            if (isForca) {
+                                forcaCounter++;
+                                if (isComplex) {
+                                    if (forcaCounter === 1 || !prevIsForca) {
+                                        complexBlockCounter++;
+                                        showBlock = true;
+                                        blockLabel = `BLOCO ${complexBlockCounter}`;
+                                    }
+                                } else {
+                                    if (forcaCounter === 1) {
+                                        showBlock = true;
+                                        blockLabel = 'BLOCO 1';
+                                    } else if (forcaCounter === 4) {
+                                        showBlock = true;
+                                        blockLabel = 'BLOCO 2';
+                                    }
+                                }
+                            }
 
                             return (
                                 <div key={ex.id}>
-                                    {isForca && forcaCounter === 1 && (
+                                    {showBlock && (
                                         <div style={{ marginBottom: '10px', padding: '5px 10px', background: 'var(--bg-hover)', borderRadius: '6px', borderLeft: '4px solid var(--cat-forca)' }}>
-                                            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.9rem' }}>BLOCO 1</span>
-                                        </div>
-                                    )}
-                                    {isForca && forcaCounter === 4 && (
-                                        <div style={{ marginTop: '10px', marginBottom: '10px', padding: '5px 10px', background: 'var(--bg-hover)', borderRadius: '6px', borderLeft: '4px solid var(--cat-forca)' }}>
-                                            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.9rem' }}>BLOCO 2</span>
+                                            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{blockLabel}</span>
                                         </div>
                                     )}
                                     <div 
@@ -614,6 +643,13 @@ export default function TreinosPage() {
                             if(!treinoAnterior) return <div style={{ color: 'var(--text-muted)' }}>Não havia equivalente a este treino na versão passada.</div>;
 
                             let forcaCounter = 0;
+                            let complexBlockCounter = 0;
+
+                            const isComplex = treinoAnterior.exercicios.some((ex, i, arr) => {
+                                const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
+                                if (!isPot) return false;
+                                return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
+                            });
 
                             return (
                                 <>
@@ -622,20 +658,40 @@ export default function TreinosPage() {
                                     </div>
                                     
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                        {treinoAnterior.exercicios.map((ex) => {
-                                            const isForca = (ex.categoria || '').toUpperCase().includes('FORC') || (ex.categoria || '').toUpperCase().includes('FORÇ');
-                                            if (isForca) forcaCounter++;
+                                        {treinoAnterior.exercicios.map((ex, exIdx, arr) => {
+                                            const upperCat = (ex.categoria || '').toUpperCase();
+                                            const isForca = upperCat.includes('FORC') || upperCat.includes('FORÇ');
+                                            const prevEx = exIdx > 0 ? arr[exIdx - 1] : null;
+                                            const prevCat = prevEx ? (prevEx.categoria || '').toUpperCase() : '';
+                                            const prevIsForca = prevCat.includes('FORC') || prevCat.includes('FORÇ');
+
+                                            let showBlock = false;
+                                            let blockLabel = '';
+
+                                            if (isForca) {
+                                                forcaCounter++;
+                                                if (isComplex) {
+                                                    if (forcaCounter === 1 || !prevIsForca) {
+                                                        complexBlockCounter++;
+                                                        showBlock = true;
+                                                        blockLabel = `BLOCO ${complexBlockCounter}`;
+                                                    }
+                                                } else {
+                                                    if (forcaCounter === 1) {
+                                                        showBlock = true;
+                                                        blockLabel = 'BLOCO 1';
+                                                    } else if (forcaCounter === 4) {
+                                                        showBlock = true;
+                                                        blockLabel = 'BLOCO 2';
+                                                    }
+                                                }
+                                            }
 
                                             return (
                                                 <div key={ex.id}>
-                                                    {isForca && forcaCounter === 1 && (
+                                                    {showBlock && (
                                                         <div style={{ marginBottom: '10px', padding: '5px 10px', background: '#e2e8f0', borderRadius: '6px', borderLeft: '4px solid #94a3b8' }}>
-                                                            <span style={{ fontWeight: 800, color: '#64748b', fontSize: '0.9rem' }}>BLOCO 1</span>
-                                                        </div>
-                                                    )}
-                                                    {isForca && forcaCounter === 4 && (
-                                                        <div style={{ marginTop: '10px', marginBottom: '10px', padding: '5px 10px', background: '#e2e8f0', borderRadius: '6px', borderLeft: '4px solid #94a3b8' }}>
-                                                            <span style={{ fontWeight: 800, color: '#64748b', fontSize: '0.9rem' }}>BLOCO 2</span>
+                                                            <span style={{ fontWeight: 800, color: '#64748b', fontSize: '0.9rem' }}>{blockLabel}</span>
                                                         </div>
                                                     )}
                                                     
