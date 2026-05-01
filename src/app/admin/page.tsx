@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, TVStatus, Treino } from "@/lib/mockData";
-import { Dumbbell, MonitorPlay, Trash2 } from "lucide-react";
+import { Dumbbell, MonitorPlay, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminPage() {
@@ -132,6 +132,9 @@ export default function AdminPage() {
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
         <div>
+          <Link href="/" style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px', textDecoration: 'none' }}>
+            <ArrowLeft size={16} /> Voltar ao Início
+          </Link>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>Painel do Professor</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Controle quais alunos estão treinando agora. (Máximo: {session.length}/10 na TV)</p>
         </div>

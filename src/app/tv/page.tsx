@@ -124,56 +124,101 @@ export default function TVPage() {
   );
 
   const renderExercicios = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }) => {
-    const nonForca: React.JSX.Element[] = [];
-    const forcaExs: Exercicio[] = [];
+    const isComplex = treino.exercicios.some((ex, i, arr) => {
+      const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
+      if (!isPot) return false;
+      return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
+    });
 
-    treino.exercicios.forEach(ex => {
-      const catUpper = (ex.categoria || '').toUpperCase();
-      const isForca = catUpper.includes('FORC') || catUpper.includes('FORÇ');
+    const groups: { label: string | null, exercises: Exercicio[] }[] = [];
+    let currentGroup: { label: string | null, exercises: Exercicio[] } = { label: null, exercises: [] };
+    
+    let forcaCounter = 0;
+    let complexBlockCounter = 0;
+
+    treino.exercicios.forEach((ex, exIdx, arr) => {
+      const upperCat = (ex.categoria || '').toUpperCase();
+      const isForca = upperCat.includes('FORC') || upperCat.includes('FORÇ');
+      const prevEx = exIdx > 0 ? arr[exIdx - 1] : null;
+      const prevCat = prevEx ? (prevEx.categoria || '').toUpperCase() : '';
+      const prevIsForca = prevCat.includes('FORC') || prevCat.includes('FORÇ');
+
+      let startNewBlock = false;
+      let newBlockLabel = '';
+
       if (isForca) {
-        forcaExs.push(ex);
+        forcaCounter++;
+        if (isComplex) {
+          if (forcaCounter === 1 || !prevIsForca) {
+            complexBlockCounter++;
+            startNewBlock = true;
+            newBlockLabel = `BLOCO ${complexBlockCounter}`;
+          }
+        } else {
+          if (forcaCounter === 1) {
+            startNewBlock = true;
+            newBlockLabel = 'BLOCO 1';
+          } else if (forcaCounter === 4) {
+            startNewBlock = true;
+            newBlockLabel = 'BLOCO 2';
+          }
+        }
+      }
+
+      if (startNewBlock) {
+        if (currentGroup.exercises.length > 0) {
+          groups.push(currentGroup);
+        }
+        currentGroup = { label: newBlockLabel, exercises: [ex] };
       } else {
-        let badgeColor = 'var(--text-secondary)';
-        if (catUpper.includes('CORE')) badgeColor = 'var(--cat-core)';
-        if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) badgeColor = 'var(--cat-explosao)';
-        nonForca.push(
-          <div key={ex.id}>
-            {renderExercicioRow(aluno, treino, ex, badgeColor, false)}
-          </div>
-        );
+        currentGroup.exercises.push(ex);
       }
     });
 
-    const bloco1 = forcaExs.slice(0, 3);
-    const bloco2 = forcaExs.slice(3);
+    if (currentGroup.exercises.length > 0) {
+      groups.push(currentGroup);
+    }
 
     return (
       <>
-        {nonForca}
-        {bloco1.length > 0 && (
-          <div style={{ border: '1.5px solid var(--accent-primary)', borderRadius: '8px', padding: '4px 6px', marginTop: '4px' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
-              Bloco 1
-            </div>
-            {bloco1.map((ex, i) => (
-              <div key={ex.id}>
-                {renderExercicioRow(aluno, treino, ex, 'var(--cat-forca)', i === bloco1.length - 1)}
+        {groups.map((group, gIdx) => {
+          if (!group.label) {
+            return group.exercises.map(ex => {
+              const catUpper = (ex.categoria || '').toUpperCase();
+              let badgeColor = 'var(--text-secondary)';
+              if (catUpper.includes('CORE')) badgeColor = 'var(--cat-core)';
+              if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) badgeColor = 'var(--cat-explosao)';
+              if (catUpper.includes('FORC') || catUpper.includes('FORÇ')) badgeColor = 'var(--cat-forca)';
+              
+              return (
+                <div key={ex.id}>
+                  {renderExercicioRow(aluno, treino, ex, badgeColor, false)}
+                </div>
+              );
+            });
+          }
+
+          return (
+            <div key={`group-${gIdx}`} style={{ border: '1.5px solid var(--accent-primary)', borderRadius: '8px', padding: '4px 6px', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
+                {group.label}
               </div>
-            ))}
-          </div>
-        )}
-        {bloco2.length > 0 && (
-          <div style={{ border: '1.5px solid var(--accent-primary)', borderRadius: '8px', padding: '4px 6px', marginTop: '6px' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
-              Bloco 2
+              {group.exercises.map((ex, i) => {
+                const catUpper = (ex.categoria || '').toUpperCase();
+                let badgeColor = 'var(--text-secondary)';
+                if (catUpper.includes('CORE')) badgeColor = 'var(--cat-core)';
+                if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) badgeColor = 'var(--cat-explosao)';
+                if (catUpper.includes('FORC') || catUpper.includes('FORÇ')) badgeColor = 'var(--cat-forca)';
+
+                return (
+                  <div key={ex.id}>
+                    {renderExercicioRow(aluno, treino, ex, badgeColor, i === group.exercises.length - 1)}
+                  </div>
+                );
+              })}
             </div>
-            {bloco2.map((ex, i) => (
-              <div key={ex.id}>
-                {renderExercicioRow(aluno, treino, ex, 'var(--cat-forca)', i === bloco2.length - 1)}
-              </div>
-            ))}
-          </div>
-        )}
+          );
+        })}
       </>
     );
   };
