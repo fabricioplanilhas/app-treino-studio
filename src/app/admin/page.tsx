@@ -72,7 +72,7 @@ export default function AdminPage() {
     alunosAtivos.forEach((aluno) => {
       if (!aluno.treinos || aluno.treinos.length === 0) return;
 
-      if (yPos > 270) {
+      if (yPos > 260) {
         doc.addPage();
         yPos = 20;
       }
@@ -81,28 +81,69 @@ export default function AdminPage() {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
       doc.text(`Aluno: ${aluno.nome}`, 14, yPos);
-      yPos += 3;
+      yPos += 4;
 
-      const bodyData: string[][] = [];
-      aluno.treinos.forEach(treino => {
-        treino.exercicios.forEach(ex => {
-          bodyData.push([treino.nomeTreino, ex.nome, `${ex.series} x ${ex.reps}`, ex.carga || '-']);
+      const numTreinos = aluno.treinos.length;
+      const cols = Math.min(numTreinos, 3); // Máximo de 3 treinos lado a lado
+      const usableWidth = 210 - 28; // A4 width (210) minus margins (14*2)
+      const tableWidth = (usableWidth / cols) - 2; // -2 for gap
+
+      let startY = yPos;
+      let currentX = 14;
+      let maxYInRow = startY;
+
+      aluno.treinos.forEach((treino, idx) => {
+        if (idx > 0 && idx % cols === 0) {
+          currentX = 14;
+          startY = maxYInRow + 8;
+        }
+
+        // Antes de desenhar uma nova linha de tabelas, checa se cabe na página
+        if (idx % cols === 0) {
+          let maxEx = 0;
+          for(let i=0; i<cols && idx+i < aluno.treinos.length; i++) {
+              maxEx = Math.max(maxEx, aluno.treinos[idx+i].exercicios.length);
+          }
+          const estHeight = 10 + (maxEx * 6);
+          if (startY + estHeight > 285) {
+              doc.addPage();
+              startY = 20;
+              maxYInRow = startY;
+              doc.setFontSize(10);
+              doc.text(`Aluno: ${aluno.nome} (cont.)`, 14, startY);
+              startY += 4;
+          }
+        }
+
+        const bodyData = treino.exercicios.map(ex => [
+          ex.nome, 
+          `${ex.series}x${ex.reps}`, 
+          ex.carga || '-'
+        ]);
+
+        autoTable(doc, {
+          startY: startY,
+          margin: { left: currentX },
+          tableWidth: tableWidth,
+          head: [[treino.nomeTreino, 'Séries', 'Cg']],
+          body: bodyData,
+          theme: 'grid',
+          headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontSize: 7, cellPadding: 1, fontStyle: 'bold' },
+          bodyStyles: { fontSize: 7, cellPadding: 1 },
+          columnStyles: {
+            0: { cellWidth: tableWidth * 0.6 },
+            1: { cellWidth: tableWidth * 0.25 },
+            2: { cellWidth: tableWidth * 0.15 }
+          },
         });
+
+        const finalY = (doc as any).lastAutoTable.finalY;
+        if (finalY > maxYInRow) maxYInRow = finalY;
+
+        currentX += tableWidth + 3;
       });
 
-      if (bodyData.length === 0) return;
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Treino', 'Exercício', 'Séries x Reps', 'Carga']],
-        body: bodyData,
-        theme: 'grid',
-        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontSize: 8, cellPadding: 1.5, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-        margin: { left: 14, right: 14 },
-      });
-
-      yPos = (doc as any).lastAutoTable.finalY + 8;
+      yPos = maxYInRow + 10;
     });
 
     doc.save(`Backup_Treinos_${dataHoje.replace(/\//g, '-')}.pdf`);
