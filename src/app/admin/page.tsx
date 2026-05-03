@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, TVStatus, Treino } from "@/lib/mockData";
-import { Dumbbell, MonitorPlay, Trash2, ArrowLeft } from "lucide-react";
+import { Dumbbell, MonitorPlay, Trash2, ArrowLeft, Download } from "lucide-react";
 import Link from "next/link";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function AdminPage() {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -30,6 +32,87 @@ export default function AdminPage() {
     const interval = setInterval(carregarDados, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Efeito para automatizar o download às 07:00 da manhã
+  useEffect(() => {
+    const checkAutoDownload = setInterval(() => {
+      if (alunos.length === 0) return; // Aguarda carregar dados
+      
+      const now = new Date();
+      const hour = now.getHours();
+      const dataHoje = now.toLocaleDateString('pt-BR');
+      const ultimoBackup = localStorage.getItem('ultimo_backup_data');
+
+      // Tenta baixar automaticamente entre 07:00 e 07:59 se ainda não baixou hoje
+      if (hour === 7 && ultimoBackup !== dataHoje) {
+        handleBaixarBackup();
+      }
+    }, 60000); // Checa a cada minuto
+
+    return () => clearInterval(checkAutoDownload);
+  }, [alunos]);
+
+  const handleBaixarBackup = () => {
+    if (alunos.length === 0) {
+      alert("Nenhum aluno carregado para backup.");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    
+    doc.setFontSize(18);
+    doc.text(`Backup Diário de Treinos - ${dataHoje}`, 14, 20);
+    
+    let yPos = 30;
+
+    // Alunos filtrados pelos que não estão deletados
+    const alunosAtivos = alunos.filter(a => a.status !== 'deletado');
+
+    alunosAtivos.forEach((aluno) => {
+      let idRecomendado = aluno.treinos && aluno.treinos.length > 0 ? aluno.treinos[0].id : null;
+      if (aluno.historico && aluno.historico.length > 0 && aluno.treinos && aluno.treinos.length > 0) {
+        const ultimo = aluno.historico[aluno.historico.length - 1];
+        const indexUltimo = aluno.treinos.findIndex(t => t.nomeTreino === ultimo.nomeTreino);
+        if (indexUltimo >= 0) {
+          const idxRecomendado = (indexUltimo + 1) % aluno.treinos.length;
+          idRecomendado = aluno.treinos[idxRecomendado]?.id || idRecomendado;
+        }
+      }
+
+      if (!idRecomendado) return; // Aluno sem treino
+
+      const treino = aluno.treinos.find(t => t.id === idRecomendado);
+      if (!treino) return;
+
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Aluno: ${aluno.nome} | Treino: ${treino.nomeTreino}`, 14, yPos);
+      yPos += 5;
+
+      const bodyData = treino.exercicios.map(ex => [ex.nome, ex.series, ex.reps, ex.carga || '-']);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Exercício', 'Séries', 'Reps', 'Carga']],
+        body: bodyData,
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185] },
+        styles: { fontSize: 10 },
+        margin: { left: 14, right: 14 },
+      });
+
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    });
+
+    doc.save(`Backup_Treinos_${dataHoje.replace(/\//g, '-')}.pdf`);
+    localStorage.setItem('ultimo_backup_data', dataHoje);
+  };
 
   const handleToggleAlunoContext = async (aluno: Aluno) => {
     const isAtivo = session.find(s => s.alunoId === aluno.id);
@@ -158,6 +241,11 @@ export default function AdminPage() {
 
           <button className="premium-btn-outline" onClick={handleLimparTV} style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
             Limpar a TV
+          </button>
+
+          <button className="premium-btn" onClick={handleBaixarBackup} style={{ background: 'var(--cat-potencia)', borderColor: 'var(--cat-potencia)', color: '#000' }}>
+            <Download size={20} />
+            Baixar Backup
           </button>
 
           <button className="premium-btn" onClick={() => window.open('/tv', '_blank')}>
