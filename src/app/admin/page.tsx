@@ -70,44 +70,39 @@ export default function AdminPage() {
     const alunosAtivos = alunos.filter(a => a.status !== 'deletado');
 
     alunosAtivos.forEach((aluno) => {
-      let idRecomendado = aluno.treinos && aluno.treinos.length > 0 ? aluno.treinos[0].id : null;
-      if (aluno.historico && aluno.historico.length > 0 && aluno.treinos && aluno.treinos.length > 0) {
-        const ultimo = aluno.historico[aluno.historico.length - 1];
-        const indexUltimo = aluno.treinos.findIndex(t => t.nomeTreino === ultimo.nomeTreino);
-        if (indexUltimo >= 0) {
-          const idxRecomendado = (indexUltimo + 1) % aluno.treinos.length;
-          idRecomendado = aluno.treinos[idxRecomendado]?.id || idRecomendado;
-        }
-      }
+      if (!aluno.treinos || aluno.treinos.length === 0) return;
 
-      if (!idRecomendado) return; // Aluno sem treino
-
-      const treino = aluno.treinos.find(t => t.id === idRecomendado);
-      if (!treino) return;
-
-      if (yPos > 260) {
+      if (yPos > 270) {
         doc.addPage();
         yPos = 20;
       }
 
-      doc.setFontSize(14);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text(`Aluno: ${aluno.nome} | Treino: ${treino.nomeTreino}`, 14, yPos);
-      yPos += 5;
+      doc.text(`Aluno: ${aluno.nome}`, 14, yPos);
+      yPos += 3;
 
-      const bodyData = treino.exercicios.map(ex => [ex.nome, ex.series, ex.reps, ex.carga || '-']);
+      const bodyData: string[][] = [];
+      aluno.treinos.forEach(treino => {
+        treino.exercicios.forEach(ex => {
+          bodyData.push([treino.nomeTreino, ex.nome, `${ex.series} x ${ex.reps}`, ex.carga || '-']);
+        });
+      });
+
+      if (bodyData.length === 0) return;
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Exercício', 'Séries', 'Reps', 'Carga']],
+        head: [['Treino', 'Exercício', 'Séries x Reps', 'Carga']],
         body: bodyData,
         theme: 'grid',
-        headStyles: { fillColor: [41, 128, 185] },
-        styles: { fontSize: 10 },
+        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontSize: 8, cellPadding: 1.5, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, cellPadding: 1.5 },
         margin: { left: 14, right: 14 },
       });
 
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as any).lastAutoTable.finalY + 8;
     });
 
     doc.save(`Backup_Treinos_${dataHoje.replace(/\//g, '-')}.pdf`);
