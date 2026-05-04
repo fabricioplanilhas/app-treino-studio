@@ -505,12 +505,6 @@ export default function TreinosPage() {
                             title="Importar Modelo Pré-Pronto"
                         >
                             <option value="">📥 Importar Base</option>
-                            {Object.keys(MODELOS_ESTUDIO).map(key => (
-                                <option key={key} value={key}>{key}</option>
-                            ))}
-                            {basesCustom.length > 0 && (
-                                <option disabled value="">── Minhas Bases ──</option>
-                            )}
                             {basesCustom.map(base => (
                                 <option key={base.id} value={`custom:${base.id}`}>⭐ {base.nome}</option>
                             ))}
