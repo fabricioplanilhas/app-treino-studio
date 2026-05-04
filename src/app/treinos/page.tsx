@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO } from "@/lib/mockData";
-import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Download, Eraser } from "lucide-react";
+import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino } from "@/lib/mockData";
+import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -17,12 +17,16 @@ export default function TreinosPage() {
   const [draggedTab, setDraggedTab] = useState<number | null>(null);
   const [draggedEx, setDraggedEx] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [basesCustom, setBasesCustom] = useState<BaseTreino[]>([]);
+  const [showBasesModal, setShowBasesModal] = useState(false);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       const todosAlunos = await mockDb.getAlunos();
       setAlunos(todosAlunos);
+      const bases = await mockDb.getBases();
+      setBasesCustom(bases);
       if(todosAlunos.length > 0) {
         selecionarAluno(todosAlunos[0].id, todosAlunos);
       }
@@ -468,10 +472,28 @@ export default function TreinosPage() {
                             onChange={(e) => {
                                 const modeloStr = e.target.value;
                                 if (!modeloStr) return;
-                                if (confirm(`Deseja importar e substituir este dia pelo modelo ${modeloStr}? Isso irá APAGAR os exercícios atuais deste dia.`)) {
+                                
+                                // Check if it's a custom base (prefixed with 'custom:')
+                                const isCustom = modeloStr.startsWith('custom:');
+                                let exerciciosParaImportar: Exercicio[] = [];
+                                let nomeModelo = modeloStr;
+                                
+                                if (isCustom) {
+                                    const baseId = modeloStr.replace('custom:', '');
+                                    const base = basesCustom.find(b => b.id === baseId);
+                                    if (base) {
+                                        exerciciosParaImportar = base.exercicios;
+                                        nomeModelo = base.nome;
+                                    }
+                                } else {
+                                    exerciciosParaImportar = MODELOS_ESTUDIO[modeloStr] || [];
+                                    nomeModelo = modeloStr;
+                                }
+                                
+                                if (confirm(`Deseja importar e substituir este dia pelo modelo ${nomeModelo}? Isso irá APAGAR os exercícios atuais deste dia.`)) {
                                     if (!alunoAtual) return;
                                     const newAluno = { ...alunoAtual };
-                                    const copiados = JSON.parse(JSON.stringify(MODELOS_ESTUDIO[modeloStr] || []));
+                                    const copiados = JSON.parse(JSON.stringify(exerciciosParaImportar));
                                     copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
                                     newAluno.treinos[activeTab].exercicios = copiados;
                                     setAlunoAtual(newAluno);
@@ -486,7 +508,67 @@ export default function TreinosPage() {
                             {Object.keys(MODELOS_ESTUDIO).map(key => (
                                 <option key={key} value={key}>{key}</option>
                             ))}
+                            {basesCustom.length > 0 && (
+                                <option disabled value="">── Minhas Bases ──</option>
+                            )}
+                            {basesCustom.map(base => (
+                                <option key={base.id} value={`custom:${base.id}`}>⭐ {base.nome}</option>
+                            ))}
                         </select>
+                        <button 
+                            onClick={async () => {
+                                if (!alunoAtual || alunoAtual.treinos.length === 0) return;
+                                const treino = alunoAtual.treinos[activeTab];
+                                if (treino.exercicios.length === 0) {
+                                    alert('Este treino não possui exercícios para salvar como base.');
+                                    return;
+                                }
+                                const nomeBase = window.prompt(
+                                    'Nome para esta base de treino:',
+                                    treino.nomeTreino
+                                );
+                                if (!nomeBase) return;
+                                
+                                // Check if a base with same name already exists
+                                const existente = basesCustom.find(b => b.nome.toLowerCase() === nomeBase.toLowerCase());
+                                if (existente) {
+                                    if (!confirm(`Já existe uma base com o nome "${existente.nome}". Deseja substituí-la?`)) return;
+                                    // Overwrite existing
+                                    const baseAtualizada: BaseTreino = {
+                                        id: existente.id,
+                                        nome: nomeBase,
+                                        exercicios: JSON.parse(JSON.stringify(treino.exercicios)),
+                                    };
+                                    await mockDb.saveBase(baseAtualizada);
+                                } else {
+                                    const novaBase: BaseTreino = {
+                                        id: `base_${Date.now()}`,
+                                        nome: nomeBase,
+                                        exercicios: JSON.parse(JSON.stringify(treino.exercicios)),
+                                    };
+                                    await mockDb.saveBase(novaBase);
+                                }
+                                
+                                const updated = await mockDb.getBases();
+                                setBasesCustom(updated);
+                                alert(`Base "${nomeBase}" salva com sucesso! Agora pode ser importada para qualquer aluno.`);
+                            }}
+                            className="premium-btn-outline"
+                            style={{ color: '#8b5cf6', borderColor: '#8b5cf6' }}
+                            title="Salvar este treino como base reutilizável"
+                        >
+                            <Upload size={18} /> Salvar como Base
+                        </button>
+                        {basesCustom.length > 0 && (
+                            <button 
+                                onClick={() => setShowBasesModal(true)}
+                                className="premium-btn-outline"
+                                style={{ color: '#6366f1', borderColor: '#6366f1' }}
+                                title="Gerenciar bases salvas"
+                            >
+                                <BookOpen size={18} />
+                            </button>
+                        )}
                         <button onClick={() => limparTreinoEstrutura(activeTab)} className="premium-btn-outline" style={{ color: '#fbbf24', borderColor: '#fbbf24' }} title="Limpar Conteúdos da Ficha">
                             <Eraser size={18} /> Limpar
                         </button>
@@ -734,6 +816,65 @@ export default function TreinosPage() {
             </div>
             )}
           </>
+      )}
+
+      {/* MODAL GERENCIAR BASES */}
+      {showBasesModal && (
+          <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 9999, backdropFilter: 'blur(4px)'
+          }}>
+              <div style={{
+                  background: 'var(--bg-card)', borderRadius: '16px', padding: '30px',
+                  width: '500px', maxWidth: '90vw', maxHeight: '70vh', overflow: 'auto',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)', border: '1px solid var(--border-light)'
+              }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h2 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <BookOpen size={22} /> Minhas Bases
+                      </h2>
+                      <button onClick={() => setShowBasesModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                          <X size={24} />
+                      </button>
+                  </div>
+                  
+                  {basesCustom.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Nenhuma base salva ainda.</p>
+                  ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {basesCustom.map(base => (
+                              <div key={base.id} style={{
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                  padding: '14px 16px', background: 'var(--bg-main)', borderRadius: '10px',
+                                  border: '1px solid var(--border-light)', transition: 'all 0.2s'
+                              }}>
+                                  <div>
+                                      <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>⭐ {base.nome}</div>
+                                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                          {base.exercicios.length} exercício{base.exercicios.length !== 1 ? 's' : ''}
+                                      </div>
+                                  </div>
+                                  <button 
+                                      onClick={async () => {
+                                          if (confirm(`Tem certeza que deseja excluir a base "${base.nome}"?`)) {
+                                              await mockDb.deleteBase(base.id);
+                                              const updated = await mockDb.getBases();
+                                              setBasesCustom(updated);
+                                              if (updated.length === 0) setShowBasesModal(false);
+                                          }
+                                      }}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cat-explosao)', padding: '8px' }}
+                                      title="Excluir base"
+                                  >
+                                      <Trash2 size={18} />
+                                  </button>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+              </div>
+          </div>
       )}
     </div>
   );

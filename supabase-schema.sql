@@ -39,8 +39,18 @@ CREATE TABLE IF NOT EXISTS tv_session (
   UNIQUE(aluno_id)
 );
 
--- 3. Índices para performance
+-- 3. Tabela de Bases de Treino Customizadas
+-- Armazena bases reutilizáveis que podem ser importadas para qualquer aluno
+CREATE TABLE IF NOT EXISTS bases_treino (
+  id TEXT PRIMARY KEY,
+  nome TEXT NOT NULL,
+  exercicios JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 4. Índices para performance
 CREATE INDEX IF NOT EXISTS idx_alunos_nome ON alunos(nome);
+CREATE INDEX IF NOT EXISTS idx_bases_treino_nome ON bases_treino(nome);
 CREATE INDEX IF NOT EXISTS idx_tv_session_aluno ON tv_session(aluno_id);
 
 -- 4. Trigger para auto-update de updated_at
@@ -61,7 +71,9 @@ CREATE TRIGGER update_alunos_updated_at
 -- 5. Desabilitar RLS para simplicidade (estúdio local, sem auth)
 ALTER TABLE alunos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tv_session ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bases_treino ENABLE ROW LEVEL SECURITY;
 
 -- Políticas abertas (sem autenticação necessária)
 CREATE POLICY "Allow all on alunos" ON alunos FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on tv_session" ON tv_session FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on bases_treino" ON bases_treino FOR ALL USING (true) WITH CHECK (true);

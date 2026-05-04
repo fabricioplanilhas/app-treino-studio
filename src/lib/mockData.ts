@@ -44,6 +44,13 @@ export type Aluno = {
   deletedAt?: string;
 };
 
+export type BaseTreino = {
+  id: string;
+  nome: string;
+  exercicios: Exercicio[];
+  created_at?: string;
+};
+
 export type TVStatus = {
   alunoId: string;
   treinoAtivoId: string; // Qual o ID do treino que ele está fazendo hoje
@@ -227,6 +234,50 @@ export const mockDb = {
 
   getTemplates: (): Treino[] => {
     return JSON.parse(JSON.stringify(MOCK_TEMPLATES));
+  },
+
+  // ─── BASES CUSTOMIZADAS (Supabase) ──────────────────────────
+
+  getBases: async (): Promise<BaseTreino[]> => {
+    const { data, error } = await supabase
+      .from('bases_treino')
+      .select('*')
+      .order('nome');
+    if (error) {
+      console.error('Erro ao buscar bases:', error);
+      return [];
+    }
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      nome: row.nome as string,
+      exercicios: (row.exercicios as Exercicio[]) || [],
+      created_at: row.created_at as string,
+    }));
+  },
+
+  saveBase: async (base: BaseTreino): Promise<void> => {
+    const { error } = await supabase
+      .from('bases_treino')
+      .upsert({
+        id: base.id,
+        nome: base.nome,
+        exercicios: base.exercicios,
+      }, { onConflict: 'id' });
+    if (error) {
+      console.error('Erro ao salvar base:', error);
+      throw error;
+    }
+  },
+
+  deleteBase: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('bases_treino')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('Erro ao deletar base:', error);
+      throw error;
+    }
   },
 
   // ─── TV SESSION ─────────────────────────────────────────────
