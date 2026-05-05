@@ -70,7 +70,7 @@ export default function TVPage() {
           {ex.nome}
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '130px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '160px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '1px' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
@@ -100,7 +100,7 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
-                width: '60px', outline: 'none'
+                width: '80px', outline: 'none'
               }}
               placeholder="-"
             />
@@ -113,7 +113,7 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
-                width: '60px', outline: 'none'
+                width: '70px', outline: 'none'
               }}
               placeholder="-"
             />
