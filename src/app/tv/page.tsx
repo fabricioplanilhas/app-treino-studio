@@ -30,7 +30,7 @@ export default function TVPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCampoChange = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series', valor: string) => {
+  const handleCampoChange = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
     await mockDb.updateCampoExercicio(alunoId, treinoId, exercicioId, campo, valor);
     await carregarDados();
   };
@@ -66,11 +66,25 @@ export default function TVPage() {
             {ex.categoria.toUpperCase() === 'FORCA' ? 'FORÇA' : ex.categoria.toUpperCase() === 'POTENCIA' ? 'POTÊNCIA' : ex.categoria}
           </span>
         </div>
-        <div style={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
-          {ex.nome}
-        </div>
+        <input
+          value={ex.nome}
+          onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--text-primary)',
+            fontSize: '1rem',
+            fontWeight: 600,
+            lineHeight: 1.2,
+            textTransform: 'uppercase',
+            letterSpacing: '-0.5px',
+            outline: 'none',
+            width: '100%',
+            padding: 0
+          }}
+        />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '160px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '190px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '1px' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
@@ -100,7 +114,7 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
-                width: '80px', outline: 'none'
+                width: '110px', outline: 'none'
               }}
               placeholder="-"
             />

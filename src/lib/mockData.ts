@@ -322,7 +322,7 @@ export const mockDb = {
     alunoId: string,
     treinoId: string,
     exercicioId: string,
-    campo: 'carga' | 'reps' | 'series',
+    campo: 'carga' | 'reps' | 'series' | 'nome',
     valor: string
   ): Promise<boolean> => {
     const aluno = await mockDb.getAlunoById(alunoId);
