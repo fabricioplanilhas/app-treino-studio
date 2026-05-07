@@ -265,7 +265,8 @@ export default function TVPage() {
               background: '#ffffff',
               padding: '6px',
               borderBottom: '3px solid var(--accent-primary)',
-              textAlign: 'center'
+              textAlign: 'center',
+              position: 'relative'
             }}>
               <h2 style={{ fontSize: '1.2rem', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {aluno.nome}
@@ -277,6 +278,22 @@ export default function TVPage() {
               }}>
                 {treino.nomeTreino}
               </div>
+              {aluno.alturaCmj && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '6px',
+                  transform: 'translateY(-50%)',
+                  background: 'var(--cat-explosao)',
+                  color: 'white',
+                  padding: '2px 5px',
+                  borderRadius: '4px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700
+                }}>
+                  CMJ: {aluno.alturaCmj}cm
+                </div>
+              )}
             </div>
 
             {/* Lista de Exercicios */}

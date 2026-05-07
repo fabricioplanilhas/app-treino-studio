@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS alunos (
   data_ficha_atual TEXT DEFAULT '',
   status TEXT DEFAULT 'ativo',
   deleted_at TEXT,
+  altura_cmj TEXT DEFAULT '',
+  semanas_concluidas INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

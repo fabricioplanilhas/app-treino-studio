@@ -246,7 +246,7 @@ export default function TreinosPage() {
       });
       
       const contagens = Object.values(contagemTreinos);
-      const semanasCompletas = contagens.length > 0 ? Math.min(...contagens) : 0;
+      const semanasCompletas = (contagens.length > 0 ? Math.min(...contagens) : 0) + (a.semanasConcluidas || 0);
       
       return semanasCompletas >= 6;
     });
@@ -374,6 +374,32 @@ export default function TreinosPage() {
                     placeholder="Ex: Adaptação, Força..."
                     style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)', marginBottom: '10px' }}
                   />
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px' }}>
+                        ALTURA CMJ (cm)
+                      </label>
+                      <input 
+                        type="number"
+                        value={alunoAtual.alturaCmj || ""} 
+                        onChange={(e) => setAlunoAtual({...alunoAtual, alturaCmj: e.target.value})}
+                        placeholder="Ex: 45.5"
+                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px' }}>
+                        SEMANAS CONCLUÍDAS
+                      </label>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={alunoAtual.semanasConcluidas || 0} 
+                        onChange={(e) => setAlunoAtual({...alunoAtual, semanasConcluidas: parseInt(e.target.value) || 0})}
+                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+                      />
+                    </div>
+                  </div>
                   <button 
                     onClick={() => {
                         if(confirm("Confirmar que este aluno está começando uma FICHA NOVA hoje? Isso irá salvar a ficha atual no histórico como versão passada e zerar a contagem de 6 semanas.")) {

@@ -42,6 +42,8 @@ export type Aluno = {
   dataFichaAtual?: string;
   status?: string;
   deletedAt?: string;
+  alturaCmj?: string;
+  semanasConcluidas?: number;
 };
 
 export type BaseTreino = {
@@ -133,6 +135,8 @@ function rowToAluno(row: Record<string, unknown>): Aluno {
     dataFichaAtual: (row.data_ficha_atual as string) || '',
     status: (row.status as string) || 'ativo',
     deletedAt: (row.deleted_at as string) || undefined,
+    alturaCmj: (row.altura_cmj as string) || '',
+    semanasConcluidas: typeof row.semanas_concluidas === 'number' ? row.semanas_concluidas : 0,
   };
 }
 
@@ -151,6 +155,8 @@ function alunoToRow(aluno: Aluno) {
     data_ficha_atual: aluno.dataFichaAtual || '',
     status: aluno.status || 'ativo',
     deleted_at: aluno.deletedAt || null,
+    altura_cmj: aluno.alturaCmj || '',
+    semanas_concluidas: aluno.semanasConcluidas || 0,
   };
 }
 
