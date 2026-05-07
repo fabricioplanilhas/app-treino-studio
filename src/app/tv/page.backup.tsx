@@ -47,7 +47,7 @@ export default function TVPage() {
   }
 
   // Dinâmica de Grid para TV
-  const cols = alunosAtivos.length > 8 ? 8 : alunosAtivos.length;
+  const cols = alunosAtivos.length > 5 ? 5 : alunosAtivos.length;
 
   const renderExercicioRow = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }, ex: Exercicio, badgeColor: string, isLast: boolean) => (
     <div style={{
@@ -73,9 +73,9 @@ export default function TVPage() {
             background: 'transparent',
             border: 'none',
             color: 'var(--text-primary)',
-            fontSize: '0.75rem',
+            fontSize: '1rem',
             fontWeight: 600,
-            lineHeight: 1.1,
+            lineHeight: 1.2,
             textTransform: 'uppercase',
             letterSpacing: '-0.5px',
             outline: 'none',
@@ -84,15 +84,15 @@ export default function TVPage() {
           }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '85px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '190px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '1px' }}>
-          <span style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
             value={ex.series}
             onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'series', e.target.value)}
             style={{
               background: 'transparent', border: 'none', color: 'var(--text-primary)',
-              fontSize: '0.75rem', fontWeight: 700, width: '25px', textAlign: 'right', outline: 'none'
+              fontSize: '0.95rem', fontWeight: 700, width: '30px', textAlign: 'right', outline: 'none'
             }}
           />
         </div>
@@ -107,27 +107,27 @@ export default function TVPage() {
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.45rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
+            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
             <input
               value={ex.carga}
               onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: '0.8rem', fontWeight: 700, textAlign: 'center',
-                width: '40px', outline: 'none'
+                fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
+                width: '110px', outline: 'none'
               }}
               placeholder="-"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.45rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
+            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
             <input
               value={ex.reps}
               onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: '0.8rem', fontWeight: 700, textAlign: 'center',
-                width: '35px', outline: 'none'
+                fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
+                width: '70px', outline: 'none'
               }}
               placeholder="-"
             />
@@ -240,11 +240,11 @@ export default function TVPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      padding: '4px',
+      padding: '20px',
       background: 'var(--bg-main)',
       display: 'grid',
       gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      gap: '4px',
+      gap: '20px',
       alignItems: 'stretch'
     }}>
       {alunosAtivos.map(aluno => {
@@ -263,18 +263,18 @@ export default function TVPage() {
             {/* Header do Card */}
             <div style={{
               background: '#ffffff',
-              padding: '4px',
+              padding: '6px',
               borderBottom: '3px solid var(--accent-primary)',
               textAlign: 'center',
               position: 'relative'
             }}>
-              <h2 style={{ fontSize: '0.9rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {aluno.nome}
               </h2>
               <div style={{
                 display: 'inline-block', background: 'var(--accent-primary)',
-                color: 'white', padding: '1px 4px', borderRadius: '4px',
-                fontSize: '0.6rem', fontWeight: 600, marginTop: '2px'
+                color: 'white', padding: '1px 6px', borderRadius: '4px',
+                fontSize: '0.7rem', fontWeight: 600, marginTop: '3px'
               }}>
                 {treino.nomeTreino}
               </div>
@@ -286,9 +286,9 @@ export default function TVPage() {
                   transform: 'translateY(-50%)',
                   background: 'var(--cat-explosao)',
                   color: 'white',
-                  padding: '1px 3px',
-                  borderRadius: '3px',
-                  fontSize: '0.55rem',
+                  padding: '2px 5px',
+                  borderRadius: '4px',
+                  fontSize: '0.65rem',
                   fontWeight: 700
                 }}>
                   CMJ: {aluno.alturaCmj}cm
