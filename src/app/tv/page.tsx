@@ -92,16 +92,18 @@ export default function TVPage() {
   const renderExercicioRow = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }, ex: Exercicio, badgeColor: string, isLast: boolean) => (
     <div style={{
       display: 'flex',
-      justifyContent: 'space-between',
-      padding: `${px(2)} 0`,
+      flexDirection: 'column',
+      padding: `${px(6)} 0`,
       borderBottom: isLast ? 'none' : '1px solid var(--border-light)',
+      gap: px(4)
     }}>
-      <div style={{ flex: 1, paddingRight: px(4), display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ marginBottom: px(1) }}>
+      {/* Nome e Categoria */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginBottom: px(2) }}>
           <span style={{
-            fontSize: s(0.6), textTransform: 'uppercase', fontWeight: 700,
+            fontSize: s(0.65), textTransform: 'uppercase', fontWeight: 700,
             color: badgeColor, border: `1px solid ${badgeColor}`,
-            padding: `0 ${px(3)}`, borderRadius: px(3)
+            padding: `0 ${px(4)}`, borderRadius: px(3)
           }}>
             {ex.categoria.toUpperCase() === 'FORCA' ? 'FORÇA' : ex.categoria.toUpperCase() === 'POTENCIA' ? 'POTÊNCIA' : ex.categoria}
           </span>
@@ -115,8 +117,8 @@ export default function TVPage() {
             background: 'transparent',
             border: 'none',
             color: 'var(--text-primary)',
-            fontSize: s(0.75),
-            fontWeight: 600,
+            fontSize: s(0.95),
+            fontWeight: 800,
             lineHeight: 1.1,
             textTransform: 'uppercase',
             letterSpacing: '-0.5px',
@@ -126,9 +128,11 @@ export default function TVPage() {
           }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: px(85) }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: px(2), marginBottom: px(1) }}>
-          <span style={{ fontSize: s(0.6), fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
+
+      {/* Controles (Séries, Carga, Reps) */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: px(4), marginBottom: px(2), alignSelf: 'flex-end', paddingRight: px(8) }}>
+          <span style={{ fontSize: s(0.7), fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
             value={ex.series}
             onFocus={handleFocus}
@@ -136,7 +140,7 @@ export default function TVPage() {
             onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'series', e.target.value)}
             style={{
               background: 'transparent', border: 'none', color: 'var(--text-primary)',
-              fontSize: s(0.75), fontWeight: 700, width: px(25), textAlign: 'right', outline: 'none'
+              fontSize: s(0.85), fontWeight: 800, width: px(30), textAlign: 'right', outline: 'none'
             }}
           />
         </div>
@@ -144,14 +148,14 @@ export default function TVPage() {
           display: 'flex',
           background: '#f3f4f6',
           border: '1px solid #e5e7eb',
-          padding: `${px(1)} ${px(3)}`,
-          borderRadius: px(5),
+          padding: `${px(2)} ${px(6)}`,
+          borderRadius: px(6),
           width: '100%',
           justifyContent: 'space-around',
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
+            <span style={{ fontSize: s(0.55), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
             <input
               value={ex.carga}
               onFocus={handleFocus}
@@ -159,14 +163,14 @@ export default function TVPage() {
               onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(40), outline: 'none'
+                fontSize: s(1.0), fontWeight: 700, textAlign: 'center',
+                width: px(50), outline: 'none'
               }}
               placeholder="-"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
+            <span style={{ fontSize: s(0.55), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
             <input
               value={ex.reps}
               onFocus={handleFocus}
@@ -174,8 +178,8 @@ export default function TVPage() {
               onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(35), outline: 'none'
+                fontSize: s(1.0), fontWeight: 700, textAlign: 'center',
+                width: px(45), outline: 'none'
               }}
               placeholder="-"
             />

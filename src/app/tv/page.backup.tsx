@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { mockDb, Aluno, Exercicio } from "@/lib/mockData";
 import { Dumbbell } from "lucide-react";
 
 export default function TVPage() {
   const [alunosAtivos, setAlunosAtivos] = useState<(Aluno & { treinoAtualId: string })[]>([]);
+  const isEditingRef = useRef(false);
 
   const carregarDados = async () => {
     const [session, todosAlunos] = await Promise.all([
@@ -26,13 +27,41 @@ export default function TVPage() {
   useEffect(() => {
     carregarDados();
     // Polling contínuo p/ buscar se o professor ligou um aluno novo
-    const interval = setInterval(carregarDados, 2000);
+    // Pausamos o polling se alguém estiver digitando (foco num input)
+    const interval = setInterval(() => {
+      if (!isEditingRef.current) {
+        carregarDados();
+      }
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleCampoChange = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+  const handleFocus = () => {
+    isEditingRef.current = true;
+  };
+
+  const handleLocalChange = (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+    setAlunosAtivos(prev => prev.map(aluno => {
+      if (aluno.id !== alunoId) return aluno;
+      return {
+        ...aluno,
+        treinos: aluno.treinos.map(treino => {
+          if (treino.id !== treinoId) return treino;
+          return {
+            ...treino,
+            exercicios: treino.exercicios.map(ex => {
+              if (ex.id !== exercicioId) return ex;
+              return { ...ex, [campo]: valor };
+            })
+          };
+        })
+      };
+    }));
+  };
+
+  const handleBlurSave = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+    isEditingRef.current = false;
     await mockDb.updateCampoExercicio(alunoId, treinoId, exercicioId, campo, valor);
-    await carregarDados();
   };
 
   // Se não tem ninguém
@@ -47,35 +76,48 @@ export default function TVPage() {
   }
 
   // Dinâmica de Grid para TV
-  const cols = alunosAtivos.length > 5 ? 5 : alunosAtivos.length;
+  const numAlunos = alunosAtivos.length;
+  const cols = numAlunos > 8 ? 8 : (numAlunos === 0 ? 1 : numAlunos);
+  
+  let scale = 1;
+  if (cols <= 2) scale = 2.0;
+  else if (cols === 3) scale = 1.7;
+  else if (cols === 4) scale = 1.4;
+  else if (cols <= 6) scale = 1.15;
+  else scale = 1;
+
+  const s = (val: number) => `${(val * scale).toFixed(2)}rem`;
+  const px = (val: number) => `${Math.round(val * scale)}px`;
 
   const renderExercicioRow = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }, ex: Exercicio, badgeColor: string, isLast: boolean) => (
     <div style={{
       display: 'flex',
       justifyContent: 'space-between',
-      padding: '2px 0',
+      padding: `${px(2)} 0`,
       borderBottom: isLast ? 'none' : '1px solid var(--border-light)',
     }}>
-      <div style={{ flex: 1, paddingRight: '4px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ marginBottom: '1px' }}>
+      <div style={{ flex: 1, paddingRight: px(4), display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ marginBottom: px(1) }}>
           <span style={{
-            fontSize: '0.6rem', textTransform: 'uppercase', fontWeight: 700,
+            fontSize: s(0.6), textTransform: 'uppercase', fontWeight: 700,
             color: badgeColor, border: `1px solid ${badgeColor}`,
-            padding: '0px 3px', borderRadius: '3px'
+            padding: `0 ${px(3)}`, borderRadius: px(3)
           }}>
             {ex.categoria.toUpperCase() === 'FORCA' ? 'FORÇA' : ex.categoria.toUpperCase() === 'POTENCIA' ? 'POTÊNCIA' : ex.categoria}
           </span>
         </div>
         <input
           value={ex.nome}
-          onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
+          onFocus={handleFocus}
+          onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
+          onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
           style={{
             background: 'transparent',
             border: 'none',
             color: 'var(--text-primary)',
-            fontSize: '1rem',
+            fontSize: s(0.75),
             fontWeight: 600,
-            lineHeight: 1.2,
+            lineHeight: 1.1,
             textTransform: 'uppercase',
             letterSpacing: '-0.5px',
             outline: 'none',
@@ -84,15 +126,17 @@ export default function TVPage() {
           }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '190px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '1px' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: px(85) }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: px(2), marginBottom: px(1) }}>
+          <span style={{ fontSize: s(0.6), fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
             value={ex.series}
-            onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'series', e.target.value)}
+            onFocus={handleFocus}
+            onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'series', e.target.value)}
+            onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'series', e.target.value)}
             style={{
               background: 'transparent', border: 'none', color: 'var(--text-primary)',
-              fontSize: '0.95rem', fontWeight: 700, width: '30px', textAlign: 'right', outline: 'none'
+              fontSize: s(0.75), fontWeight: 700, width: px(25), textAlign: 'right', outline: 'none'
             }}
           />
         </div>
@@ -100,34 +144,38 @@ export default function TVPage() {
           display: 'flex',
           background: '#f3f4f6',
           border: '1px solid #e5e7eb',
-          padding: '1px 3px',
-          borderRadius: '5px',
+          padding: `${px(1)} ${px(3)}`,
+          borderRadius: px(5),
           width: '100%',
           justifyContent: 'space-around',
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
+            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
             <input
               value={ex.carga}
-              onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
+              onFocus={handleFocus}
+              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
+              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
-                width: '110px', outline: 'none'
+                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
+                width: px(40), outline: 'none'
               }}
               placeholder="-"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
+            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
             <input
               value={ex.reps}
-              onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
+              onFocus={handleFocus}
+              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
+              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: '1.1rem', fontWeight: 700, textAlign: 'center',
-                width: '70px', outline: 'none'
+                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
+                width: px(35), outline: 'none'
               }}
               placeholder="-"
             />
@@ -213,8 +261,8 @@ export default function TVPage() {
           }
 
           return (
-            <div key={`group-${gIdx}`} style={{ border: '1.5px solid var(--accent-primary)', borderRadius: '8px', padding: '4px 6px', marginTop: '4px' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>
+            <div key={`group-${gIdx}`} style={{ border: `${px(1.5)} solid var(--accent-primary)`, borderRadius: px(8), padding: `${px(4)} ${px(6)}`, marginTop: px(4) }}>
+              <div style={{ fontSize: s(0.7), fontWeight: 900, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: px(2) }}>
                 {group.label}
               </div>
               {group.exercises.map((ex, i) => {
@@ -240,11 +288,11 @@ export default function TVPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      padding: '20px',
+      padding: px(4),
       background: 'var(--bg-main)',
       display: 'grid',
       gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      gap: '20px',
+      gap: px(4),
       alignItems: 'stretch'
     }}>
       {alunosAtivos.map(aluno => {
@@ -254,7 +302,7 @@ export default function TVPage() {
         return (
           <div key={aluno.id} style={{
             background: 'var(--bg-card)',
-            borderRadius: '16px',
+            borderRadius: px(16),
             border: '1px solid var(--border-light)',
             overflow: 'hidden',
             display: 'flex',
@@ -263,42 +311,50 @@ export default function TVPage() {
             {/* Header do Card */}
             <div style={{
               background: '#ffffff',
-              padding: '6px',
-              borderBottom: '3px solid var(--accent-primary)',
+              padding: px(4),
+              borderBottom: `${px(3)} solid var(--accent-primary)`,
               textAlign: 'center',
               position: 'relative'
             }}>
-              <h2 style={{ fontSize: '1.2rem', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <h2 style={{ fontSize: s(0.9), margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {aluno.nome}
               </h2>
               <div style={{
                 display: 'inline-block', background: 'var(--accent-primary)',
-                color: 'white', padding: '1px 6px', borderRadius: '4px',
-                fontSize: '0.7rem', fontWeight: 600, marginTop: '3px'
+                color: 'white', padding: `${px(1)} ${px(4)}`, borderRadius: px(4),
+                fontSize: s(0.6), fontWeight: 600, marginTop: px(2)
               }}>
                 {treino.nomeTreino}
               </div>
-              {aluno.alturaCmj && (
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: '6px',
-                  transform: 'translateY(-50%)',
-                  background: 'var(--cat-explosao)',
-                  color: 'white',
-                  padding: '2px 5px',
-                  borderRadius: '4px',
-                  fontSize: '0.65rem',
-                  fontWeight: 700
-                }}>
-                  CMJ: {aluno.alturaCmj}cm
-                </div>
-              )}
             </div>
 
             {/* Lista de Exercicios */}
-            <div style={{ padding: '4px 8px', flex: 1, overflowY: 'auto' }}>
+            <div style={{ padding: `${px(4)} ${px(8)}`, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               {renderExercicios(aluno, treino)}
+
+              {/* CMJ Highlight no final */}
+              {aluno.alturaCmj && (
+                <div style={{
+                  marginTop: px(12),
+                  marginBottom: px(8),
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    background: 'var(--cat-explosao)',
+                    color: 'white',
+                    padding: `${px(6)} ${px(16)}`,
+                    borderRadius: px(8),
+                    fontSize: s(0.95),
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    letterSpacing: '1px'
+                  }}>
+                    CMJ: {aluno.alturaCmj}cm
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
