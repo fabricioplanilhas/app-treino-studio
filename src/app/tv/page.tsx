@@ -289,27 +289,35 @@ export default function TVPage() {
               }}>
                 {treino.nomeTreino}
               </div>
-              {aluno.alturaCmj && (
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: px(6),
-                  transform: 'translateY(-50%)',
-                  background: 'var(--cat-explosao)',
-                  color: 'white',
-                  padding: `${px(1)} ${px(3)}`,
-                  borderRadius: px(3),
-                  fontSize: s(0.55),
-                  fontWeight: 700
-                }}>
-                  CMJ: {aluno.alturaCmj}cm
-                </div>
-              )}
             </div>
 
             {/* Lista de Exercicios */}
-            <div style={{ padding: `${px(4)} ${px(8)}`, flex: 1, overflowY: 'auto' }}>
+            <div style={{ padding: `${px(4)} ${px(8)}`, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               {renderExercicios(aluno, treino)}
+
+              {/* CMJ Highlight no final */}
+              {aluno.alturaCmj && (
+                <div style={{
+                  marginTop: px(12),
+                  marginBottom: px(8),
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    background: 'var(--cat-explosao)',
+                    color: 'white',
+                    padding: `${px(6)} ${px(16)}`,
+                    borderRadius: px(8),
+                    fontSize: s(0.95),
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    letterSpacing: '1px'
+                  }}>
+                    CMJ: {aluno.alturaCmj}cm
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
