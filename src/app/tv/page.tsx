@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { mockDb, Aluno, Exercicio } from "@/lib/mockData";
 import { Dumbbell } from "lucide-react";
 
 export default function TVPage() {
   const [alunosAtivos, setAlunosAtivos] = useState<(Aluno & { treinoAtualId: string })[]>([]);
+  const isEditingRef = useRef(false);
 
   const carregarDados = async () => {
     const [session, todosAlunos] = await Promise.all([
@@ -26,13 +27,41 @@ export default function TVPage() {
   useEffect(() => {
     carregarDados();
     // Polling contínuo p/ buscar se o professor ligou um aluno novo
-    const interval = setInterval(carregarDados, 2000);
+    // Pausamos o polling se alguém estiver digitando (foco num input)
+    const interval = setInterval(() => {
+      if (!isEditingRef.current) {
+        carregarDados();
+      }
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleCampoChange = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+  const handleFocus = () => {
+    isEditingRef.current = true;
+  };
+
+  const handleLocalChange = (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+    setAlunosAtivos(prev => prev.map(aluno => {
+      if (aluno.id !== alunoId) return aluno;
+      return {
+        ...aluno,
+        treinos: aluno.treinos.map(treino => {
+          if (treino.id !== treinoId) return treino;
+          return {
+            ...treino,
+            exercicios: treino.exercicios.map(ex => {
+              if (ex.id !== exercicioId) return ex;
+              return { ...ex, [campo]: valor };
+            })
+          };
+        })
+      };
+    }));
+  };
+
+  const handleBlurSave = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+    isEditingRef.current = false;
     await mockDb.updateCampoExercicio(alunoId, treinoId, exercicioId, campo, valor);
-    await carregarDados();
   };
 
   // Se não tem ninguém
@@ -79,7 +108,9 @@ export default function TVPage() {
         </div>
         <input
           value={ex.nome}
-          onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
+          onFocus={handleFocus}
+          onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
+          onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'nome', e.target.value)}
           style={{
             background: 'transparent',
             border: 'none',
@@ -100,7 +131,9 @@ export default function TVPage() {
           <span style={{ fontSize: s(0.6), fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
             value={ex.series}
-            onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'series', e.target.value)}
+            onFocus={handleFocus}
+            onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'series', e.target.value)}
+            onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'series', e.target.value)}
             style={{
               background: 'transparent', border: 'none', color: 'var(--text-primary)',
               fontSize: s(0.75), fontWeight: 700, width: px(25), textAlign: 'right', outline: 'none'
@@ -121,7 +154,9 @@ export default function TVPage() {
             <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
             <input
               value={ex.carga}
-              onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
+              onFocus={handleFocus}
+              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
+              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'carga', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
@@ -134,7 +169,9 @@ export default function TVPage() {
             <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
             <input
               value={ex.reps}
-              onChange={(e) => handleCampoChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
+              onFocus={handleFocus}
+              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
+              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
