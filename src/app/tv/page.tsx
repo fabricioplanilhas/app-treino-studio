@@ -80,10 +80,10 @@ export default function TVPage() {
   const cols = numAlunos > 8 ? 8 : (numAlunos === 0 ? 1 : numAlunos);
   
   let scale = 1;
-  if (cols <= 2) scale = 1.45;
-  else if (cols === 3) scale = 1.3;
-  else if (cols === 4) scale = 1.2;
-  else if (cols <= 6) scale = 1.1;
+  if (cols <= 2) scale = 1.35;
+  else if (cols === 3) scale = 1.25;
+  else if (cols === 4) scale = 1.15;
+  else if (cols <= 6) scale = 1.05;
   else scale = 1;
 
   const s = (val: number) => `${(val * scale).toFixed(2)}rem`;
