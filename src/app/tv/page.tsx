@@ -126,7 +126,7 @@ export default function TVPage() {
           }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: px(85) }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: px(125) }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: px(2), marginBottom: px(1) }}>
           <span style={{ fontSize: s(0.6), fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
@@ -160,7 +160,7 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(40), outline: 'none'
+                width: px(62), outline: 'none'
               }}
               placeholder="-"
             />
@@ -175,11 +175,12 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(35), outline: 'none'
+                width: px(48), outline: 'none'
               }}
               placeholder="-"
             />
           </div>
+
         </div>
       </div>
     </div>
