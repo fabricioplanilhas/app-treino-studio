@@ -64,6 +64,18 @@ export default function TVPage() {
     await mockDb.updateCampoExercicio(alunoId, treinoId, exercicioId, campo, valor);
   };
 
+  const handleCmjChange = (alunoId: string, valor: string) => {
+    setAlunosAtivos(prev => prev.map(aluno => {
+      if (aluno.id !== alunoId) return aluno;
+      return { ...aluno, alturaCmj: valor };
+    }));
+  };
+
+  const handleCmjBlurSave = async (alunoId: string, valor: string) => {
+    isEditingRef.current = false;
+    await mockDb.updateAlturaCmj(alunoId, valor);
+  };
+
   // Se não tem ninguém
   if (alunosAtivos.length === 0) {
     return (
@@ -336,29 +348,50 @@ export default function TVPage() {
             <div style={{ padding: `${px(4)} ${px(8)}`, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               {renderExercicios(aluno, treino)}
 
-              {/* CMJ Highlight no final */}
-              {aluno.alturaCmj && (
+              {/* CMJ Highlight no final (Editável) */}
+              <div style={{
+                marginTop: px(12),
+                marginBottom: px(8),
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
                 <div style={{
-                  marginTop: px(12),
-                  marginBottom: px(8),
+                  background: 'var(--cat-explosao)',
+                  color: 'white',
+                  padding: `${px(4)} ${px(12)}`,
+                  borderRadius: px(8),
+                  fontSize: s(0.95),
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  letterSpacing: '1px',
                   display: 'flex',
-                  justifyContent: 'center'
+                  alignItems: 'center',
+                  gap: px(1)
                 }}>
-                  <div style={{
-                    background: 'var(--cat-explosao)',
-                    color: 'white',
-                    padding: `${px(6)} ${px(16)}`,
-                    borderRadius: px(8),
-                    fontSize: s(0.95),
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                    letterSpacing: '1px'
-                  }}>
-                    CMJ: {aluno.alturaCmj}cm
-                  </div>
+                  <span>CMJ:</span>
+                  <input
+                    value={aluno.alturaCmj || ''}
+                    placeholder="-"
+                    onFocus={handleFocus}
+                    onChange={(e) => handleCmjChange(aluno.id, e.target.value)}
+                    onBlur={(e) => handleCmjBlurSave(aluno.id, e.target.value)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'white',
+                      fontSize: s(0.95),
+                      fontWeight: 900,
+                      width: px(50),
+                      textAlign: 'center',
+                      outline: 'none',
+                      borderBottom: '1px dashed rgba(255, 255, 255, 0.6)',
+                      padding: 0
+                    }}
+                  />
+                  <span>cm</span>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         );
