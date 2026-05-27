@@ -5,6 +5,81 @@ import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X }
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const getProgressoTreinos = (aluno: Aluno | null) => {
+  if (!aluno) {
+    return {
+      semanasCompletas: 0,
+      minContagem: 0,
+      treinosRestantes: {} as Record<string, number>,
+      totalTreinosRestantes: 0,
+      contagemTreinos: {} as Record<string, number>,
+      dataRefStr: "",
+      treinosFaltandoDetalhado: [] as string[]
+    };
+  }
+
+  const dataReferenciaStr = aluno.dataFichaAtual || (aluno.historico && aluno.historico.length > 0 ? aluno.historico[0].data : new Date().toLocaleDateString('pt-BR'));
+  
+  let dataRef: Date | null = null;
+  if (dataReferenciaStr) {
+    const refParts = dataReferenciaStr.split('/');
+    if (refParts.length === 3) {
+      dataRef = new Date(parseInt(refParts[2]), parseInt(refParts[1]) - 1, parseInt(refParts[0]));
+    }
+  }
+
+  const contagemTreinos: Record<string, number> = {};
+  if (aluno.treinos) {
+    aluno.treinos.forEach(t => {
+      contagemTreinos[t.nomeTreino] = 0;
+    });
+  }
+
+  if (aluno.historico && dataRef) {
+    aluno.historico.forEach(h => {
+      const hParts = h.data.split('/');
+      if (hParts.length !== 3) return;
+      const hDate = new Date(parseInt(hParts[2]), parseInt(hParts[1]) - 1, parseInt(hParts[0]));
+      if (hDate >= dataRef!) {
+        if (contagemTreinos[h.nomeTreino] !== undefined) {
+          contagemTreinos[h.nomeTreino]++;
+        }
+      }
+    });
+  }
+
+  const contagens = Object.values(contagemTreinos);
+  const minContagem = contagens.length > 0 ? Math.min(...contagens) : 0;
+  const semanasCompletas = minContagem + (aluno.semanasConcluidas || 0);
+
+  const treinosRestantes: Record<string, number> = {};
+  let totalTreinosRestantes = 0;
+  const treinosFaltandoDetalhado: string[] = [];
+
+  if (aluno.treinos) {
+    aluno.treinos.forEach(t => {
+      const realizados = contagemTreinos[t.nomeTreino] || 0;
+      const offset = aluno.semanasConcluidas || 0;
+      const faltam = Math.max(0, 6 - (realizados + offset));
+      treinosRestantes[t.nomeTreino] = faltam;
+      totalTreinosRestantes += faltam;
+      if (faltam > 0) {
+        treinosFaltandoDetalhado.push(`${t.nomeTreino}: ${faltam} restante${faltam > 1 ? 's' : ''}`);
+      }
+    });
+  }
+
+  return {
+    semanasCompletas,
+    minContagem,
+    treinosRestantes,
+    totalTreinosRestantes,
+    contagemTreinos,
+    dataRefStr: dataReferenciaStr,
+    treinosFaltandoDetalhado
+  };
+};
+
 export default function TreinosPage() {
   const router = useRouter();
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -283,6 +358,7 @@ export default function TreinosPage() {
   );
 
   const alunosFiltrados = alunos.filter(a => a.nome.toLowerCase().includes(busca.toLowerCase()));
+  const progresso = getProgressoTreinos(alunoAtual);
 
   return (
     <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
@@ -389,15 +465,27 @@ export default function TreinosPage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px' }}>
-                        SEMANAS CONCLUÍDAS
+                        SEMANAS CONCLUÍDAS (TOTAL: {progresso.semanasCompletas})
                       </label>
-                      <input 
-                        type="number"
-                        min="0"
-                        value={alunoAtual.semanasConcluidas || 0} 
-                        onChange={(e) => setAlunoAtual({...alunoAtual, semanasConcluidas: parseInt(e.target.value) || 0})}
-                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-                      />
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <div style={{
+                          flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)',
+                          background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 'bold', textAlign: 'center', fontSize: '1.1rem'
+                        }} title="Total de semanas completas (treinos realizados + ajuste manual)">
+                          {progresso.semanasCompletas} / 6
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={alunoAtual.semanasConcluidas || 0} 
+                            onChange={(e) => setAlunoAtual({...alunoAtual, semanasConcluidas: parseInt(e.target.value) || 0})}
+                            placeholder="Ajuste"
+                            title="Ajuste manual de semanas"
+                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <button 
@@ -422,6 +510,111 @@ export default function TreinosPage() {
                   >
                     Renovar Ficha (Resetar Semanas)
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* PROGRESSO E HISTÓRICO DE TREINOS */}
+            <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-light)', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                {/* Lado Esquerdo: Progresso */}
+                <div style={{ paddingRight: '10px' }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                    📊 Progresso para Mudança de Ficha (Meta: 6 Semanas)
+                  </h3>
+                  
+                  {/* Progress Bar */}
+                  <div style={{ background: 'var(--bg-main)', height: '24px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-medium)', marginBottom: '15px', position: 'relative' }}>
+                    <div style={{
+                      width: `${Math.min(100, (progresso.semanasCompletas / 6) * 100)}%`,
+                      height: '100%',
+                      background: progresso.semanasCompletas >= 6 ? '#22c55e' : '#3b82f6',
+                      transition: 'width 0.4s ease'
+                    }} />
+                    <span style={{
+                      position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                      fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', mixBlendMode: 'difference'
+                    }}>
+                      {progresso.semanasCompletas} de 6 semanas ({Math.round(Math.min(100, (progresso.semanasCompletas / 6) * 100))}%)
+                    </span>
+                  </div>
+
+                  <p style={{ margin: '0 0 10px 0', fontSize: '0.95rem' }}>
+                    {progresso.semanasCompletas >= 6 ? (
+                      <strong style={{ color: '#22c55e' }}>🎉 Meta alcançada! Ficha pronta para renovação.</strong>
+                    ) : (
+                      <>
+                        Faltam <strong>{Math.max(0, 6 - progresso.semanasCompletas)}</strong> semanas de treino.
+                      </>
+                    )}
+                  </p>
+
+                  {/* Faltam Treinos Detalhados */}
+                  {progresso.semanasCompletas < 6 && (
+                    <div style={{ background: 'var(--bg-main)', padding: '10px 15px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                      <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Treinos restantes para completar 6 semanas:</p>
+                      {progresso.treinosFaltandoDetalhado.length > 0 ? (
+                        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9rem' }}>
+                          {progresso.treinosFaltandoDetalhado.map((item, idx) => (
+                            <li key={idx} style={{ color: 'var(--text-primary)' }}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Realize todos os dias recomendados.</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '15px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Data de início desta ficha: <strong>{progresso.dataRefStr}</strong>
+                  </div>
+                </div>
+
+                {/* Lado Direito: Histórico */}
+                <div>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                    📅 Histórico de Treinos Realizados ({alunoAtual.historico ? alunoAtual.historico.length : 0})
+                  </h3>
+                  
+                  <div style={{
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    background: 'var(--bg-main)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-light)',
+                    padding: '10px'
+                  }}>
+                    {alunoAtual.historico && alunoAtual.historico.length > 0 ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-medium)', textAlign: 'left' }}>
+                            <th style={{ padding: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>DATA</th>
+                            <th style={{ padding: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>TREINO</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...alunoAtual.historico].reverse().map((h, idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                              <td style={{ padding: '6px', fontWeight: 500, color: 'var(--text-primary)' }}>{h.data}</td>
+                              <td style={{ padding: '6px' }}>
+                                <span style={{
+                                  background: 'var(--bg-card)', padding: '2px 8px', borderRadius: '4px',
+                                  fontSize: '0.85rem', fontWeight: 'bold', border: '1px solid var(--border-medium)',
+                                  color: 'var(--text-primary)'
+                                }}>
+                                  {h.nomeTreino}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                        Nenhum treino registrado no histórico para esta ficha.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
