@@ -349,49 +349,51 @@ export default function TVPage() {
               {renderExercicios(aluno, treino)}
 
               {/* CMJ Highlight no final (Editável) */}
-              <div style={{
-                marginTop: px(12),
-                marginBottom: px(8),
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
+              {aluno.alturaCmj && aluno.alturaCmj.trim() !== '' && (
                 <div style={{
-                  background: 'var(--cat-explosao)',
-                  color: 'white',
-                  padding: `${px(4)} ${px(12)}`,
-                  borderRadius: px(8),
-                  fontSize: s(0.95),
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                  letterSpacing: '1px',
+                  marginTop: px(12),
+                  marginBottom: px(8),
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: px(1)
+                  justifyContent: 'center'
                 }}>
-                  <span>CMJ:</span>
-                  <input
-                    value={aluno.alturaCmj || ''}
-                    placeholder="-"
-                    onFocus={handleFocus}
-                    onChange={(e) => handleCmjChange(aluno.id, e.target.value)}
-                    onBlur={(e) => handleCmjBlurSave(aluno.id, e.target.value)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'white',
-                      fontSize: s(0.95),
-                      fontWeight: 900,
-                      width: px(50),
-                      textAlign: 'center',
-                      outline: 'none',
-                      borderBottom: '1px dashed rgba(255, 255, 255, 0.6)',
-                      padding: 0
-                    }}
-                  />
-                  <span>cm</span>
+                  <div style={{
+                    background: 'var(--cat-explosao)',
+                    color: 'white',
+                    padding: `${px(4)} ${px(12)}`,
+                    borderRadius: px(8),
+                    fontSize: s(0.95),
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    letterSpacing: '1px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: px(1)
+                  }}>
+                    <span>CMJ:</span>
+                    <input
+                      value={aluno.alturaCmj || ''}
+                      placeholder="-"
+                      onFocus={handleFocus}
+                      onChange={(e) => handleCmjChange(aluno.id, e.target.value)}
+                      onBlur={(e) => handleCmjBlurSave(aluno.id, e.target.value)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: s(0.95),
+                        fontWeight: 900,
+                        width: px(50),
+                        textAlign: 'center',
+                        outline: 'none',
+                        borderBottom: '1px dashed rgba(255, 255, 255, 0.6)',
+                        padding: 0
+                      }}
+                    />
+                    <span>cm</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         );
