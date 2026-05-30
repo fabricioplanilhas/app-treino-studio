@@ -361,7 +361,7 @@ export default function TreinosPage() {
   const progresso = getProgressoTreinos(alunoAtual);
 
   return (
-    <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '40px', maxWidth: isComparing && versaoComparacaoId ? '1600px' : '1000px', margin: '0 auto', transition: 'max-width 0.3s ease' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
         <div>
           <Link href="/" style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
@@ -501,7 +501,12 @@ export default function TreinosPage() {
                             };
                             const versoes = alunoAtual.versoesAnteriores ? [...alunoAtual.versoesAnteriores] : [];
                             versoes.push(novaVersao);
-                            setAlunoAtual({...alunoAtual, dataFichaAtual: dataAtual, versoesAnteriores: versoes});
+                            setAlunoAtual({
+                                ...alunoAtual,
+                                dataFichaAtual: dataAtual,
+                                versoesAnteriores: versoes,
+                                semanasConcluidas: 0
+                            });
                             alert("Cópia da ficha salva no histórico e contagem resetada para hoje!");
                         }
                     }}
