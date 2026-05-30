@@ -117,12 +117,22 @@ export default function TreinosPage() {
     }
   }, [busca, alunos, selectedAlunoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selecionarAluno = (id: string, listaAlunos: Aluno[] = alunos) => {
+  const selecionarAluno = async (id: string, listaAlunos: Aluno[] = alunos) => {
     setSelectedAlunoId(id);
     const aluno = listaAlunos.find(a => a.id === id);
     if (aluno) {
-      // Trabalhamos com uma cópia local para edição antes de salvar
-      setAlunoAtual(JSON.parse(JSON.stringify(aluno)));
+      // Busca o aluno completo do Supabase (para obter as versoes_anteriores que foram omitidas na listagem inicial)
+      try {
+        const fullAluno = await mockDb.getAlunoById(id);
+        if (fullAluno) {
+          setAlunoAtual(fullAluno);
+        } else {
+          setAlunoAtual(JSON.parse(JSON.stringify(aluno)));
+        }
+      } catch (err) {
+        console.error("Erro ao buscar detalhes do aluno:", err);
+        setAlunoAtual(JSON.parse(JSON.stringify(aluno)));
+      }
       setActiveTab(0);
     } else {
       setAlunoAtual(null);

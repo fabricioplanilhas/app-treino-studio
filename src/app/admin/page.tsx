@@ -21,6 +21,11 @@ export default function AdminPage() {
     setSession(sessionData);
   };
 
+  const atualizarSessao = async () => {
+    const sessionData = await mockDb.getTvSession();
+    setSession(sessionData);
+  };
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -28,8 +33,8 @@ export default function AdminPage() {
       setLoading(false);
     })();
 
-    // Polling para sincronizar estado com TV
-    const interval = setInterval(carregarDados, 3000);
+    // Polling apenas para a tabela super leve tv_session (evita puxar todos os alunos a cada 3 segundos)
+    const interval = setInterval(atualizarSessao, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -163,13 +168,16 @@ export default function AdminPage() {
           const updatedAluno = { ...aluno, historico: novoHistorico };
           await mockDb.saveAluno(updatedAluno);
 
+          // Atualizar estado local de alunos
+          setAlunos(prev => prev.map(a => a.id === aluno.id ? updatedAluno : a));
+
           alert(`${aluno.nome} ${treinoFeito.nomeTreino} ${dataHoje} salvo.`);
         }
       }
 
       const newSession = session.filter(s => s.alunoId !== aluno.id);
       await mockDb.setTvSession(newSession);
-      await carregarDados();
+      setSession(newSession);
       return;
     }
 
@@ -196,7 +204,7 @@ export default function AdminPage() {
 
     const newSession = [...session, { alunoId: aluno.id, treinoAtivoId: treinoRecomendadoId }];
     await mockDb.setTvSession(newSession);
-    await carregarDados();
+    setSession(newSession);
   };
 
   const handleMudarTreino = async (alunoId: string, novoTreinoId: string) => {
@@ -230,10 +238,12 @@ export default function AdminPage() {
             }
           }
         }
+        // Atualiza a lista local com os novos dados de histórico
+        setAlunos(alunosCopy);
         alert("Histórico de todos os alunos salvo com sucesso!");
       }
       await mockDb.setTvSession([]);
-      await carregarDados();
+      setSession([]);
     }
   };
 

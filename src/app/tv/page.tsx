@@ -9,13 +9,18 @@ export default function TVPage() {
   const isEditingRef = useRef(false);
 
   const carregarDados = async () => {
-    const [session, todosAlunos] = await Promise.all([
-      mockDb.getTvSession(),
-      mockDb.getAlunos(),
-    ]);
+    const session = await mockDb.getTvSession();
+    const activeIds = session.map(s => s.alunoId);
+    
+    if (activeIds.length === 0) {
+      setAlunosAtivos([]);
+      return;
+    }
+
+    const alunosAtivosDb = await mockDb.getAlunosByIds(activeIds);
     
     const ativos = session.map(s => {
-      const dbAluno = todosAlunos.find(a => a.id === s.alunoId);
+      const dbAluno = alunosAtivosDb.find(a => a.id === s.alunoId);
       if(dbAluno) {
         return { ...dbAluno, treinoAtualId: s.treinoAtivoId };
       }

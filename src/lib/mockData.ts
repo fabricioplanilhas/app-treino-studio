@@ -168,7 +168,7 @@ export const mockDb = {
   getAlunos: async (): Promise<Aluno[]> => {
     const { data, error } = await supabase
       .from('alunos')
-      .select('*')
+      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar alunos:', error);
@@ -180,7 +180,7 @@ export const mockDb = {
   getAlunosLixeira: async (): Promise<Aluno[]> => {
     const { data, error } = await supabase
       .from('alunos')
-      .select('*')
+      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar alunos da lixeira:', error);
@@ -197,6 +197,19 @@ export const mockDb = {
       .single();
     if (error || !data) return null;
     return rowToAluno(data);
+  },
+
+  getAlunosByIds: async (ids: string[]): Promise<Aluno[]> => {
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+      .from('alunos')
+      .select('*')
+      .in('id', ids);
+    if (error) {
+      console.error('Erro ao buscar alunos por IDs:', error);
+      return [];
+    }
+    return (data || []).map(rowToAluno);
   },
 
   saveAluno: async (aluno: Aluno): Promise<void> => {
