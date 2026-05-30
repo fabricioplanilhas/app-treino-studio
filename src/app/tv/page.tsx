@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { mockDb, Aluno, Exercicio } from "@/lib/mockData";
 import { Dumbbell } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function TVPage() {
   const [alunosAtivos, setAlunosAtivos] = useState<(Aluno & { treinoAtualId: string })[]>([]);
@@ -26,14 +27,46 @@ export default function TVPage() {
 
   useEffect(() => {
     carregarDados();
-    // Polling contínuo p/ buscar se o professor ligou um aluno novo
-    // Pausamos o polling se alguém estiver digitando (foco num input)
+
+    // Inscrever em mudanças em tempo real no Supabase
+    const channelAlunos = supabase
+      .channel('tv-alunos-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'alunos' },
+        () => {
+          if (!isEditingRef.current) {
+            carregarDados();
+          }
+        }
+      )
+      .subscribe();
+
+    const channelSession = supabase
+      .channel('tv-session-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tv_session' },
+        () => {
+          if (!isEditingRef.current) {
+            carregarDados();
+          }
+        }
+      )
+      .subscribe();
+
+    // Polling contínuo para backup caso a conexão em tempo real caia ou não esteja habilitada
     const interval = setInterval(() => {
       if (!isEditingRef.current) {
         carregarDados();
       }
-    }, 2000);
-    return () => clearInterval(interval);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channelAlunos);
+      supabase.removeChannel(channelSession);
+    };
   }, []);
 
   const handleFocus = () => {
