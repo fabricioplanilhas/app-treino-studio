@@ -94,6 +94,16 @@ export default function TreinosPage() {
   const [loading, setLoading] = useState(true);
   const [basesCustom, setBasesCustom] = useState<BaseTreino[]>([]);
   const [showBasesModal, setShowBasesModal] = useState(false);
+  const [semanasInput, setSemanasInput] = useState<string>("");
+
+  useEffect(() => {
+    if (alunoAtual) {
+      const prog = getProgressoTreinos(alunoAtual);
+      setSemanasInput(prog.semanasCompletas.toString());
+    } else {
+      setSemanasInput("");
+    }
+  }, [alunoAtual?.id, alunoAtual?.dataFichaAtual, alunoAtual?.semanasConcluidas]);
 
   useEffect(() => {
     (async () => {
@@ -475,28 +485,42 @@ export default function TreinosPage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px' }}>
-                        SEMANAS CONCLUÍDAS (TOTAL: {progresso.semanasCompletas})
+                        SEMANAS CONCLUÍDAS (META: 6)
                       </label>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input 
+                          type="number"
+                          value={semanasInput} 
+                          onChange={(e) => {
+                            const valStr = e.target.value;
+                            setSemanasInput(valStr);
+                            
+                            const val = parseInt(valStr);
+                            if (!isNaN(val) && alunoAtual) {
+                              setAlunoAtual({
+                                ...alunoAtual,
+                                semanasConcluidas: val - progresso.minContagem
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (semanasInput === "") {
+                              setSemanasInput(progresso.semanasCompletas.toString());
+                            }
+                          }}
+                          placeholder="Ex: 3"
+                          title="Alterar total de semanas concluídas"
+                          style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.1rem', textAlign: 'center' }}
+                        />
                         <div style={{
-                          flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)',
-                          background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 'bold', textAlign: 'center', fontSize: '1.1rem'
-                        }} title="Total de semanas completas (treinos realizados + ajuste manual)">
-                          {progresso.semanasCompletas} / 6
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={alunoAtual.semanasConcluidas || 0} 
-                            onChange={(e) => setAlunoAtual({...alunoAtual, semanasConcluidas: parseInt(e.target.value) || 0})}
-                            placeholder="Ajuste"
-                            title="Ajuste manual de semanas"
-                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-                          />
+                          padding: '12px 20px', borderRadius: '8px', border: '1px solid var(--border-medium)',
+                          background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.1rem'
+                        }}>
+                          / 6
                         </div>
                       </div>
                     </div>
+
                   </div>
                   <button 
                     onClick={() => {
