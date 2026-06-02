@@ -483,11 +483,11 @@ export default function TreinosPage() {
                         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
                       />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px' }}>
-                        SEMANAS CONCLUÍDAS (META: 6)
+                    <div style={{ flex: '0 0 110px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title="SEMANAS CONCLUÍDAS">
+                        SEM. CONCLUÍDAS
                       </label>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                         <input 
                           type="number"
                           value={semanasInput} 
@@ -510,10 +510,10 @@ export default function TreinosPage() {
                           }}
                           placeholder="Ex: 3"
                           title="Alterar total de semanas concluídas"
-                          style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.1rem', textAlign: 'center' }}
+                          style={{ flex: 1, padding: '12px 4px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.1rem', textAlign: 'center', minWidth: '35px' }}
                         />
                         <div style={{
-                          padding: '12px 20px', borderRadius: '8px', border: '1px solid var(--border-medium)',
+                          padding: '12px 8px', borderRadius: '8px', border: '1px solid var(--border-medium)',
                           background: 'var(--bg-hover)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.1rem'
                         }}>
                           / 6
