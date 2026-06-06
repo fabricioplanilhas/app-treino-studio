@@ -65,7 +65,7 @@ export default function TVPage() {
       if (!isEditingRef.current) {
         carregarDados();
       }
-    }, 5000);
+    }, 60000);
 
     return () => {
       clearInterval(interval);

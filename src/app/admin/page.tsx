@@ -5,6 +5,7 @@ import { Dumbbell, MonitorPlay, Trash2, ArrowLeft, Download } from "lucide-react
 import Link from "next/link";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AdminPage() {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -33,9 +34,25 @@ export default function AdminPage() {
       setLoading(false);
     })();
 
-    // Polling apenas para a tabela super leve tv_session (evita puxar todos os alunos a cada 3 segundos)
-    const interval = setInterval(atualizarSessao, 3000);
-    return () => clearInterval(interval);
+    // Inscrever em mudanças em tempo real para tv_session
+    const channel = supabase
+      .channel("admin-session-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tv_session" },
+        () => {
+          atualizarSessao();
+        }
+      )
+      .subscribe();
+
+    // Polling de backup muito mais espaçado (60 segundos) para economizar banda
+    const interval = setInterval(atualizarSessao, 60000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Efeito para automatizar o download às 07:00 da manhã
