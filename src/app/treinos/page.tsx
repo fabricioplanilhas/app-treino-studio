@@ -174,6 +174,7 @@ export default function TreinosPage() {
     const novosTreinos = JSON.parse(JSON.stringify(templates)).map((t: Treino, idx: number) => {
         t.id = `t${alunoAtual.id}_${Date.now()}_${idx}`;
         t.exercicios.forEach(ex => ex.id = `ex_${Date.now()}_${Math.random()}`);
+        t.ordenadoManualmente = false;
         return t;
     });
 
@@ -204,6 +205,7 @@ export default function TreinosPage() {
         itens.push(modificado);
         itens.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
         newAluno.treinos[treinoIndex].exercicios = itens;
+        newAluno.treinos[treinoIndex].ordenadoManualmente = false;
     }
     
     setAlunoAtual(newAluno);
@@ -222,6 +224,7 @@ export default function TreinosPage() {
       carga: "-"
     });
     newAluno.treinos[treinoIndex].exercicios.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
+    newAluno.treinos[treinoIndex].ordenadoManualmente = false;
     setAlunoAtual(newAluno);
   };
 
@@ -291,6 +294,7 @@ export default function TreinosPage() {
     const [reorderedItem] = items.splice(draggedEx, 1);
     items.splice(dropIndex, 0, reorderedItem);
     newAluno.treinos[treinoIndex].exercicios = items;
+    newAluno.treinos[treinoIndex].ordenadoManualmente = true;
     setAlunoAtual(newAluno);
     setDraggedEx(null);
   };
@@ -754,6 +758,7 @@ export default function TreinosPage() {
                                     const copiados = JSON.parse(JSON.stringify(exerciciosParaImportar));
                                     copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
                                     newAluno.treinos[activeTab].exercicios = copiados;
+                                    newAluno.treinos[activeTab].ordenadoManualmente = false;
                                     setAlunoAtual(newAluno);
                                 }
                                 e.target.value = "";
@@ -866,7 +871,7 @@ export default function TreinosPage() {
                                     if (forcaCounter === 1) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 1';
-                                    } else if (forcaCounter === 4) {
+                                    } else if (forcaCounter === (alunoAtual.treinos[activeTab].ordenadoManualmente ? 5 : 4)) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 2';
                                     }
@@ -1014,7 +1019,7 @@ export default function TreinosPage() {
                                                     if (forcaCounter === 1) {
                                                         showBlock = true;
                                                         blockLabel = 'BLOCO 1';
-                                                    } else if (forcaCounter === 4) {
+                                                    } else if (forcaCounter === (treinoAnterior.ordenadoManualmente ? 5 : 4)) {
                                                         showBlock = true;
                                                         blockLabel = 'BLOCO 2';
                                                     }

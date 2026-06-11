@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { mockDb, Aluno, Exercicio } from "@/lib/mockData";
+import { mockDb, Aluno, Exercicio, Treino } from "@/lib/mockData";
 import { Dumbbell } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -139,7 +139,7 @@ export default function TVPage() {
   const s = (val: number) => `${(val * scale).toFixed(2)}rem`;
   const px = (val: number) => `${Math.round(val * scale)}px`;
 
-  const renderExercicioRow = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }, ex: Exercicio, badgeColor: string, isLast: boolean) => (
+  const renderExercicioRow = (aluno: Aluno & { treinoAtualId: string }, treino: Treino, ex: Exercicio, badgeColor: string, isLast: boolean) => (
     <div style={{
       display: 'flex',
       justifyContent: 'space-between',
@@ -236,7 +236,7 @@ export default function TVPage() {
     </div>
   );
 
-  const renderExercicios = (aluno: Aluno & { treinoAtualId: string }, treino: { id: string; nomeTreino: string; exercicios: Exercicio[] }) => {
+  const renderExercicios = (aluno: Aluno & { treinoAtualId: string }, treino: Treino) => {
     const isComplex = treino.exercicios.some((ex, i, arr) => {
       const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
       if (!isPot) return false;
@@ -271,7 +271,7 @@ export default function TVPage() {
           if (forcaCounter === 1) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 1';
-          } else if (forcaCounter === 4) {
+          } else if (forcaCounter === (treino.ordenadoManualmente ? 5 : 4)) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 2';
           }

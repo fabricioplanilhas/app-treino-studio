@@ -15,6 +15,7 @@ export type Treino = {
   id: string;
   nomeTreino: string; // 'A', 'B', 'C'
   exercicios: Exercicio[];
+  ordenadoManualmente?: boolean;
 };
 
 export type Historico = {
