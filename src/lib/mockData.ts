@@ -11,11 +11,21 @@ export type Exercicio = {
   carga: string;
 };
 
+export type ProtocoloBike = {
+  ativo: boolean;
+  data?: string;
+  teste?: string;
+  tempo?: string;
+  avg?: string;
+  resultados?: string;
+};
+
 export type Treino = {
   id: string;
   nomeTreino: string; // 'A', 'B', 'C'
   exercicios: Exercicio[];
   ordenadoManualmente?: boolean;
+  protocoloBike?: ProtocoloBike;
 };
 
 export type Historico = {

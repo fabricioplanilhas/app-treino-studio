@@ -153,6 +153,17 @@ export default function TreinosPage() {
     selecionarAluno(e.target.value);
   };
 
+  const handleUpdateProtocolo = (campo: string, valor: any) => {
+    if (!alunoAtual) return;
+    const newAluno = { ...alunoAtual };
+    const currentTreino = newAluno.treinos[activeTab];
+    if (!currentTreino.protocoloBike) {
+      currentTreino.protocoloBike = { ativo: false, data: '', teste: '', tempo: '', avg: '', resultados: '' };
+    }
+    (currentTreino.protocoloBike as any)[campo] = valor;
+    setAlunoAtual(newAluno);
+  };
+
   const saveAluno = async () => {
     if(alunoAtual) {
       await mockDb.saveAluno(alunoAtual);
@@ -966,6 +977,213 @@ export default function TreinosPage() {
                         </div>
                     )}
                     </div>
+
+                    {/* PROTOCOLO DE BIKE (Dias de Chuva) */}
+                    {(() => {
+                        const treinoAtivo = alunoAtual.treinos[activeTab];
+                        const protocolo = treinoAtivo.protocoloBike || { ativo: false };
+                        
+                        // Cálculos das zonas de potência (110%, 115%, 120%)
+                        const avgNum = parseFloat(protocolo.avg || '');
+                        const avg110 = !isNaN(avgNum) ? Math.round(avgNum * 1.10) : null;
+                        const avg115 = !isNaN(avgNum) ? Math.round(avgNum * 1.15) : null;
+                        const avg120 = !isNaN(avgNum) ? Math.round(avgNum * 1.20) : null;
+
+                        return (
+                            <div style={{ 
+                                marginTop: '30px', 
+                                borderTop: '2px solid var(--border-light)', 
+                                paddingTop: '20px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '15px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                                    <h3 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                                        🚴 Protocolo de Bike (Condicionamento pós-treino / Chuva)
+                                    </h3>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', userSelect: 'none' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={protocolo.ativo}
+                                            onChange={(e) => handleUpdateProtocolo('ativo', e.target.checked)}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+                                        />
+                                        <span>Ativar Protocolo</span>
+                                    </label>
+                                </div>
+
+                                {protocolo.ativo && (
+                                    <div style={{ 
+                                        background: 'var(--bg-main)', 
+                                        padding: '20px', 
+                                        borderRadius: '10px', 
+                                        border: '1px solid var(--border-medium)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '15px'
+                                    }}>
+                                        {/* Grid de Inputs */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '15px' }}>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '6px' }}>
+                                                    DATA DO TESTE
+                                                </label>
+                                                <input 
+                                                    type="date"
+                                                    value={protocolo.data || ''}
+                                                    onChange={(e) => handleUpdateProtocolo('data', e.target.value)}
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        padding: '10px', 
+                                                        borderRadius: '6px', 
+                                                        border: '1px solid var(--border-medium)', 
+                                                        background: 'var(--bg-card)', 
+                                                        color: 'var(--text-primary)',
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '6px' }}>
+                                                    TESTE APLICADO
+                                                </label>
+                                                <input 
+                                                    type="text"
+                                                    placeholder="Ex: 5 Minutos"
+                                                    value={protocolo.teste || ''}
+                                                    onChange={(e) => handleUpdateProtocolo('teste', e.target.value)}
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        padding: '10px', 
+                                                        borderRadius: '6px', 
+                                                        border: '1px solid var(--border-medium)', 
+                                                        background: 'var(--bg-card)', 
+                                                        color: 'var(--text-primary)',
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '6px' }}>
+                                                    TEMPO
+                                                </label>
+                                                <input 
+                                                    type="text"
+                                                    placeholder="Ex: 20 min"
+                                                    value={protocolo.tempo || ''}
+                                                    onChange={(e) => handleUpdateProtocolo('tempo', e.target.value)}
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        padding: '10px', 
+                                                        borderRadius: '6px', 
+                                                        border: '1px solid var(--border-medium)', 
+                                                        background: 'var(--bg-card)', 
+                                                        color: 'var(--text-primary)',
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '6px' }}>
+                                                    AVG (Watts / BPM)
+                                                </label>
+                                                <input 
+                                                    type="number"
+                                                    placeholder="Ex: 200"
+                                                    value={protocolo.avg || ''}
+                                                    onChange={(e) => handleUpdateProtocolo('avg', e.target.value)}
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        padding: '10px', 
+                                                        borderRadius: '6px', 
+                                                        border: '1px solid var(--border-medium)', 
+                                                        background: 'var(--bg-card)', 
+                                                        color: 'var(--text-primary)',
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Cálculos das Zonas */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                                                Zonas Calculadas (% da AVG)
+                                            </span>
+                                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
+                                                <div style={{ 
+                                                    flex: 1, 
+                                                    minWidth: '100px', 
+                                                    background: 'rgba(59, 130, 246, 0.1)', 
+                                                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                                                    padding: '8px 12px', 
+                                                    borderRadius: '6px',
+                                                    textAlign: 'center' 
+                                                }}>
+                                                    <div style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 'bold' }}>110%</div>
+                                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                                        {avg110 !== null ? `${avg110} W` : '-'}
+                                                    </div>
+                                                </div>
+                                                <div style={{ 
+                                                    flex: 1, 
+                                                    minWidth: '100px', 
+                                                    background: 'rgba(249, 115, 22, 0.1)', 
+                                                    border: '1px solid rgba(249, 115, 22, 0.3)',
+                                                    padding: '8px 12px', 
+                                                    borderRadius: '6px',
+                                                    textAlign: 'center' 
+                                                }}>
+                                                    <div style={{ fontSize: '0.75rem', color: '#f97316', fontWeight: 'bold' }}>115%</div>
+                                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                                        {avg115 !== null ? `${avg115} W` : '-'}
+                                                    </div>
+                                                </div>
+                                                <div style={{ 
+                                                    flex: 1, 
+                                                    minWidth: '100px', 
+                                                    background: 'rgba(239, 68, 68, 0.1)', 
+                                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                                    padding: '8px 12px', 
+                                                    borderRadius: '6px',
+                                                    textAlign: 'center' 
+                                                }}>
+                                                    <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold' }}>120%</div>
+                                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                                        {avg120 !== null ? `${avg120} W` : '-'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Anotação de Resultados */}
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '6px' }}>
+                                                RESULTADOS DO TESTE E ANOTAÇÕES
+                                            </label>
+                                            <textarea 
+                                                rows={3}
+                                                placeholder="Anote aqui os resultados (RPM, watts atingidos, fadiga, observações gerais do atleta...)"
+                                                value={protocolo.resultados || ''}
+                                                onChange={(e) => handleUpdateProtocolo('resultados', e.target.value)}
+                                                style={{ 
+                                                    width: '100%', 
+                                                    padding: '10px', 
+                                                    borderRadius: '6px', 
+                                                    border: '1px solid var(--border-medium)', 
+                                                    background: 'var(--bg-card)', 
+                                                    color: 'var(--text-primary)',
+                                                    outline: 'none',
+                                                    resize: 'vertical'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* COLUNA DIREITA: VISAO READONLY DA VERSAO ANTIGA */}
