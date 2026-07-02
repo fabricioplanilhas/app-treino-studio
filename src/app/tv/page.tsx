@@ -114,6 +114,18 @@ export default function TVPage() {
     await mockDb.updateAlturaCmj(alunoId, valor);
   };
 
+  const handleNomeChange = (alunoId: string, valor: string) => {
+    setAlunosAtivos(prev => prev.map(aluno => {
+      if (aluno.id !== alunoId) return aluno;
+      return { ...aluno, nome: valor };
+    }));
+  };
+
+  const handleNomeBlurSave = async (alunoId: string, valor: string) => {
+    isEditingRef.current = false;
+    await mockDb.updateNomeAluno(alunoId, valor);
+  };
+
   // Se não tem ninguém
   if (alunosAtivos.length === 0) {
     return (
@@ -370,9 +382,27 @@ export default function TVPage() {
               textAlign: 'center',
               position: 'relative'
             }}>
-              <h2 style={{ fontSize: s(0.9), margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {aluno.nome}
-              </h2>
+              <input
+                value={aluno.nome}
+                onFocus={handleFocus}
+                onChange={(e) => handleNomeChange(aluno.id, e.target.value)}
+                onBlur={(e) => handleNomeBlurSave(aluno.id, e.target.value)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontSize: s(0.9),
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  outline: 'none',
+                  width: '100%',
+                  padding: 0,
+                  margin: 0,
+                  cursor: 'pointer'
+                }}
+              />
               <div style={{
                 display: 'inline-block', background: 'var(--accent-primary)',
                 color: 'white', padding: `${px(1)} ${px(4)}`, borderRadius: px(4),

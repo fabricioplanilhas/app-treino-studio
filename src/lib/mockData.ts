@@ -379,4 +379,14 @@ export const mockDb = {
     await mockDb.saveAluno(aluno);
     return true;
   },
+
+  updateNomeAluno: async (alunoId: string, valor: string): Promise<boolean> => {
+    const aluno = await mockDb.getAlunoById(alunoId);
+    if (!aluno) return false;
+
+    aluno.nome = valor;
+
+    await mockDb.saveAluno(aluno);
+    return true;
+  },
 };
