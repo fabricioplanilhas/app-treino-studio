@@ -171,12 +171,50 @@ function alunoToRow(aluno: Aluno) {
   };
 }
 
+// Purga automática de alunos na lixeira há mais de 60 dias para economizar espaço do Supabase Free Plan
+const autoPurgeLixeira = async (): Promise<void> => {
+  try {
+    const hoje = new Date();
+    const limiteDias = 60;
+    const { data, error } = await supabase
+      .from('alunos')
+      .select('id, deleted_at')
+      .eq('status', 'deletado');
+      
+    if (error || !data) return;
+    
+    const idsParaDeletar: string[] = [];
+    for (const row of data) {
+      if (row.deleted_at) {
+        const deletedDate = new Date(row.deleted_at as string);
+        const diffTime = Math.abs(hoje.getTime() - deletedDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > limiteDias) {
+          idsParaDeletar.push(row.id as string);
+        }
+      }
+    }
+    
+    if (idsParaDeletar.length > 0) {
+      await supabase
+        .from('alunos')
+        .delete()
+        .in('id', idsParaDeletar);
+    }
+  } catch (err) {
+    console.error('Erro ao executar autoPurgeLixeira:', err);
+  }
+};
+
 // ── Database Service ──────────────────────────────────────────
 
 export const mockDb = {
   // ─── ALUNOS ─────────────────────────────────────────────────
 
   getAlunos: async (): Promise<Aluno[]> => {
+    // Executa a purga automática em segundo plano
+    autoPurgeLixeira().catch(e => console.error('Erro na purga automática:', e));
+
     const { data, error } = await supabase
       .from('alunos')
       .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
@@ -189,6 +227,9 @@ export const mockDb = {
   },
 
   getAlunosLixeira: async (): Promise<Aluno[]> => {
+    // Executa a purga automática em segundo plano
+    autoPurgeLixeira().catch(e => console.error('Erro na purga automática:', e));
+
     const { data, error } = await supabase
       .from('alunos')
       .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
@@ -224,9 +265,22 @@ export const mockDb = {
   },
 
   saveAluno: async (aluno: Aluno): Promise<void> => {
+    // Limita arrays para evitar estourar o limite de 500MB do Supabase Free
+    const optimized = { ...aluno };
+    
+    // Mantém no máximo as últimas 150 entradas de histórico de treinos
+    if (optimized.historico && optimized.historico.length > 150) {
+      optimized.historico = optimized.historico.slice(-150);
+    }
+    
+    // Mantém no máximo as últimas 8 versões de fichas de treino
+    if (optimized.versoesAnteriores && optimized.versoesAnteriores.length > 8) {
+      optimized.versoesAnteriores = optimized.versoesAnteriores.slice(-8);
+    }
+
     const { error } = await supabase
       .from('alunos')
-      .upsert(alunoToRow(aluno), { onConflict: 'id' });
+      .upsert(alunoToRow(optimized), { onConflict: 'id' });
     if (error) {
       console.error('Erro ao salvar aluno:', error);
       throw error;
