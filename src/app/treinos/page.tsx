@@ -205,18 +205,20 @@ export default function TreinosPage() {
   const handleExercicioChange = (treinoIndex: number, exIndex: number, field: keyof Exercicio, value: string) => {
     if(!alunoAtual) return;
     const newAluno = { ...alunoAtual };
-    newAluno.treinos[treinoIndex].exercicios[exIndex] = {
-      ...newAluno.treinos[treinoIndex].exercicios[exIndex],
+    const treino = newAluno.treinos[treinoIndex];
+    treino.exercicios[exIndex] = {
+      ...treino.exercicios[exIndex],
       [field]: value
     };
     
     if (field === 'categoria') {
-        const itens = Array.from(newAluno.treinos[treinoIndex].exercicios);
+      if (!treino.ordenadoManualmente) {
+        const itens = Array.from(treino.exercicios);
         const [modificado] = itens.splice(exIndex, 1);
         itens.push(modificado);
         itens.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
-        newAluno.treinos[treinoIndex].exercicios = itens;
-        newAluno.treinos[treinoIndex].ordenadoManualmente = false;
+        treino.exercicios = itens;
+      }
     }
     
     setAlunoAtual(newAluno);
@@ -226,7 +228,8 @@ export default function TreinosPage() {
     if(!alunoAtual) return;
     const newAluno = { ...alunoAtual };
     const newId = `ex_${Date.now()}_${Math.random()}`;
-    newAluno.treinos[treinoIndex].exercicios.push({
+    const treino = newAluno.treinos[treinoIndex];
+    treino.exercicios.push({
       id: newId,
       nome: "",
       categoria: "Outros",
@@ -234,8 +237,20 @@ export default function TreinosPage() {
       reps: "10",
       carga: "-"
     });
-    newAluno.treinos[treinoIndex].exercicios.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
-    newAluno.treinos[treinoIndex].ordenadoManualmente = false;
+    if (!treino.ordenadoManualmente) {
+      treino.exercicios.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
+    }
+    setAlunoAtual(newAluno);
+  };
+
+  const ordenarPorCategoria = (treinoIndex: number) => {
+    if(!alunoAtual) return;
+    const newAluno = { ...alunoAtual };
+    const treino = newAluno.treinos[treinoIndex];
+    const itens = Array.from(treino.exercicios);
+    itens.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
+    treino.exercicios = itens;
+    treino.ordenadoManualmente = false;
     setAlunoAtual(newAluno);
   };
 
@@ -843,6 +858,16 @@ export default function TreinosPage() {
                         <button onClick={() => removerTreinoTodo(activeTab)} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
                             <Trash2 size={18} /> Apagar
                         </button>
+                        {alunoAtual.treinos[activeTab].ordenadoManualmente && (
+                            <button 
+                                onClick={() => ordenarPorCategoria(activeTab)} 
+                                className="premium-btn-outline" 
+                                style={{ color: '#10b981', borderColor: '#10b981' }} 
+                                title="Ordenar exercícios por categoria e reativar layout automático"
+                            >
+                                ⚡ Organizar Categoria
+                            </button>
+                        )}
                         <button onClick={() => adicionarExercicio(activeTab)} className="premium-btn-outline" style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
                             <Plus size={18} /> Exercício
                         </button>
@@ -870,7 +895,7 @@ export default function TreinosPage() {
                             let showBlock = false;
                             let blockLabel = '';
 
-                            if (isForca) {
+                            if (!alunoAtual.treinos[activeTab].ordenadoManualmente && isForca) {
                                 forcaCounter++;
                                 if (isComplex) {
                                     if (forcaCounter === 1 || !prevIsForca) {
@@ -882,7 +907,7 @@ export default function TreinosPage() {
                                     if (forcaCounter === 1) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 1';
-                                    } else if (forcaCounter === (alunoAtual.treinos[activeTab].ordenadoManualmente ? 5 : 4)) {
+                                    } else if (forcaCounter === 4) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 2';
                                     }
@@ -1225,7 +1250,7 @@ export default function TreinosPage() {
                                             let showBlock = false;
                                             let blockLabel = '';
 
-                                            if (isForca) {
+                                            if (!treinoAnterior.ordenadoManualmente && isForca) {
                                                 forcaCounter++;
                                                 if (isComplex) {
                                                     if (forcaCounter === 1 || !prevIsForca) {
@@ -1237,7 +1262,7 @@ export default function TreinosPage() {
                                                     if (forcaCounter === 1) {
                                                         showBlock = true;
                                                         blockLabel = 'BLOCO 1';
-                                                    } else if (forcaCounter === (treinoAnterior.ordenadoManualmente ? 5 : 4)) {
+                                                    } else if (forcaCounter === 4) {
                                                         showBlock = true;
                                                         blockLabel = 'BLOCO 2';
                                                     }

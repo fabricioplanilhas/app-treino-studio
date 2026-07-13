@@ -271,7 +271,7 @@ export default function TVPage() {
       let startNewBlock = false;
       let newBlockLabel = '';
 
-      if (isForca) {
+      if (!treino.ordenadoManualmente && isForca) {
         forcaCounter++;
         if (isComplex) {
           if (forcaCounter === 1 || !prevIsForca) {
@@ -283,7 +283,7 @@ export default function TVPage() {
           if (forcaCounter === 1) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 1';
-          } else if (forcaCounter === (treino.ordenadoManualmente ? 5 : 4)) {
+          } else if (forcaCounter === 4) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 2';
           }
