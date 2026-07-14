@@ -27,6 +27,7 @@ export type Treino = {
   ordenadoManualmente?: boolean;
   protocoloBike?: ProtocoloBike;
   bloco2Desativado?: boolean;
+  limiteBloco1?: number;
 };
 
 export type Historico = {

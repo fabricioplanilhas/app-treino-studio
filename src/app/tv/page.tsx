@@ -280,10 +280,11 @@ export default function TVPage() {
             newBlockLabel = `BLOCO ${complexBlockCounter}`;
           }
         } else {
+          const limit = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
           if (forcaCounter === 1) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 1';
-          } else if (forcaCounter === 4 && !treino.bloco2Desativado) {
+          } else if (forcaCounter === (limit + 1) && !treino.bloco2Desativado) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 2';
           }

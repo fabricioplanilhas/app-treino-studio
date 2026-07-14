@@ -252,6 +252,7 @@ export default function TreinosPage() {
     treino.exercicios = itens;
     treino.ordenadoManualmente = false;
     treino.bloco2Desativado = false;
+    treino.limiteBloco1 = undefined;
     setAlunoAtual(newAluno);
   };
 
@@ -333,11 +334,53 @@ export default function TreinosPage() {
   const handleDropExercicio = (treinoIndex: number, dropIndex: number) => {
     if (draggedEx === null || draggedEx === dropIndex || !alunoAtual) return;
     const newAluno = { ...alunoAtual };
-    const items = Array.from(newAluno.treinos[treinoIndex].exercicios);
+    const treino = newAluno.treinos[treinoIndex];
+    const items = Array.from(treino.exercicios);
+
+    const draggedItem = items[draggedEx];
+    const isForcaDragged = (draggedItem.categoria || '').toUpperCase().includes('FORC') || (draggedItem.categoria || '').toUpperCase().includes('FORÇ');
+
+    if (isForcaDragged) {
+      let currentLimit = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
+
+      const countForcaUpTo = (idx: number) => {
+        let count = 0;
+        for (let i = 0; i <= idx; i++) {
+          const cat = (items[i].categoria || '').toUpperCase();
+          if (cat.includes('FORC') || cat.includes('FORÇ')) {
+            count++;
+          }
+        }
+        return count;
+      };
+
+      const draggedInBloco1 = countForcaUpTo(draggedEx) <= currentLimit;
+      const targetInBloco1 = countForcaUpTo(dropIndex) <= currentLimit;
+
+      let newLimit = currentLimit;
+      if (draggedInBloco1 && !targetInBloco1) {
+        newLimit = currentLimit - 1;
+      } else if (!draggedInBloco1 && targetInBloco1) {
+        newLimit = currentLimit + 1;
+      }
+
+      const totalForca = items.filter(ex => {
+        const cat = (ex.categoria || '').toUpperCase();
+        return cat.includes('FORC') || cat.includes('FORÇ');
+      }).length;
+
+      if (totalForca > 1) {
+        treino.limiteBloco1 = Math.max(1, Math.min(totalForca - 1, newLimit));
+      } else {
+        treino.limiteBloco1 = 1;
+      }
+    }
+
     const [reorderedItem] = items.splice(draggedEx, 1);
     items.splice(dropIndex, 0, reorderedItem);
-    newAluno.treinos[treinoIndex].exercicios = items;
-    newAluno.treinos[treinoIndex].ordenadoManualmente = true;
+    treino.exercicios = items;
+    treino.ordenadoManualmente = true;
+
     setAlunoAtual(newAluno);
     setDraggedEx(null);
   };
@@ -931,10 +974,11 @@ export default function TreinosPage() {
                                         blockLabel = `BLOCO ${complexBlockCounter}`;
                                     }
                                 } else {
+                                    const limit = alunoAtual.treinos[activeTab].limiteBloco1 !== undefined ? alunoAtual.treinos[activeTab].limiteBloco1 : 3;
                                     if (forcaCounter === 1) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 1';
-                                    } else if (forcaCounter === 4 && !alunoAtual.treinos[activeTab].bloco2Desativado) {
+                                    } else if (forcaCounter === (limit + 1) && !alunoAtual.treinos[activeTab].bloco2Desativado) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 2';
                                     }
@@ -1314,13 +1358,14 @@ export default function TreinosPage() {
                                                         blockLabel = `BLOCO ${complexBlockCounter}`;
                                                     }
                                                 } else {
-                                                    if (forcaCounter === 1) {
-                                                        showBlock = true;
-                                                        blockLabel = 'BLOCO 1';
-                                                    } else if (forcaCounter === 4 && !treinoAnterior.bloco2Desativado) {
-                                                        showBlock = true;
-                                                        blockLabel = 'BLOCO 2';
-                                                    }
+                                                     const limit = treinoAnterior.limiteBloco1 !== undefined ? treinoAnterior.limiteBloco1 : 3;
+                                                     if (forcaCounter === 1) {
+                                                         showBlock = true;
+                                                         blockLabel = 'BLOCO 1';
+                                                     } else if (forcaCounter === (limit + 1) && !treinoAnterior.bloco2Desativado) {
+                                                         showBlock = true;
+                                                         blockLabel = 'BLOCO 2';
+                                                     }
                                                 }
                                             }
 
