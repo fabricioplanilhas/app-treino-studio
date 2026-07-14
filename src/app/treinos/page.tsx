@@ -251,6 +251,23 @@ export default function TreinosPage() {
     itens.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
     treino.exercicios = itens;
     treino.ordenadoManualmente = false;
+    treino.bloco2Desativado = false;
+    setAlunoAtual(newAluno);
+  };
+
+  const removerBloco2 = (treinoIndex: number) => {
+    if(!alunoAtual) return;
+    if (confirm("Deseja deletar a divisão do BLOCO 2? Todos os exercícios passarão a fazer parte do BLOCO 1.")) {
+      const newAluno = { ...alunoAtual };
+      newAluno.treinos[treinoIndex].bloco2Desativado = true;
+      setAlunoAtual(newAluno);
+    }
+  };
+
+  const restaurarBloco2 = (treinoIndex: number) => {
+    if(!alunoAtual) return;
+    const newAluno = { ...alunoAtual };
+    newAluno.treinos[treinoIndex].bloco2Desativado = false;
     setAlunoAtual(newAluno);
   };
 
@@ -868,6 +885,16 @@ export default function TreinosPage() {
                                 ⚡ Organizar Categoria
                             </button>
                         )}
+                        {alunoAtual.treinos[activeTab].bloco2Desativado && (
+                            <button 
+                                onClick={() => restaurarBloco2(activeTab)} 
+                                className="premium-btn-outline" 
+                                style={{ color: '#8b5cf6', borderColor: '#8b5cf6' }} 
+                                title="Ativar a divisão do BLOCO 2"
+                            >
+                                <Plus size={18} /> Bloco 2
+                            </button>
+                        )}
                         <button onClick={() => adicionarExercicio(activeTab)} className="premium-btn-outline" style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
                             <Plus size={18} /> Exercício
                         </button>
@@ -895,7 +922,7 @@ export default function TreinosPage() {
                             let showBlock = false;
                             let blockLabel = '';
 
-                            if (!alunoAtual.treinos[activeTab].ordenadoManualmente && isForca) {
+                            if (isForca) {
                                 forcaCounter++;
                                 if (isComplex) {
                                     if (forcaCounter === 1 || !prevIsForca) {
@@ -907,7 +934,7 @@ export default function TreinosPage() {
                                     if (forcaCounter === 1) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 1';
-                                    } else if (forcaCounter === 4) {
+                                    } else if (forcaCounter === 4 && !alunoAtual.treinos[activeTab].bloco2Desativado) {
                                         showBlock = true;
                                         blockLabel = 'BLOCO 2';
                                     }
@@ -917,8 +944,36 @@ export default function TreinosPage() {
                             return (
                                 <div key={ex.id}>
                                     {showBlock && (
-                                        <div style={{ marginBottom: '10px', padding: '5px 10px', background: 'var(--bg-hover)', borderRadius: '6px', borderLeft: '4px solid var(--cat-forca)' }}>
+                                        <div style={{ 
+                                            marginBottom: '10px', 
+                                            padding: '5px 10px', 
+                                            background: 'var(--bg-hover)', 
+                                            borderRadius: '6px', 
+                                            borderLeft: '4px solid var(--cat-forca)',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
                                             <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{blockLabel}</span>
+                                            {blockLabel === 'BLOCO 2' && (
+                                                <button 
+                                                    onClick={() => removerBloco2(activeTab)}
+                                                    style={{ 
+                                                        background: 'transparent', 
+                                                        border: 'none', 
+                                                        color: 'var(--cat-explosao)', 
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.85rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                    title="Deletar BLOCO 2 e mesclar com BLOCO 1"
+                                                >
+                                                    <Trash2 size={14} /> Deletar Bloco
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                     <div 
@@ -1250,7 +1305,7 @@ export default function TreinosPage() {
                                             let showBlock = false;
                                             let blockLabel = '';
 
-                                            if (!treinoAnterior.ordenadoManualmente && isForca) {
+                                            if (isForca) {
                                                 forcaCounter++;
                                                 if (isComplex) {
                                                     if (forcaCounter === 1 || !prevIsForca) {
@@ -1262,7 +1317,7 @@ export default function TreinosPage() {
                                                     if (forcaCounter === 1) {
                                                         showBlock = true;
                                                         blockLabel = 'BLOCO 1';
-                                                    } else if (forcaCounter === 4) {
+                                                    } else if (forcaCounter === 4 && !treinoAnterior.bloco2Desativado) {
                                                         showBlock = true;
                                                         blockLabel = 'BLOCO 2';
                                                     }

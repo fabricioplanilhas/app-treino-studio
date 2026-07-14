@@ -26,6 +26,7 @@ export type Treino = {
   exercicios: Exercicio[];
   ordenadoManualmente?: boolean;
   protocoloBike?: ProtocoloBike;
+  bloco2Desativado?: boolean;
 };
 
 export type Historico = {
