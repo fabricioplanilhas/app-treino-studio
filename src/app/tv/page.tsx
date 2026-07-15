@@ -281,12 +281,16 @@ export default function TVPage() {
           }
         } else {
           const limit = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
+          const limit2 = treino.limiteBloco2 !== undefined ? treino.limiteBloco2 : (limit + 3);
           if (forcaCounter === 1) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 1';
           } else if (forcaCounter === (limit + 1) && !treino.bloco2Desativado) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 2';
+          } else if (forcaCounter === (limit2 + 1) && !treino.bloco2Desativado && !treino.bloco3Desativado) {
+            startNewBlock = true;
+            newBlockLabel = 'BLOCO 3';
           }
         }
       }
