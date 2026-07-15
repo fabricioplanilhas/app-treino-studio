@@ -30,6 +30,7 @@ export type Treino = {
   limiteBloco1?: number;
   bloco3Desativado?: boolean;
   limiteBloco2?: number;
+  limitesBlocos?: number[];
 };
 
 export type Historico = {

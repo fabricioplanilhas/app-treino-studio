@@ -255,6 +255,24 @@ export default function TVPage() {
       return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
     });
 
+    const getBlockLimits = (t: any): number[] => {
+      if (t.limitesBlocos !== undefined) {
+        return t.limitesBlocos;
+      }
+      if (t.bloco2Desativado) {
+        return [];
+      }
+      const limit1 = t.limiteBloco1 !== undefined ? t.limiteBloco1 : 3;
+      const bloco3Desativado = t.bloco3Desativado !== false;
+      if (bloco3Desativado) {
+        return [limit1];
+      }
+      const limit2 = t.limiteBloco2 !== undefined ? t.limiteBloco2 : (limit1 + 3);
+      return [limit1, limit2];
+    };
+
+    const limits = getBlockLimits(treino);
+
     const groups: { label: string | null, exercises: Exercicio[] }[] = [];
     let currentGroup: { label: string | null, exercises: Exercicio[] } = { label: null, exercises: [] };
     
@@ -280,17 +298,15 @@ export default function TVPage() {
             newBlockLabel = `BLOCO ${complexBlockCounter}`;
           }
         } else {
-          const limit = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
-          const limit2 = treino.limiteBloco2 !== undefined ? treino.limiteBloco2 : (limit + 3);
           if (forcaCounter === 1) {
             startNewBlock = true;
             newBlockLabel = 'BLOCO 1';
-          } else if (forcaCounter === (limit + 1) && !treino.bloco2Desativado) {
-            startNewBlock = true;
-            newBlockLabel = 'BLOCO 2';
-          } else if (forcaCounter === (limit2 + 1) && !treino.bloco2Desativado && !treino.bloco3Desativado) {
-            startNewBlock = true;
-            newBlockLabel = 'BLOCO 3';
+          } else {
+            const matchIdx = limits.indexOf(forcaCounter - 1);
+            if (matchIdx !== -1) {
+              startNewBlock = true;
+              newBlockLabel = `BLOCO ${matchIdx + 2}`;
+            }
           }
         }
       }
