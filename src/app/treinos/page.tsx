@@ -262,15 +262,66 @@ export default function TreinosPage() {
     if(!alunoAtual) return;
     const newAluno = { ...alunoAtual };
     const treino = newAluno.treinos[treinoIndex];
-    if (treino.bloco2Desativado) {
+
+    const forcaExercises = treino.exercicios.filter(ex => {
+      const cat = (ex.categoria || '').toUpperCase();
+      return cat.includes('FORC') || cat.includes('FORÇ');
+    });
+    const N = forcaExercises.length;
+
+    const limit1 = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
+    const isBloco2Visible = !treino.bloco2Desativado && N > limit1;
+
+    if (!isBloco2Visible) {
       treino.bloco2Desativado = false;
+      if (N === 0) {
+        // Bloco 1 precisa de pelo menos 1 exercício
+        treino.exercicios.push({
+          id: `ex_${Date.now()}_1`,
+          nome: "",
+          categoria: "Forca",
+          series: "",
+          reps: "",
+          carga: ""
+        });
+        treino.limiteBloco1 = 1;
+        // Adiciona o exercício do Bloco 2
+        treino.exercicios.push({
+          id: `ex_${Date.now()}_2`,
+          nome: "",
+          categoria: "Forca",
+          series: "",
+          reps: "",
+          carga: ""
+        });
+      } else {
+        treino.limiteBloco1 = N;
+        treino.exercicios.push({
+          id: `ex_${Date.now()}_${Math.random()}`,
+          nome: "",
+          categoria: "Forca",
+          series: "",
+          reps: "",
+          carga: ""
+        });
+      }
     } else {
       treino.bloco3Desativado = false;
-      if (treino.limiteBloco2 === undefined) {
-        const limit1 = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
-        treino.limiteBloco2 = limit1 + 3;
-      }
+      treino.limiteBloco2 = N;
+      treino.exercicios.push({
+        id: `ex_${Date.now()}_${Math.random()}`,
+        nome: "",
+        categoria: "Forca",
+        series: "",
+        reps: "",
+        carga: ""
+      });
     }
+
+    if (!treino.ordenadoManualmente) {
+      treino.exercicios.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
+    }
+
     setAlunoAtual(newAluno);
   };
 
