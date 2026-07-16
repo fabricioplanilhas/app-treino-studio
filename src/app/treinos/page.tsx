@@ -206,6 +206,15 @@ export default function TreinosPage() {
     if(!alunoAtual) return;
     const newAluno = { ...alunoAtual };
     const treino = newAluno.treinos[treinoIndex];
+
+    if (treino.limitesBlocos === undefined) {
+      treino.limitesBlocos = getBlockLimits(treino);
+      treino.bloco2Desativado = undefined;
+      treino.bloco3Desativado = undefined;
+      treino.limiteBloco1 = undefined;
+      treino.limiteBloco2 = undefined;
+    }
+
     treino.exercicios[exIndex] = {
       ...treino.exercicios[exIndex],
       [field]: value
@@ -219,6 +228,15 @@ export default function TreinosPage() {
     const newAluno = { ...alunoAtual };
     const newId = `ex_${Date.now()}_${Math.random()}`;
     const treino = newAluno.treinos[treinoIndex];
+
+    if (treino.limitesBlocos === undefined) {
+      treino.limitesBlocos = getBlockLimits(treino);
+      treino.bloco2Desativado = undefined;
+      treino.bloco3Desativado = undefined;
+      treino.limiteBloco1 = undefined;
+      treino.limiteBloco2 = undefined;
+    }
+
     treino.exercicios.push({
       id: newId,
       nome: "",
@@ -327,7 +345,30 @@ export default function TreinosPage() {
     if (confirm("Remover este exercício?")) {
       if(!alunoAtual) return;
       const newAluno = { ...alunoAtual };
-      newAluno.treinos[treinoIndex].exercicios.splice(exIndex, 1);
+      const treino = newAluno.treinos[treinoIndex];
+
+      const limits = [...getBlockLimits(treino)];
+
+      treino.exercicios.splice(exIndex, 1);
+
+      const newLimits = limits.map(limit => {
+        if (limit > exIndex) {
+          return limit - 1;
+        }
+        return limit;
+      }).filter((limit, idx, arr) => {
+        if (limit < 0) return false;
+        if (limit >= treino.exercicios.length) return false;
+        if (idx > 0 && limit <= arr[idx - 1]) return false;
+        return true;
+      });
+
+      treino.limitesBlocos = newLimits;
+      treino.bloco2Desativado = undefined;
+      treino.bloco3Desativado = undefined;
+      treino.limiteBloco1 = undefined;
+      treino.limiteBloco2 = undefined;
+
       setAlunoAtual(newAluno);
     }
   };
