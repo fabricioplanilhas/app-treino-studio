@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino } from "@/lib/mockData";
-import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -245,6 +245,34 @@ export default function TreinosPage() {
       reps: "10",
       carga: "-"
     });
+    setAlunoAtual(newAluno);
+  };
+
+  const moverExercicio = (treinoIndex: number, exIndex: number, direcao: 'up' | 'down') => {
+    if (!alunoAtual) return;
+    const newAluno = { ...alunoAtual };
+    const treino = newAluno.treinos[treinoIndex];
+    const N = treino.exercicios.length;
+    
+    if (direcao === 'up' && exIndex === 0) return;
+    if (direcao === 'down' && exIndex === N - 1) return;
+    
+    const targetIndex = direcao === 'up' ? exIndex - 1 : exIndex + 1;
+    
+    // Freeze the block structure before reordering
+    if (treino.limitesBlocos === undefined) {
+      treino.limitesBlocos = getBlockLimits(treino);
+      treino.bloco2Desativado = undefined;
+      treino.bloco3Desativado = undefined;
+      treino.limiteBloco1 = undefined;
+      treino.limiteBloco2 = undefined;
+    }
+    
+    // Swap exercises
+    const temp = treino.exercicios[exIndex];
+    treino.exercicios[exIndex] = treino.exercicios[targetIndex];
+    treino.exercicios[targetIndex] = temp;
+    
     setAlunoAtual(newAluno);
   };
 
@@ -1177,9 +1205,33 @@ export default function TreinosPage() {
                                       onDrop={() => handleDropExercicio(activeTab, exIdx)}
                                       style={{ display: 'flex', gap: '15px', alignItems: 'center', padding: '15px', background: draggedEx === exIdx ? 'var(--bg-hover)' : 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border-light)', cursor: 'grab', transition: 'all 0.2s' }}
                                     >
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', paddingRight: '5px', cursor: 'grab' }} title="Arraste para reposicionar">
-                                            <GripVertical size={20} />
-                                        </div>
+                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', paddingRight: '5px' }}>
+                                             <button 
+                                                 onClick={(e) => {
+                                                     e.stopPropagation();
+                                                     moverExercicio(activeTab, exIdx, 'up');
+                                                 }}
+                                                 disabled={exIdx === 0}
+                                                 style={{ background: 'transparent', border: 'none', padding: '2px', cursor: exIdx === 0 ? 'not-allowed' : 'pointer', color: exIdx === 0 ? 'var(--border-medium)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                 title="Mover para cima"
+                                             >
+                                                 <ChevronUp size={16} />
+                                             </button>
+                                             <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Arraste para reposicionar">
+                                                 <GripVertical size={16} />
+                                             </div>
+                                             <button 
+                                                 onClick={(e) => {
+                                                     e.stopPropagation();
+                                                     moverExercicio(activeTab, exIdx, 'down');
+                                                 }}
+                                                 disabled={exIdx === arr.length - 1}
+                                                 style={{ background: 'transparent', border: 'none', padding: '2px', cursor: exIdx === arr.length - 1 ? 'not-allowed' : 'pointer', color: exIdx === arr.length - 1 ? 'var(--border-medium)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                 title="Mover para baixo"
+                                             >
+                                                 <ChevronDown size={16} />
+                                             </button>
+                                         </div>
                         
                         <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>EXERCÍCIO</label>
