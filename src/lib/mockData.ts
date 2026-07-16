@@ -5,10 +5,11 @@ export type CategoriaExercicio = 'Core' | 'Potencia' | 'Forca' | 'Outros';
 export type Exercicio = {
   id: string;
   nome: string;
-  categoria: CategoriaExercicio;
+  categoria: CategoriaExercicio | string;
   series: string;
   reps: string;
   carga: string;
+  limitesBlocos?: number[];
 };
 
 export type ProtocoloBike = {
@@ -81,6 +82,7 @@ export const MOCK_TEMPLATES: Treino[] = [
   {
     id: 'global_A',
     nomeTreino: 'Treino A',
+    limitesBlocos: [2],
     exercicios: [
       { id: 'ga_1', nome: 'PRANCHA FRONTAL', categoria: 'Core', series: '3', reps: '30"', carga: '-' },
       { id: 'ga_2', nome: 'AGACHA E SALTA', categoria: 'Potencia', series: '3', reps: '5', carga: '-' },
@@ -90,6 +92,7 @@ export const MOCK_TEMPLATES: Treino[] = [
   {
     id: 'global_B',
     nomeTreino: 'Treino B',
+    limitesBlocos: [2],
     exercicios: [
       { id: 'gb_1', nome: 'ROOL OUT NA BOLA', categoria: 'Core', series: '3', reps: '10', carga: '-' },
       { id: 'gb_2', nome: 'SALTO 1P CXT', categoria: 'Potencia', series: '3', reps: '5/5', carga: '-' },
@@ -99,6 +102,7 @@ export const MOCK_TEMPLATES: Treino[] = [
   {
     id: 'global_C',
     nomeTreino: 'Treino C',
+    limitesBlocos: [2],
     exercicios: [
       { id: 'gc_1', nome: 'LIFT BAND', categoria: 'Core', series: '3', reps: '10/10', carga: '-' },
       { id: 'gc_2', nome: 'ARRANQUE', categoria: 'Potencia', series: '3', reps: '6', carga: '30kg' },
@@ -109,7 +113,7 @@ export const MOCK_TEMPLATES: Treino[] = [
 
 export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   "Introdutório Adulto A": [
-    { id: 'mod_iaa_1', nome: 'AGACHA G.B', categoria: 'Forca', carga: '', reps: '8', series: '2' },
+    { id: 'mod_iaa_1', nome: 'AGACHA G.B', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [0, 3] },
     { id: 'mod_iaa_2', nome: 'APOIO', categoria: 'Forca', carga: '', reps: '8', series: '2' },
     { id: 'mod_iaa_3', nome: 'PONTE UNI SOLO', categoria: 'Forca', carga: 'P.C', reps: '8/8', series: '2' },
     { id: 'mod_iaa_4', nome: 'PUXADA N. TRX', categoria: 'Forca', carga: 'P.C', reps: '8', series: '2' },
@@ -124,7 +128,7 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   "Fase 2 Atleta B": [],
   "Fase 2 Atleta C": [],
   "Complex": [
-    { id: 'mod_cx_1', nome: 'CORE', categoria: 'Core', carga: '', reps: '', series: '' },
+    { id: 'mod_cx_1', nome: 'CORE', categoria: 'Core', carga: '', reps: '', series: '', limitesBlocos: [2, 4, 6, 8] },
     { id: 'mod_cx_2', nome: 'CORE', categoria: 'Core', carga: '', reps: '', series: '' },
     { id: 'mod_cx_3', nome: 'FRONT SQUAT', categoria: 'Forca', carga: '', reps: '', series: '' },
     { id: 'mod_cx_4', nome: 'ARRANQUE', categoria: 'Potencia', carga: '', reps: '', series: '' },

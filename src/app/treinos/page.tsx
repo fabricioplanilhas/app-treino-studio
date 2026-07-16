@@ -958,6 +958,14 @@ export default function TreinosPage() {
                                     if (!alunoAtual) return;
                                     const newAluno = { ...alunoAtual };
                                     const copiados = JSON.parse(JSON.stringify(exerciciosParaImportar));
+                                    
+                                    // Extract block limits if stored on the first exercise
+                                    let limitesExtras: number[] | undefined = undefined;
+                                    if (copiados.length > 0 && copiados[0].limitesBlocos) {
+                                        limitesExtras = copiados[0].limitesBlocos;
+                                        delete copiados[0].limitesBlocos;
+                                    }
+
                                     copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
                                     newAluno.treinos[activeTab].exercicios = copiados;
 
@@ -965,10 +973,10 @@ export default function TreinosPage() {
                                         const baseId = modeloStr.replace('custom:', '');
                                         const base = basesCustom.find(b => b.id === baseId);
                                         if (base) {
-                                            newAluno.treinos[activeTab].limitesBlocos = base.limitesBlocos ? [...base.limitesBlocos] : undefined;
+                                            newAluno.treinos[activeTab].limitesBlocos = limitesExtras ? [...limitesExtras] : (base.limitesBlocos ? [...base.limitesBlocos] : undefined);
                                         }
                                     } else {
-                                        newAluno.treinos[activeTab].limitesBlocos = undefined;
+                                        newAluno.treinos[activeTab].limitesBlocos = limitesExtras ? [...limitesExtras] : undefined;
                                     }
 
                                     newAluno.treinos[activeTab].bloco2Desativado = undefined;
@@ -1006,22 +1014,28 @@ export default function TreinosPage() {
                                 
                                 // Check if a base with same name already exists
                                 const existente = basesCustom.find(b => b.nome.toLowerCase() === nomeBase.toLowerCase());
+                                const currentLimits = getBlockLimits(treino);
+                                const exerciciosCopiados = JSON.parse(JSON.stringify(treino.exercicios));
+                                if (exerciciosCopiados.length > 0) {
+                                    exerciciosCopiados[0].limitesBlocos = currentLimits;
+                                }
+
                                 if (existente) {
                                     if (!confirm(`Já existe uma base com o nome "${existente.nome}". Deseja substituí-la?`)) return;
                                     // Overwrite existing
                                     const baseAtualizada: BaseTreino = {
                                         id: existente.id,
                                         nome: nomeBase,
-                                        exercicios: JSON.parse(JSON.stringify(treino.exercicios)),
-                                        limitesBlocos: treino.limitesBlocos ? [...treino.limitesBlocos] : undefined,
+                                        exercicios: exerciciosCopiados,
+                                        limitesBlocos: currentLimits,
                                     };
                                     await mockDb.saveBase(baseAtualizada);
                                 } else {
                                     const novaBase: BaseTreino = {
                                         id: `base_${Date.now()}`,
                                         nome: nomeBase,
-                                        exercicios: JSON.parse(JSON.stringify(treino.exercicios)),
-                                        limitesBlocos: treino.limitesBlocos ? [...treino.limitesBlocos] : undefined,
+                                        exercicios: exerciciosCopiados,
+                                        limitesBlocos: currentLimits,
                                     };
                                     await mockDb.saveBase(novaBase);
                                 }
