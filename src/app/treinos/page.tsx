@@ -396,7 +396,7 @@ export default function TreinosPage() {
     const getBlockIndex = (index: number, isDrop: boolean) => {
       let blockIndex = -1; // -1 significa acima do BLOCO 1
       for (let i = 0; i < limits.length; i++) {
-        if (isDrop && index === limits[i]) {
+        if (isDrop && draggedEx > dropIndex && index === limits[i]) {
           break;
         }
         if (index >= limits[i]) {
