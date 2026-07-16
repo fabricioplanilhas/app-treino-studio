@@ -956,7 +956,23 @@ export default function TreinosPage() {
                                     const copiados = JSON.parse(JSON.stringify(exerciciosParaImportar));
                                     copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
                                     newAluno.treinos[activeTab].exercicios = copiados;
-                                    newAluno.treinos[activeTab].ordenadoManualmente = false;
+
+                                    if (isCustom) {
+                                        const baseId = modeloStr.replace('custom:', '');
+                                        const base = basesCustom.find(b => b.id === baseId);
+                                        if (base) {
+                                            newAluno.treinos[activeTab].limitesBlocos = base.limitesBlocos ? [...base.limitesBlocos] : undefined;
+                                        }
+                                    } else {
+                                        newAluno.treinos[activeTab].limitesBlocos = undefined;
+                                    }
+
+                                    newAluno.treinos[activeTab].bloco2Desativado = undefined;
+                                    newAluno.treinos[activeTab].bloco3Desativado = undefined;
+                                    newAluno.treinos[activeTab].limiteBloco1 = undefined;
+                                    newAluno.treinos[activeTab].limiteBloco2 = undefined;
+                                    newAluno.treinos[activeTab].ordenadoManualmente = true;
+
                                     setAlunoAtual(newAluno);
                                 }
                                 e.target.value = "";
@@ -993,6 +1009,7 @@ export default function TreinosPage() {
                                         id: existente.id,
                                         nome: nomeBase,
                                         exercicios: JSON.parse(JSON.stringify(treino.exercicios)),
+                                        limitesBlocos: treino.limitesBlocos ? [...treino.limitesBlocos] : undefined,
                                     };
                                     await mockDb.saveBase(baseAtualizada);
                                 } else {
@@ -1000,6 +1017,7 @@ export default function TreinosPage() {
                                         id: `base_${Date.now()}`,
                                         nome: nomeBase,
                                         exercicios: JSON.parse(JSON.stringify(treino.exercicios)),
+                                        limitesBlocos: treino.limitesBlocos ? [...treino.limitesBlocos] : undefined,
                                     };
                                     await mockDb.saveBase(novaBase);
                                 }

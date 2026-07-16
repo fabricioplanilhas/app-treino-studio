@@ -66,6 +66,7 @@ export type BaseTreino = {
   id: string;
   nome: string;
   exercicios: Exercicio[];
+  limitesBlocos?: number[];
   created_at?: string;
 };
 
