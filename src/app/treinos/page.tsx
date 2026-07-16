@@ -243,50 +243,48 @@ export default function TreinosPage() {
     setAlunoAtual(newAluno);
   };
 
-  const getBlockLimits = (treino: any, totalForca: number): number[] => {
+  const getBlockLimits = (treino: any): number[] => {
     if (treino.limitesBlocos !== undefined) {
       return treino.limitesBlocos;
     }
     if (treino.bloco2Desativado) {
       return [];
     }
-    const limit1 = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
-    const bloco3Desativado = treino.bloco3Desativado !== false;
-    if (bloco3Desativado) {
-      return [limit1];
+    
+    const forcaIndices: number[] = [];
+    treino.exercicios.forEach((ex: any, idx: number) => {
+      const cat = (ex.categoria || '').toUpperCase();
+      if (cat.includes('FORC') || cat.includes('FORÇ')) {
+        forcaIndices.push(idx + 1);
+      }
+    });
+    
+    if (forcaIndices.length === 0) {
+      return [];
     }
-    const limit2 = treino.limiteBloco2 !== undefined ? treino.limiteBloco2 : (limit1 + 3);
-    return [limit1, limit2];
-  };
-
-  const ordenarPorCategoria = (treinoIndex: number) => {
-    if(!alunoAtual) return;
-    const newAluno = { ...alunoAtual };
-    const treino = newAluno.treinos[treinoIndex];
-    const itens = Array.from(treino.exercicios);
-    itens.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
-    treino.exercicios = itens;
-    treino.ordenadoManualmente = false;
-    treino.bloco2Desativado = undefined;
-    treino.bloco3Desativado = undefined;
-    treino.limiteBloco1 = undefined;
-    treino.limiteBloco2 = undefined;
-    treino.limitesBlocos = undefined;
-    setAlunoAtual(newAluno);
+    
+    const limit1Forca = treino.limiteBloco1 !== undefined ? treino.limiteBloco1 : 3;
+    const bloco3Desativado = treino.bloco3Desativado !== false;
+    
+    const limit1Index = forcaIndices[Math.min(limit1Forca, forcaIndices.length) - 1];
+    
+    if (bloco3Desativado) {
+      return [limit1Index];
+    }
+    
+    const limit2Forca = treino.limiteBloco2 !== undefined ? treino.limiteBloco2 : (limit1Forca + 3);
+    const limit2Index = forcaIndices[Math.min(limit2Forca, forcaIndices.length) - 1];
+    
+    return [limit1Index, limit2Index];
   };
 
   const adicionarBloco = (treinoIndex: number) => {
     if(!alunoAtual) return;
     const newAluno = { ...alunoAtual };
     const treino = newAluno.treinos[treinoIndex];
+    const N = treino.exercicios.length;
 
-    const forcaExercises = treino.exercicios.filter(ex => {
-      const cat = (ex.categoria || '').toUpperCase();
-      return cat.includes('FORC') || cat.includes('FORÇ');
-    });
-    const N = forcaExercises.length;
-
-    let limits = [...getBlockLimits(treino, N)];
+    let limits = [...getBlockLimits(treino)];
 
     if (N === 0) {
       treino.exercicios.push({
@@ -351,7 +349,7 @@ export default function TreinosPage() {
     if (confirm(`Deseja deletar a divisão do ${blockLabel}? Todos os exercícios passarão a fazer parte do ${targetLabel}.`)) {
       const newAluno = { ...alunoAtual };
       const treino = newAluno.treinos[treinoIndex];
-      const limits = [...getBlockLimits(treino, treino.exercicios.length)];
+      const limits = [...getBlockLimits(treino)];
       
       limits.splice(limitIndex, 1);
       
@@ -430,39 +428,25 @@ export default function TreinosPage() {
     const treino = newAluno.treinos[treinoIndex];
     const items = Array.from(treino.exercicios);
 
-    const draggedItem = items[draggedEx];
-    const isForcaDragged = (draggedItem.categoria || '').toUpperCase().includes('FORC') || (draggedItem.categoria || '').toUpperCase().includes('FORÇ');
+    let limits = [...getBlockLimits(treino)];
 
-    if (isForcaDragged) {
-      let limits = [...getBlockLimits(treino, items.length)];
+    const srcCount = draggedEx + 1;
+    const destCount = dropIndex + 1;
 
-      const countForcaUpTo = (idx: number) => {
-        let count = 0;
-        for (let i = 0; i <= idx; i++) {
-          const cat = (items[i].categoria || '').toUpperCase();
-          if (cat.includes('FORC') || cat.includes('FORÇ')) {
-            count++;
-          }
+    const getBlockIndex = (count: number) => {
+      let blockIndex = 0;
+      for (let i = 0; i < limits.length; i++) {
+        if (count > limits[i]) {
+          blockIndex = i + 1;
         }
-        return count;
-      };
+      }
+      return blockIndex;
+    };
 
-      const srcCount = countForcaUpTo(draggedEx);
-      const destCount = countForcaUpTo(dropIndex);
+    const srcBlockIndex = getBlockIndex(srcCount);
+    const destBlockIndex = getBlockIndex(destCount);
 
-      const getBlockIndex = (count: number) => {
-        let blockIndex = 0;
-        for (let i = 0; i < limits.length; i++) {
-          if (count > limits[i]) {
-            blockIndex = i + 1;
-          }
-        }
-        return blockIndex;
-      };
-
-      const srcBlockIndex = getBlockIndex(srcCount);
-      const destBlockIndex = getBlockIndex(destCount);
-
+    if (srcBlockIndex !== destBlockIndex) {
       if (srcBlockIndex < destBlockIndex) {
         for (let i = srcBlockIndex; i < destBlockIndex; i++) {
           limits[i]--;
@@ -472,40 +456,37 @@ export default function TreinosPage() {
           limits[i]++;
         }
       }
-
-      const totalForca = items.filter(ex => {
-        const cat = (ex.categoria || '').toUpperCase();
-        return cat.includes('FORC') || cat.includes('FORÇ');
-      }).length;
-
-      // Sanitize limits
-      if (limits.length > 0) {
-        limits[0] = Math.max(1, limits[0]);
-        for (let i = 1; i < limits.length; i++) {
-          limits[i] = Math.max(limits[i - 1] + 1, limits[i]);
-        }
-        
-        let maxLimit = totalForca - 1;
-        for (let i = limits.length - 1; i >= 0; i--) {
-          if (limits[i] > maxLimit) {
-            limits[i] = maxLimit;
-          }
-          maxLimit = limits[i] - 1;
-        }
-        
-        limits = limits.filter((val, idx) => {
-          if (val < 1) return false;
-          if (idx > 0 && val <= limits[idx - 1]) return false;
-          return true;
-        });
-      }
-
-      treino.limitesBlocos = limits;
-      treino.bloco2Desativado = undefined;
-      treino.bloco3Desativado = undefined;
-      treino.limiteBloco1 = undefined;
-      treino.limiteBloco2 = undefined;
     }
+
+    const totalExercises = items.length;
+
+    // Sanitize limits
+    if (limits.length > 0) {
+      limits[0] = Math.max(1, limits[0]);
+      for (let i = 1; i < limits.length; i++) {
+        limits[i] = Math.max(limits[i - 1] + 1, limits[i]);
+      }
+      
+      let maxLimit = totalExercises - 1;
+      for (let i = limits.length - 1; i >= 0; i--) {
+        if (limits[i] > maxLimit) {
+          limits[i] = maxLimit;
+        }
+        maxLimit = limits[i] - 1;
+      }
+      
+      limits = limits.filter((val, idx) => {
+        if (val < 1) return false;
+        if (idx > 0 && val <= limits[idx - 1]) return false;
+        return true;
+      });
+    }
+
+    treino.limitesBlocos = limits;
+    treino.bloco2Desativado = undefined;
+    treino.bloco3Desativado = undefined;
+    treino.limiteBloco1 = undefined;
+    treino.limiteBloco2 = undefined;
 
     const [reorderedItem] = items.splice(draggedEx, 1);
     items.splice(dropIndex, 0, reorderedItem);
@@ -1043,22 +1024,9 @@ export default function TreinosPage() {
                                 <BookOpen size={18} />
                             </button>
                         )}
-                        <button onClick={() => limparTreinoEstrutura(activeTab)} className="premium-btn-outline" style={{ color: '#fbbf24', borderColor: '#fbbf24' }} title="Limpar Conteúdos da Ficha">
-                            <Eraser size={18} /> Limpar
-                        </button>
                         <button onClick={() => removerTreinoTodo(activeTab)} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
                             <Trash2 size={18} /> Apagar
                         </button>
-                        {alunoAtual.treinos[activeTab].ordenadoManualmente && (
-                            <button 
-                                onClick={() => ordenarPorCategoria(activeTab)} 
-                                className="premium-btn-outline" 
-                                style={{ color: '#10b981', borderColor: '#10b981' }} 
-                                title="Ordenar exercícios por categoria e reativar layout automático"
-                            >
-                                ⚡ Organizar Categoria
-                            </button>
-                        )}
                         <button 
                             onClick={() => adicionarBloco(activeTab)} 
                             className="premium-btn-outline" 
@@ -1075,48 +1043,24 @@ export default function TreinosPage() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {(() => {
-                        let forcaCounter = 0;
-                        let complexBlockCounter = 0;
-                        
-                        const isComplex = alunoAtual.treinos[activeTab].exercicios.some((ex, i, arr) => {
-                            const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
-                            if (!isPot) return false;
-                            return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
-                        });
-
-                        const limits = getBlockLimits(alunoAtual.treinos[activeTab], alunoAtual.treinos[activeTab].exercicios.length);
+                        const limits = getBlockLimits(alunoAtual.treinos[activeTab]);
+                        let exerciseCounter = 0;
 
                         return alunoAtual.treinos[activeTab].exercicios.map((ex, exIdx, arr) => {
-                            const upperCat = (ex.categoria || '').toUpperCase();
-                            const isForca = upperCat.includes('FORC') || upperCat.includes('FORÇ');
-                            const prevEx = exIdx > 0 ? arr[exIdx - 1] : null;
-                            const prevCat = prevEx ? (prevEx.categoria || '').toUpperCase() : '';
-                            const prevIsForca = prevCat.includes('FORC') || prevCat.includes('FORÇ');
-
+                            exerciseCounter++;
                             let showBlock = false;
                             let blockLabel = '';
                             let limitIdx = -1;
 
-                            if (isForca) {
-                                forcaCounter++;
-                                if (isComplex) {
-                                    if (forcaCounter === 1 || !prevIsForca) {
-                                        complexBlockCounter++;
-                                        showBlock = true;
-                                        blockLabel = `BLOCO ${complexBlockCounter}`;
-                                    }
-                                } else {
-                                    if (forcaCounter === 1) {
-                                        showBlock = true;
-                                        blockLabel = 'BLOCO 1';
-                                    } else {
-                                        const matchIdx = limits.indexOf(forcaCounter - 1);
-                                        if (matchIdx !== -1) {
-                                            showBlock = true;
-                                            blockLabel = `BLOCO ${matchIdx + 2}`;
-                                            limitIdx = matchIdx;
-                                        }
-                                    }
+                            if (exerciseCounter === 1) {
+                                showBlock = true;
+                                blockLabel = 'BLOCO 1';
+                            } else {
+                                const matchIdx = limits.indexOf(exerciseCounter - 1);
+                                if (matchIdx !== -1) {
+                                    showBlock = true;
+                                    blockLabel = `BLOCO ${matchIdx + 2}`;
+                                    limitIdx = matchIdx;
                                 }
                             }
 
@@ -1458,16 +1402,8 @@ export default function TreinosPage() {
 
                             if(!treinoAnterior) return <div style={{ color: 'var(--text-muted)' }}>Não havia equivalente a este treino na versão passada.</div>;
 
-                            let forcaCounter = 0;
-                            let complexBlockCounter = 0;
-
-                            const isComplex = treinoAnterior.exercicios.some((ex, i, arr) => {
-                                const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
-                                if (!isPot) return false;
-                                return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
-                            });
-
-                            const limits = getBlockLimits(treinoAnterior, treinoAnterior.exercicios.length);
+                            const limits = getBlockLimits(treinoAnterior);
+                            let exerciseCounter = 0;
 
                             return (
                                 <>
@@ -1477,34 +1413,18 @@ export default function TreinosPage() {
                                     
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                         {treinoAnterior.exercicios.map((ex, exIdx, arr) => {
-                                            const upperCat = (ex.categoria || '').toUpperCase();
-                                            const isForca = upperCat.includes('FORC') || upperCat.includes('FORÇ');
-                                            const prevEx = exIdx > 0 ? arr[exIdx - 1] : null;
-                                            const prevCat = prevEx ? (prevEx.categoria || '').toUpperCase() : '';
-                                            const prevIsForca = prevCat.includes('FORC') || prevCat.includes('FORÇ');
-
+                                            exerciseCounter++;
                                             let showBlock = false;
                                             let blockLabel = '';
 
-                                            if (isForca) {
-                                                forcaCounter++;
-                                                if (isComplex) {
-                                                    if (forcaCounter === 1 || !prevIsForca) {
-                                                        complexBlockCounter++;
-                                                        showBlock = true;
-                                                        blockLabel = `BLOCO ${complexBlockCounter}`;
-                                                    }
-                                                } else {
-                                                      if (forcaCounter === 1) {
-                                                          showBlock = true;
-                                                          blockLabel = 'BLOCO 1';
-                                                      } else {
-                                                          const matchIdx = limits.indexOf(forcaCounter - 1);
-                                                          if (matchIdx !== -1) {
-                                                              showBlock = true;
-                                                              blockLabel = `BLOCO ${matchIdx + 2}`;
-                                                          }
-                                                      }
+                                            if (exerciseCounter === 1) {
+                                                showBlock = true;
+                                                blockLabel = 'BLOCO 1';
+                                            } else {
+                                                const matchIdx = limits.indexOf(exerciseCounter - 1);
+                                                if (matchIdx !== -1) {
+                                                    showBlock = true;
+                                                    blockLabel = `BLOCO ${matchIdx + 2}`;
                                                 }
                                             }
 

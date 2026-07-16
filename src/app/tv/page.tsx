@@ -249,12 +249,6 @@ export default function TVPage() {
   );
 
   const renderExercicios = (aluno: Aluno & { treinoAtualId: string }, treino: Treino) => {
-    const isComplex = treino.exercicios.some((ex, i, arr) => {
-      const isPot = (ex.categoria || '').toUpperCase().includes('POTENCIA') || (ex.categoria || '').toUpperCase().includes('POTÊNCIA');
-      if (!isPot) return false;
-      return arr.slice(0, i).some(prev => (prev.categoria || '').toUpperCase().includes('FORC') || (prev.categoria || '').toUpperCase().includes('FORÇ'));
-    });
-
     const getBlockLimits = (t: any): number[] => {
       if (t.limitesBlocos !== undefined) {
         return t.limitesBlocos;
@@ -262,13 +256,32 @@ export default function TVPage() {
       if (t.bloco2Desativado) {
         return [];
       }
-      const limit1 = t.limiteBloco1 !== undefined ? t.limiteBloco1 : 3;
-      const bloco3Desativado = t.bloco3Desativado !== false;
-      if (bloco3Desativado) {
-        return [limit1];
+      
+      const forcaIndices: number[] = [];
+      t.exercicios.forEach((ex: any, idx: number) => {
+        const cat = (ex.categoria || '').toUpperCase();
+        if (cat.includes('FORC') || cat.includes('FORÇ')) {
+          forcaIndices.push(idx + 1);
+        }
+      });
+      
+      if (forcaIndices.length === 0) {
+        return [];
       }
-      const limit2 = t.limiteBloco2 !== undefined ? t.limiteBloco2 : (limit1 + 3);
-      return [limit1, limit2];
+      
+      const limit1Forca = t.limiteBloco1 !== undefined ? t.limiteBloco1 : 3;
+      const bloco3Desativado = t.bloco3Desativado !== false;
+      
+      const limit1Index = forcaIndices[Math.min(limit1Forca, forcaIndices.length) - 1];
+      
+      if (bloco3Desativado) {
+        return [limit1Index];
+      }
+      
+      const limit2Forca = t.limiteBloco2 !== undefined ? t.limiteBloco2 : (limit1Forca + 3);
+      const limit2Index = forcaIndices[Math.min(limit2Forca, forcaIndices.length) - 1];
+      
+      return [limit1Index, limit2Index];
     };
 
     const limits = getBlockLimits(treino);
@@ -276,38 +289,21 @@ export default function TVPage() {
     const groups: { label: string | null, exercises: Exercicio[] }[] = [];
     let currentGroup: { label: string | null, exercises: Exercicio[] } = { label: null, exercises: [] };
     
-    let forcaCounter = 0;
-    let complexBlockCounter = 0;
+    let exerciseCounter = 0;
 
     treino.exercicios.forEach((ex, exIdx, arr) => {
-      const upperCat = (ex.categoria || '').toUpperCase();
-      const isForca = upperCat.includes('FORC') || upperCat.includes('FORÇ');
-      const prevEx = exIdx > 0 ? arr[exIdx - 1] : null;
-      const prevCat = prevEx ? (prevEx.categoria || '').toUpperCase() : '';
-      const prevIsForca = prevCat.includes('FORC') || prevCat.includes('FORÇ');
-
+      exerciseCounter++;
       let startNewBlock = false;
       let newBlockLabel = '';
 
-      if (isForca) {
-        forcaCounter++;
-        if (isComplex) {
-          if (forcaCounter === 1 || !prevIsForca) {
-            complexBlockCounter++;
-            startNewBlock = true;
-            newBlockLabel = `BLOCO ${complexBlockCounter}`;
-          }
-        } else {
-          if (forcaCounter === 1) {
-            startNewBlock = true;
-            newBlockLabel = 'BLOCO 1';
-          } else {
-            const matchIdx = limits.indexOf(forcaCounter - 1);
-            if (matchIdx !== -1) {
-              startNewBlock = true;
-              newBlockLabel = `BLOCO ${matchIdx + 2}`;
-            }
-          }
+      if (exerciseCounter === 1) {
+        startNewBlock = true;
+        newBlockLabel = 'BLOCO 1';
+      } else {
+        const matchIdx = limits.indexOf(exerciseCounter - 1);
+        if (matchIdx !== -1) {
+          startNewBlock = true;
+          newBlockLabel = `BLOCO ${matchIdx + 2}`;
         }
       }
 
