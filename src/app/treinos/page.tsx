@@ -393,7 +393,10 @@ export default function TreinosPage() {
     const srcIndex = draggedEx;
     const destIndex = dropIndex;
 
-    const getBlockIndex = (index: number) => {
+    const getBlockIndex = (index: number, isDrop: boolean) => {
+      if (isDrop && index === 0 && limits[0] === 0) {
+        return -1;
+      }
       let blockIndex = -1; // -1 significa acima do BLOCO 1
       for (let i = 0; i < limits.length; i++) {
         if (index >= limits[i]) {
@@ -403,8 +406,8 @@ export default function TreinosPage() {
       return blockIndex;
     };
 
-    const srcBlockIndex = getBlockIndex(srcIndex);
-    const destBlockIndex = getBlockIndex(destIndex);
+    const srcBlockIndex = getBlockIndex(srcIndex, false);
+    const destBlockIndex = getBlockIndex(destIndex, true);
 
     if (srcBlockIndex !== destBlockIndex) {
       if (srcBlockIndex < destBlockIndex) {
