@@ -275,13 +275,13 @@ export default function TVPage() {
       const limit1Index = forcaIndices[Math.min(limit1Forca, forcaIndices.length) - 1];
       
       if (bloco3Desativado) {
-        return [limit1Index];
+        return [0, limit1Index];
       }
       
       const limit2Forca = t.limiteBloco2 !== undefined ? t.limiteBloco2 : (limit1Forca + 3);
       const limit2Index = forcaIndices[Math.min(limit2Forca, forcaIndices.length) - 1];
       
-      return [limit1Index, limit2Index];
+      return [0, limit1Index, limit2Index];
     };
 
     const limits = getBlockLimits(treino);
@@ -296,15 +296,10 @@ export default function TVPage() {
       let startNewBlock = false;
       let newBlockLabel = '';
 
-      if (exerciseCounter === 1) {
+      const matchIdx = limits.indexOf(exerciseCounter - 1);
+      if (matchIdx !== -1) {
         startNewBlock = true;
-        newBlockLabel = 'BLOCO 1';
-      } else {
-        const matchIdx = limits.indexOf(exerciseCounter - 1);
-        if (matchIdx !== -1) {
-          startNewBlock = true;
-          newBlockLabel = `BLOCO ${matchIdx + 2}`;
-        }
+        newBlockLabel = `BLOCO ${matchIdx + 1}`;
       }
 
       if (startNewBlock) {

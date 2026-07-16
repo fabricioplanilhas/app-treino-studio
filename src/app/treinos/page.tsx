@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino } from "@/lib/mockData";
-import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -211,16 +211,6 @@ export default function TreinosPage() {
       [field]: value
     };
     
-    if (field === 'categoria') {
-      if (!treino.ordenadoManualmente) {
-        const itens = Array.from(treino.exercicios);
-        const [modificado] = itens.splice(exIndex, 1);
-        itens.push(modificado);
-        itens.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
-        treino.exercicios = itens;
-      }
-    }
-    
     setAlunoAtual(newAluno);
   };
 
@@ -237,9 +227,6 @@ export default function TreinosPage() {
       reps: "10",
       carga: "-"
     });
-    if (!treino.ordenadoManualmente) {
-      treino.exercicios.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
-    }
     setAlunoAtual(newAluno);
   };
 
@@ -269,13 +256,13 @@ export default function TreinosPage() {
     const limit1Index = forcaIndices[Math.min(limit1Forca, forcaIndices.length) - 1];
     
     if (bloco3Desativado) {
-      return [limit1Index];
+      return [0, limit1Index];
     }
     
     const limit2Forca = treino.limiteBloco2 !== undefined ? treino.limiteBloco2 : (limit1Forca + 3);
     const limit2Index = forcaIndices[Math.min(limit2Forca, forcaIndices.length) - 1];
     
-    return [limit1Index, limit2Index];
+    return [0, limit1Index, limit2Index];
   };
 
   const adicionarBloco = (treinoIndex: number) => {
@@ -286,48 +273,25 @@ export default function TreinosPage() {
 
     let limits = [...getBlockLimits(treino)];
 
-    if (N === 0) {
-      treino.exercicios.push({
-        id: `ex_${Date.now()}_1`,
-        nome: "",
-        categoria: "Forca",
-        series: "",
-        reps: "",
-        carga: ""
-      });
-      treino.exercicios.push({
-        id: `ex_${Date.now()}_2`,
-        nome: "",
-        categoria: "Forca",
-        series: "",
-        reps: "",
-        carga: ""
-      });
-      limits = [1];
-    } else {
-      const lastLimit = limits.length > 0 ? limits[limits.length - 1] : 0;
-      if (N <= lastLimit) {
-        limits[limits.length - 1] = N;
-        treino.exercicios.push({
-          id: `ex_${Date.now()}_${Math.random()}`,
-          nome: "",
-          categoria: "Forca",
-          series: "",
-          reps: "",
-          carga: ""
-        });
-      } else {
-        limits.push(N);
-        treino.exercicios.push({
-          id: `ex_${Date.now()}_${Math.random()}`,
-          nome: "",
-          categoria: "Forca",
-          series: "",
-          reps: "",
-          carga: ""
-        });
-      }
+    if (limits.length === 0) {
+      limits = [0];
     }
+
+    const lastLimit = limits[limits.length - 1];
+    if (N < lastLimit) {
+      limits[limits.length - 1] = N;
+    } else {
+      limits.push(N);
+    }
+
+    treino.exercicios.push({
+      id: `ex_${Date.now()}_${Math.random()}`,
+      nome: "",
+      categoria: "Forca",
+      series: "3",
+      reps: "10",
+      carga: "-"
+    });
 
     treino.limitesBlocos = limits;
     treino.bloco2Desativado = undefined;
@@ -335,17 +299,13 @@ export default function TreinosPage() {
     treino.limiteBloco1 = undefined;
     treino.limiteBloco2 = undefined;
 
-    if (!treino.ordenadoManualmente) {
-      treino.exercicios.sort((a, b) => getPesoCategoria(a.categoria) - getPesoCategoria(b.categoria));
-    }
-
     setAlunoAtual(newAluno);
   };
 
   const removerBloco = (treinoIndex: number, limitIndex: number) => {
     if(!alunoAtual) return;
-    const blockLabel = `BLOCO ${limitIndex + 2}`;
-    const targetLabel = `BLOCO ${limitIndex + 1}`;
+    const blockLabel = `BLOCO ${limitIndex + 1}`;
+    const targetLabel = limitIndex === 0 ? 'exercícios acima do bloco' : `BLOCO ${limitIndex}`;
     if (confirm(`Deseja deletar a divisão do ${blockLabel}? Todos os exercícios passarão a fazer parte do ${targetLabel}.`)) {
       const newAluno = { ...alunoAtual };
       const treino = newAluno.treinos[treinoIndex];
@@ -430,29 +390,29 @@ export default function TreinosPage() {
 
     let limits = [...getBlockLimits(treino)];
 
-    const srcCount = draggedEx + 1;
-    const destCount = dropIndex + 1;
+    const srcIndex = draggedEx;
+    const destIndex = dropIndex;
 
-    const getBlockIndex = (count: number) => {
-      let blockIndex = 0;
+    const getBlockIndex = (index: number) => {
+      let blockIndex = -1; // -1 significa acima do BLOCO 1
       for (let i = 0; i < limits.length; i++) {
-        if (count > limits[i]) {
-          blockIndex = i + 1;
+        if (index >= limits[i]) {
+          blockIndex = i;
         }
       }
       return blockIndex;
     };
 
-    const srcBlockIndex = getBlockIndex(srcCount);
-    const destBlockIndex = getBlockIndex(destCount);
+    const srcBlockIndex = getBlockIndex(srcIndex);
+    const destBlockIndex = getBlockIndex(destIndex);
 
     if (srcBlockIndex !== destBlockIndex) {
       if (srcBlockIndex < destBlockIndex) {
-        for (let i = srcBlockIndex; i < destBlockIndex; i++) {
+        for (let i = srcBlockIndex + 1; i <= destBlockIndex; i++) {
           limits[i]--;
         }
       } else if (srcBlockIndex > destBlockIndex) {
-        for (let i = destBlockIndex; i < srcBlockIndex; i++) {
+        for (let i = destBlockIndex + 1; i <= srcBlockIndex; i++) {
           limits[i]++;
         }
       }
@@ -462,7 +422,7 @@ export default function TreinosPage() {
 
     // Sanitize limits
     if (limits.length > 0) {
-      limits[0] = Math.max(1, limits[0]);
+      limits[0] = Math.max(0, limits[0]);
       for (let i = 1; i < limits.length; i++) {
         limits[i] = Math.max(limits[i - 1] + 1, limits[i]);
       }
@@ -476,7 +436,7 @@ export default function TreinosPage() {
       }
       
       limits = limits.filter((val, idx) => {
-        if (val < 1) return false;
+        if (val < 0) return false;
         if (idx > 0 && val <= limits[idx - 1]) return false;
         return true;
       });
@@ -1070,16 +1030,11 @@ export default function TreinosPage() {
                             let blockLabel = '';
                             let limitIdx = -1;
 
-                            if (exerciseCounter === 1) {
+                            const matchIdx = limits.indexOf(exerciseCounter - 1);
+                            if (matchIdx !== -1) {
                                 showBlock = true;
-                                blockLabel = 'BLOCO 1';
-                            } else {
-                                const matchIdx = limits.indexOf(exerciseCounter - 1);
-                                if (matchIdx !== -1) {
-                                    showBlock = true;
-                                    blockLabel = `BLOCO ${matchIdx + 2}`;
-                                    limitIdx = matchIdx;
-                                }
+                                blockLabel = `BLOCO ${matchIdx + 1}`;
+                                limitIdx = matchIdx;
                             }
 
                             return (
@@ -1110,7 +1065,7 @@ export default function TreinosPage() {
                                                         gap: '4px',
                                                         fontWeight: 'bold'
                                                     }}
-                                                    title={`Deletar ${blockLabel} e mesclar com BLOCO ${limitIdx + 1}`}
+                                                    title={`Deletar ${blockLabel} e mesclar`}
                                                 >
                                                     <Trash2 size={14} /> Deletar Bloco
                                                 </button>
@@ -1124,6 +1079,9 @@ export default function TreinosPage() {
                                       onDrop={() => handleDropExercicio(activeTab, exIdx)}
                                       style={{ display: 'flex', gap: '15px', alignItems: 'center', padding: '15px', background: draggedEx === exIdx ? 'var(--bg-hover)' : 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border-light)', cursor: 'grab', transition: 'all 0.2s' }}
                                     >
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', paddingRight: '5px', cursor: 'grab' }} title="Arraste para reposicionar">
+                                            <GripVertical size={20} />
+                                        </div>
                         
                         <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>EXERCÍCIO</label>
@@ -1435,15 +1393,10 @@ export default function TreinosPage() {
                                             let showBlock = false;
                                             let blockLabel = '';
 
-                                            if (exerciseCounter === 1) {
+                                            const matchIdx = limits.indexOf(exerciseCounter - 1);
+                                            if (matchIdx !== -1) {
                                                 showBlock = true;
-                                                blockLabel = 'BLOCO 1';
-                                            } else {
-                                                const matchIdx = limits.indexOf(exerciseCounter - 1);
-                                                if (matchIdx !== -1) {
-                                                    showBlock = true;
-                                                    blockLabel = `BLOCO ${matchIdx + 2}`;
-                                                }
+                                                blockLabel = `BLOCO ${matchIdx + 1}`;
                                             }
 
                                             return (
