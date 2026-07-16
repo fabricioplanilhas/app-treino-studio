@@ -1106,6 +1106,10 @@ export default function TreinosPage() {
                             <option value="Core">Core</option>
                             <option value="Potencia">Potência</option>
                             <option value="Forca">Força</option>
+                            <option value="ACC">ACC</option>
+                            <option value="DCC">DCC</option>
+                            <option value="OSC">OSC</option>
+                            <option value="AFSM">AFSM</option>
                             <option value="Outros">Outros</option>
                             </select>
                         </div>

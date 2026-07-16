@@ -286,6 +286,15 @@ export default function TVPage() {
 
     const limits = getBlockLimits(treino);
 
+    const getBadgeColor = (categoria: string) => {
+      const catUpper = (categoria || '').toUpperCase();
+      if (catUpper.includes('CORE')) return 'var(--cat-core)';
+      if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) return 'var(--cat-explosao)';
+      if (catUpper.includes('FORC') || catUpper.includes('FORÇ')) return 'var(--cat-forca)';
+      if (catUpper.includes('ACC') || catUpper.includes('DCC') || catUpper.includes('OSC') || catUpper.includes('AFSM')) return 'var(--cat-forca)';
+      return 'var(--text-secondary)';
+    };
+
     const groups: { label: string | null, exercises: Exercicio[] }[] = [];
     let currentGroup: { label: string | null, exercises: Exercicio[] } = { label: null, exercises: [] };
     
@@ -321,12 +330,7 @@ export default function TVPage() {
         {groups.map((group, gIdx) => {
           if (!group.label) {
             return group.exercises.map(ex => {
-              const catUpper = (ex.categoria || '').toUpperCase();
-              let badgeColor = 'var(--text-secondary)';
-              if (catUpper.includes('CORE')) badgeColor = 'var(--cat-core)';
-              if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) badgeColor = 'var(--cat-explosao)';
-              if (catUpper.includes('FORC') || catUpper.includes('FORÇ')) badgeColor = 'var(--cat-forca)';
-              
+              const badgeColor = getBadgeColor(ex.categoria);
               return (
                 <div key={ex.id}>
                   {renderExercicioRow(aluno, treino, ex, badgeColor, false)}
@@ -341,12 +345,7 @@ export default function TVPage() {
                 {group.label}
               </div>
               {group.exercises.map((ex, i) => {
-                const catUpper = (ex.categoria || '').toUpperCase();
-                let badgeColor = 'var(--text-secondary)';
-                if (catUpper.includes('CORE')) badgeColor = 'var(--cat-core)';
-                if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) badgeColor = 'var(--cat-explosao)';
-                if (catUpper.includes('FORC') || catUpper.includes('FORÇ')) badgeColor = 'var(--cat-forca)';
-
+                const badgeColor = getBadgeColor(ex.categoria);
                 return (
                   <div key={ex.id}>
                     {renderExercicioRow(aluno, treino, ex, badgeColor, i === group.exercises.length - 1)}
