@@ -18,7 +18,7 @@ export type Exercicio = {
   historicoCargas?: RegistroCarga[];
 };
 
-export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataStr?: string) {
+export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataStr?: string, dataFichaStr?: string) {
   const cargaClean = (novaCarga || '').trim();
   if (!cargaClean || cargaClean === '-') return;
 
@@ -26,6 +26,17 @@ export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataSt
 
   if (!ex.historicoCargas) {
     ex.historicoCargas = [];
+  }
+
+  if (ex.historicoCargas.length === 0) {
+    const cargaAntiga = (ex.carga || '').trim();
+    if (cargaAntiga && cargaAntiga !== '-' && cargaAntiga !== cargaClean) {
+      const dataInicial = dataFichaStr || 'Ficha Inicial';
+      ex.historicoCargas.push({
+        data: dataInicial,
+        carga: cargaAntiga
+      });
+    }
   }
 
   const ultimoRegistro = ex.historicoCargas[ex.historicoCargas.length - 1];
@@ -36,17 +47,32 @@ export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataSt
       carga: cargaClean
     });
   } else if (ultimoRegistro.carga.trim() !== cargaClean) {
-    if (ultimoRegistro.data === hoje) {
-      ultimoRegistro.carga = cargaClean;
-    } else {
-      ex.historicoCargas.push({
-        data: hoje,
-        carga: cargaClean
-      });
-    }
+    ex.historicoCargas.push({
+      data: hoje,
+      carga: cargaClean
+    });
   }
 
   ex.carga = cargaClean;
+}
+
+export function garantirHistoricoCargasAluno(aluno: Aluno) {
+  if (!aluno || !aluno.treinos) return;
+  const dataFicha = aluno.dataFichaAtual || new Date().toLocaleDateString('pt-BR');
+
+  aluno.treinos.forEach(t => {
+    t.exercicios.forEach(ex => {
+      const cargaClean = (ex.carga || '').trim();
+      if (!cargaClean || cargaClean === '-') return;
+
+      if (!ex.historicoCargas || ex.historicoCargas.length === 0) {
+        ex.historicoCargas = [{
+          data: dataFicha,
+          carga: cargaClean
+        }];
+      }
+    });
+  });
 }
 
 export type ProtocoloBike = {

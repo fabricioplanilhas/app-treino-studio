@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino, registrarEvolucaoCargas } from "@/lib/mockData";
+import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino, registrarEvolucaoCargas, garantirHistoricoCargasAluno } from "@/lib/mockData";
 import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical, ChevronUp, ChevronDown, FileText, TrendingUp, Printer, Download, Award, Calendar, Dumbbell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -446,14 +446,14 @@ export default function TreinosPage() {
       // Busca o aluno completo do Supabase (para obter as versoes_anteriores que foram omitidas na listagem inicial)
       try {
         const fullAluno = await mockDb.getAlunoById(id);
-        if (fullAluno) {
-          setAlunoAtual(fullAluno);
-        } else {
-          setAlunoAtual(JSON.parse(JSON.stringify(aluno)));
-        }
+        const target = fullAluno || JSON.parse(JSON.stringify(aluno));
+        garantirHistoricoCargasAluno(target);
+        setAlunoAtual(target);
       } catch (err) {
         console.error("Erro ao buscar detalhes do aluno:", err);
-        setAlunoAtual(JSON.parse(JSON.stringify(aluno)));
+        const target = JSON.parse(JSON.stringify(aluno));
+        garantirHistoricoCargasAluno(target);
+        setAlunoAtual(target);
       }
       setActiveTab(0);
     } else {
@@ -478,6 +478,7 @@ export default function TreinosPage() {
 
   const saveAluno = async () => {
     if(alunoAtual) {
+      garantirHistoricoCargasAluno(alunoAtual);
       await mockDb.saveAluno(alunoAtual);
       // Atualiza a lista master
       const updated = await mockDb.getAlunos();
@@ -529,7 +530,7 @@ export default function TreinosPage() {
 
     const ex = treino.exercicios[exIndex];
     if (field === 'carga') {
-      registrarEvolucaoCargas(ex, value);
+      registrarEvolucaoCargas(ex, value, undefined, alunoAtual.dataFichaAtual);
     } else {
       (ex as any)[field] = value;
     }
