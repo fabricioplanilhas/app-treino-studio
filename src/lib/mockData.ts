@@ -351,6 +351,19 @@ export const mockDb = {
       optimized.versoesAnteriores = optimized.versoesAnteriores.slice(-8);
     }
 
+    // Limita o histórico de cargas por exercício a no máximo 20 registros para otimizar o banco Supabase Free
+    if (optimized.treinos) {
+      optimized.treinos.forEach(t => {
+        t.exercicios.forEach(ex => {
+          if (ex.historicoCargas && ex.historicoCargas.length > 20) {
+            const inicial = ex.historicoCargas[0];
+            const recentes = ex.historicoCargas.slice(-19);
+            ex.historicoCargas = [inicial, ...recentes];
+          }
+        });
+      });
+    }
+
     const { error } = await supabase
       .from('alunos')
       .upsert(alunoToRow(optimized), { onConflict: 'id' });
