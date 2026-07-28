@@ -1,9 +1,312 @@
 "use client";
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino } from "@/lib/mockData";
-import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical, ChevronUp, ChevronDown, FileText, TrendingUp, Printer, Download, Award, Calendar, Dumbbell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+function parseCargaNumeric(cargaStr: string | undefined): number | null {
+  if (!cargaStr) return null;
+  const str = cargaStr.trim();
+  if (str === '-' || str === '' || str.toUpperCase() === 'P.C') return null;
+  const match = str.replace(',', '.').match(/\d+(\.\d+)?/);
+  if (match) {
+    const val = parseFloat(match[0]);
+    return isNaN(val) ? null : val;
+  }
+  return null;
+}
+
+type ItemProgressoCarga = {
+  nomeExercicio: string;
+  categoria: string;
+  cargaInicial: string;
+  numericInicial: number | null;
+  dataInicial: string;
+  faseInicial: string;
+  cargaAtual: string;
+  numericAtual: number | null;
+  faseAtual: string;
+  diffKg: number | null;
+  percentualGanha: number | null;
+  historicoVersoes: {
+    faseLabel: string;
+    data: string;
+    carga: string;
+    numeric: number | null;
+  }[];
+};
+
+type DadosProgressoAluno = {
+  dataPrimeiroTreino: string;
+  totalPresencas: number;
+  totalFichas: number;
+  faseAtual: string;
+  itens: ItemProgressoCarga[];
+  destaques: ItemProgressoCarga[];
+  fichasLinhaTempo: {
+    id: string;
+    label: string;
+    fase: string;
+    dataInicio: string;
+    dataTermino?: string;
+    isAtual: boolean;
+    treinos: Treino[];
+  }[];
+};
+
+const getDadosProgressoAluno = (aluno: Aluno | null): DadosProgressoAluno | null => {
+  if (!aluno) return null;
+
+  const fichasLinhaTempo: {
+    id: string;
+    label: string;
+    fase: string;
+    dataInicio: string;
+    dataTermino?: string;
+    isAtual: boolean;
+    treinos: Treino[];
+  }[] = [];
+
+  if (aluno.versoesAnteriores && aluno.versoesAnteriores.length > 0) {
+    aluno.versoesAnteriores.forEach((v, idx) => {
+      fichasLinhaTempo.push({
+        id: v.id || `v_${idx}`,
+        label: `1ª Ficha ${idx > 0 ? `(${idx + 1}ª Versão)` : '(Inicial)'}`,
+        fase: v.faseTreinamento || `Fase ${idx + 1}`,
+        dataInicio: v.dataInicio || 'Data inicial',
+        dataTermino: v.dataTermino || 'Concluída',
+        isAtual: false,
+        treinos: v.treinos || []
+      });
+    });
+  }
+
+  const dataAtualStr = aluno.dataFichaAtual || new Date().toLocaleDateString('pt-BR');
+  fichasLinhaTempo.push({
+    id: 'atual',
+    label: fichasLinhaTempo.length === 0 ? 'Ficha Inicial (Atual)' : `Ficha Atual (${fichasLinhaTempo.length + 1}ª Ficha)`,
+    fase: aluno.faseTreinamento || 'Fase Atual',
+    dataInicio: dataAtualStr,
+    dataTermino: 'Em andamento',
+    isAtual: true,
+    treinos: aluno.treinos || []
+  });
+
+  const dataPrimeiroTreino = fichasLinhaTempo[0]?.dataInicio || (aluno.historico && aluno.historico.length > 0 ? aluno.historico[0].data : dataAtualStr);
+  const totalPresencas = aluno.historico ? aluno.historico.length : 0;
+  const totalFichas = fichasLinhaTempo.length;
+  const faseAtual = aluno.faseTreinamento || 'Fase Atual';
+
+  const exerciciosMap = new Map<string, {
+    nomeOriginal: string;
+    categoria: string;
+    versoesMap: Map<string, { carga: string; numeric: number | null; faseLabel: string; data: string }>;
+  }>();
+
+  fichasLinhaTempo.forEach((ficha) => {
+    ficha.treinos.forEach((tr) => {
+      tr.exercicios.forEach((ex) => {
+        const nomeClean = ex.nome.trim();
+        if (!nomeClean) return;
+        const key = nomeClean.toUpperCase();
+
+        if (!exerciciosMap.has(key)) {
+          exerciciosMap.set(key, {
+            nomeOriginal: nomeClean,
+            categoria: ex.categoria || 'Geral',
+            versoesMap: new Map()
+          });
+        }
+
+        const exInfo = exerciciosMap.get(key)!;
+        const cargaStr = (ex.carga || '').trim();
+        const numVal = parseCargaNumeric(cargaStr);
+
+        if (cargaStr && cargaStr !== '-') {
+          exInfo.versoesMap.set(ficha.id, {
+            carga: cargaStr,
+            numeric: numVal,
+            faseLabel: ficha.label,
+            data: ficha.dataInicio
+          });
+        }
+      });
+    });
+  });
+
+  const itens: ItemProgressoCarga[] = [];
+
+  exerciciosMap.forEach((info) => {
+    const historicoVersoes: { faseLabel: string; data: string; carga: string; numeric: number | null }[] = [];
+
+    fichasLinhaTempo.forEach((ficha) => {
+      if (info.versoesMap.has(ficha.id)) {
+        const item = info.versoesMap.get(ficha.id)!;
+        historicoVersoes.push({
+          faseLabel: ficha.label,
+          data: item.data,
+          carga: item.carga,
+          numeric: item.numeric
+        });
+      }
+    });
+
+    if (historicoVersoes.length === 0) return;
+
+    const inicial = historicoVersoes[0];
+    const atual = historicoVersoes[historicoVersoes.length - 1];
+
+    let diffKg: number | null = null;
+    let percentualGanha: number | null = null;
+
+    if (inicial.numeric !== null && atual.numeric !== null) {
+      diffKg = parseFloat((atual.numeric - inicial.numeric).toFixed(1));
+      if (inicial.numeric > 0) {
+        percentualGanha = parseFloat((((atual.numeric - inicial.numeric) / inicial.numeric) * 100).toFixed(1));
+      }
+    }
+
+    itens.push({
+      nomeExercicio: info.nomeOriginal,
+      categoria: info.categoria,
+      cargaInicial: inicial.carga,
+      numericInicial: inicial.numeric,
+      dataInicial: inicial.data,
+      faseInicial: inicial.faseLabel,
+      cargaAtual: atual.carga,
+      numericAtual: atual.numeric,
+      faseAtual: atual.faseLabel,
+      diffKg,
+      percentualGanha,
+      historicoVersoes
+    });
+  });
+
+  itens.sort((a, b) => {
+    if (a.percentualGanha !== null && b.percentualGanha !== null) {
+      return b.percentualGanha - a.percentualGanha;
+    }
+    if (a.diffKg !== null && b.diffKg !== null) {
+      return b.diffKg - a.diffKg;
+    }
+    if (a.percentualGanha !== null) return -1;
+    if (b.percentualGanha !== null) return 1;
+    return a.nomeExercicio.localeCompare(b.nomeExercicio);
+  });
+
+  const destaques = itens.filter(i => (i.diffKg !== null && i.diffKg > 0) || (i.percentualGanha !== null && i.percentualGanha > 0)).slice(0, 4);
+
+  return {
+    dataPrimeiroTreino,
+    totalPresencas,
+    totalFichas,
+    faseAtual,
+    itens,
+    destaques,
+    fichasLinhaTempo
+  };
+};
+
+const gerarPdfRelatorio = (aluno: Aluno, dados: DadosProgressoAluno) => {
+  const doc = new jsPDF();
+  const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+  doc.setFontSize(20);
+  doc.setTextColor(30, 41, 59);
+  doc.text(`Relatorio de Progresso do Aluno`, 14, 20);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Estudio de Treinamento - Emissao em ${dataHoje}`, 14, 26);
+
+  doc.setFillColor(241, 245, 249);
+  doc.roundedRect(14, 32, 182, 28, 3, 3, 'F');
+
+  doc.setFontSize(13);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`Aluno(a): ${aluno.nome.toUpperCase()}`, 20, 42);
+
+  doc.setFontSize(9.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Primeiro Treino: ${dados.dataPrimeiroTreino}   |   Presencas Concluidas: ${dados.totalPresencas} treinos`, 20, 49);
+  doc.text(`Fases Percorridas: ${dados.totalFichas} ficha(s)   |   Fase Atual: ${dados.faseAtual}`, 20, 55);
+
+  let y = 68;
+
+  if (dados.destaques.length > 0) {
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`Destaques de Evolucao de Carga`, 14, y);
+    y += 4;
+
+    const bodyDestaques = dados.destaques.map(d => [
+      d.nomeExercicio,
+      d.cargaInicial,
+      d.cargaAtual,
+      d.diffKg !== null && d.diffKg > 0
+        ? `+${d.diffKg} kg ${d.percentualGanha ? `(+${d.percentualGanha.toFixed(0)}%)` : ''}`
+        : 'Evolucao Registrada'
+    ]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Exercicio', 'Carga Inicial', 'Carga Atual', 'Evolucao Total']],
+      body: bodyDestaques,
+      theme: 'grid',
+      headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9.5, cellPadding: 4 }
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
+
+  doc.setFontSize(12);
+  doc.setTextColor(30, 41, 59);
+  doc.text(`Historico Completo de Cargas por Exercicio`, 14, y);
+  y += 4;
+
+  const bodyGeral = dados.itens.map(d => {
+    let evolucaoStr = 'Estavel';
+    if (d.diffKg !== null) {
+      const sinal = d.diffKg > 0 ? '+' : '';
+      const pctStr = d.percentualGanha !== null ? ` (${sinal}${d.percentualGanha.toFixed(0)}%)` : '';
+      evolucaoStr = `${sinal}${d.diffKg} kg${pctStr}`;
+    } else if (d.cargaInicial !== d.cargaAtual) {
+      evolucaoStr = `${d.cargaInicial} -> ${d.cargaAtual}`;
+    }
+
+    const historicoStr = d.historicoVersoes.map(h => `${h.faseLabel}: ${h.carga}`).join('\n');
+
+    return [
+      d.nomeExercicio,
+      d.cargaInicial,
+      d.cargaAtual,
+      evolucaoStr,
+      historicoStr
+    ];
+  });
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Exercicio', '1a Ficha', 'Carga Atual', 'Evolucao', 'Evolucao por Ficha']],
+    body: bodyGeral,
+    theme: 'striped',
+    headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
+    styles: { fontSize: 9, cellPadding: 3 },
+    columnStyles: {
+      0: { cellWidth: 42 },
+      1: { cellWidth: 24 },
+      2: { cellWidth: 24 },
+      3: { cellWidth: 32 },
+      4: { cellWidth: 'auto' }
+    }
+  });
+
+  doc.save(`Relatorio_Progresso_${aluno.nome.replace(/\s+/g, '_')}.pdf`);
+};
 
 const getProgressoTreinos = (aluno: Aluno | null) => {
   if (!aluno) {
@@ -94,6 +397,7 @@ export default function TreinosPage() {
   const [loading, setLoading] = useState(true);
   const [basesCustom, setBasesCustom] = useState<BaseTreino[]>([]);
   const [showBasesModal, setShowBasesModal] = useState(false);
+  const [showRelatorioModal, setShowRelatorioModal] = useState(false);
   const [semanasInput, setSemanasInput] = useState<string>("");
 
   useEffect(() => {
@@ -666,9 +970,18 @@ export default function TreinosPage() {
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {alunoAtual && (
-            <button onClick={handleLixeira} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
-              <Trash2 size={20} /> Excluir Aluno
-            </button>
+            <>
+              <button 
+                onClick={() => setShowRelatorioModal(true)} 
+                className="premium-btn" 
+                style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <FileText size={20} /> Relatório de Progresso
+              </button>
+              <button onClick={handleLixeira} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
+                <Trash2 size={20} /> Excluir Aluno
+              </button>
+            </>
           )}
           <button onClick={saveAluno} className="premium-btn">
             <Save size={20} /> Salvar Ficha do Aluno
@@ -881,6 +1194,14 @@ export default function TreinosPage() {
                   <div style={{ marginTop: '15px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                     Data de início desta ficha: <strong>{progresso.dataRefStr}</strong>
                   </div>
+
+                  <button 
+                    onClick={() => setShowRelatorioModal(true)}
+                    className="premium-btn"
+                    style={{ marginTop: '15px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff' }}
+                  >
+                    <TrendingUp size={18} /> Gerar Relatório de Progresso para Pais
+                  </button>
                 </div>
 
                 {/* Lado Direito: Histórico */}
@@ -1660,6 +1981,254 @@ export default function TreinosPage() {
               </div>
           </div>
       )}
+
+      {/* MODAL DE RELATÓRIO DE PROGRESSO */}
+      {showRelatorioModal && alunoAtual && (() => {
+        const dados = getDadosProgressoAluno(alunoAtual);
+        if (!dados) return null;
+
+        return (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '20px'
+          }}>
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #relatorio-print-area, #relatorio-print-area * {
+                  visibility: visible !important;
+                }
+                #relatorio-print-area {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  background: #ffffff !important;
+                  color: #000000 !important;
+                  padding: 20px !important;
+                  box-shadow: none !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+              }
+            `}</style>
+
+            <div style={{
+              background: 'var(--bg-card)', width: '100%', maxWidth: '950px', maxHeight: '90vh',
+              borderRadius: '16px', border: '1px solid var(--border-light)', overflow: 'hidden',
+              display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)'
+            }}>
+              {/* Barra de Ações Topo (no-print) */}
+              <div className="no-print" style={{
+                padding: '16px 24px', borderBottom: '1px solid var(--border-medium)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                background: 'var(--bg-main)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ background: '#2563eb', padding: '8px', borderRadius: '8px', color: '#fff', display: 'flex' }}>
+                    <TrendingUp size={22} />
+                  </div>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Relatório de Progresso de Cargas
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      Acompanhamento completo desde o primeiro treino para os pais
+                    </p>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    onClick={() => gerarPdfRelatorio(alunoAtual, dados)}
+                    className="premium-btn-outline"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', padding: '8px 14px' }}
+                  >
+                    <Download size={16} /> Baixar PDF
+                  </button>
+
+                  <button
+                    onClick={() => window.print()}
+                    className="premium-btn"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', padding: '8px 14px', background: '#2563eb' }}
+                  >
+                    <Printer size={16} /> Imprimir
+                  </button>
+
+                  <button
+                    onClick={() => setShowRelatorioModal(false)}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '6px' }}
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Conteúdo Imprimível do Relatório */}
+              <div id="relatorio-print-area" style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--bg-card)' }}>
+                {/* Cabeçalho do Aluno */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px',
+                  padding: '24px', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(59,130,246,0.02) 100%)',
+                  border: '1px solid rgba(37,99,235,0.2)', marginBottom: '24px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {alunoAtual.foto ? (
+                      <img src={alunoAtual.foto} alt={alunoAtual.nome} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563eb' }} />
+                    ) : (
+                      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 'bold' }}>
+                        {alunoAtual.nome.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h1 style={{ margin: '0 0 4px 0', fontSize: '1.6rem', color: 'var(--text-primary)' }}>{alunoAtual.nome}</h1>
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        <span>📅 1º Treino: <strong>{dados.dataPrimeiroTreino}</strong></span>
+                        <span>⚡ Fase Atual: <strong>{dados.faseAtual}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ padding: '10px 16px', background: 'var(--bg-main)', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2563eb' }}>{dados.totalPresencas}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>TREINOS CONCLUÍDOS</div>
+                    </div>
+                    <div style={{ padding: '10px 16px', background: 'var(--bg-main)', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>{dados.totalFichas}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>FICHAS/FASES</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Destaques de Maior Evolução */}
+                {dados.destaques.length > 0 && (
+                  <div style={{ marginBottom: '28px' }}>
+                    <h3 style={{ margin: '0 0 14px 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Sparkles size={20} style={{ color: '#eab308' }} /> Destaques de Evolução de Carga
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                      {dados.destaques.map((item, idx) => (
+                        <div key={idx} style={{
+                          padding: '16px', borderRadius: '12px', background: 'var(--bg-main)',
+                          border: '1px solid var(--border-light)', position: 'relative', overflow: 'hidden'
+                        }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
+                            {item.categoria}
+                          </div>
+                          <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '10px' }}>
+                            {item.nomeExercicio}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{item.cargaInicial}</span>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>{item.cargaAtual}</span>
+                            {item.diffKg !== null && item.diffKg > 0 && (
+                              <span style={{ marginLeft: 'auto', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                                +{item.diffKg} kg {item.percentualGanha ? `(+${item.percentualGanha.toFixed(0)}%)` : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tabela de Evolução Completa */}
+                <div style={{ marginBottom: '28px' }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Dumbbell size={20} style={{ color: '#2563eb' }} /> Histórico de Cargas por Exercício
+                  </h3>
+
+                  {dados.itens.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Nenhum exercício com carga registrada ainda.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto', border: '1px solid var(--border-light)', borderRadius: '12px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--bg-main)', borderBottom: '1px solid var(--border-medium)', textAlign: 'left' }}>
+                            <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 700 }}>EXERCÍCIO</th>
+                            <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 700 }}>1ª FICHA ({dados.dataPrimeiroTreino})</th>
+                            <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 700 }}>FICHA ATUAL</th>
+                            <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 700 }}>EVOLUÇÃO</th>
+                            <th style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontWeight: 700 }}>LINHA DO TEMPO</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dados.itens.map((item, idx) => (
+                            <tr key={idx} style={{ borderBottom: idx < dados.itens.length - 1 ? '1px solid var(--border-light)' : 'none', background: idx % 2 === 0 ? 'transparent' : 'var(--bg-main)' }}>
+                              <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                {item.nomeExercicio}
+                                <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>{item.categoria}</span>
+                              </td>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>
+                                <span style={{ background: 'var(--bg-main)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-light)', fontWeight: 600 }}>
+                                  {item.cargaInicial}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 700 }}>
+                                <span style={{ background: 'rgba(37,99,235,0.1)', color: '#2563eb', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                                  {item.cargaAtual}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 16px' }}>
+                                {item.diffKg !== null ? (
+                                  <span style={{
+                                    fontWeight: 800, fontSize: '0.85rem', padding: '3px 8px', borderRadius: '12px',
+                                    background: item.diffKg > 0 ? '#dcfce7' : item.diffKg < 0 ? '#fee2e2' : 'var(--bg-main)',
+                                    color: item.diffKg > 0 ? '#15803d' : item.diffKg < 0 ? '#b91c1c' : 'var(--text-muted)'
+                                  }}>
+                                    {item.diffKg > 0 ? `+${item.diffKg} kg` : `${item.diffKg} kg`}
+                                    {item.percentualGanha !== null && item.percentualGanha > 0 ? ` (+${item.percentualGanha.toFixed(0)}%)` : ''}
+                                  </span>
+                                ) : item.cargaInicial !== item.cargaAtual ? (
+                                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#2563eb' }}>
+                                    {item.cargaInicial} ➔ {item.cargaAtual}
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Estável</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px 16px' }}>
+                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  {item.historicoVersoes.map((h, hIdx) => (
+                                    <span key={hIdx} style={{
+                                      fontSize: '0.75rem', padding: '2px 6px', borderRadius: '4px',
+                                      background: 'var(--bg-main)', border: '1px solid var(--border-medium)',
+                                      color: 'var(--text-secondary)'
+                                    }}>
+                                      <strong>{h.faseLabel.split(' ')[0]}:</strong> {h.carga}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rodapé Profissional para Impressão */}
+                <div style={{
+                  marginTop: '30px', paddingTop: '16px', borderTop: '1px solid var(--border-medium)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  fontSize: '0.8rem', color: 'var(--text-muted)'
+                }}>
+                  <div>Acompanhamento Individual de Cargas • Studio de Treinamento</div>
+                  <div>Relatório gerado em {new Date().toLocaleDateString('pt-BR')}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
