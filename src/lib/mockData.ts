@@ -2,6 +2,11 @@ import { supabase } from './supabaseClient';
 
 export type CategoriaExercicio = 'Core' | 'Potencia' | 'Forca' | 'Outros';
 
+export type RegistroCarga = {
+  data: string;
+  carga: string;
+};
+
 export type Exercicio = {
   id: string;
   nome: string;
@@ -10,7 +15,39 @@ export type Exercicio = {
   reps: string;
   carga: string;
   limitesBlocos?: number[];
+  historicoCargas?: RegistroCarga[];
 };
+
+export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataStr?: string) {
+  const cargaClean = (novaCarga || '').trim();
+  if (!cargaClean || cargaClean === '-') return;
+
+  const hoje = dataStr || new Date().toLocaleDateString('pt-BR');
+
+  if (!ex.historicoCargas) {
+    ex.historicoCargas = [];
+  }
+
+  const ultimoRegistro = ex.historicoCargas[ex.historicoCargas.length - 1];
+
+  if (!ultimoRegistro) {
+    ex.historicoCargas.push({
+      data: hoje,
+      carga: cargaClean
+    });
+  } else if (ultimoRegistro.carga.trim() !== cargaClean) {
+    if (ultimoRegistro.data === hoje) {
+      ultimoRegistro.carga = cargaClean;
+    } else {
+      ex.historicoCargas.push({
+        data: hoje,
+        carga: cargaClean
+      });
+    }
+  }
+
+  ex.carga = cargaClean;
+}
 
 export type ProtocoloBike = {
   ativo: boolean;
@@ -428,7 +465,11 @@ export const mockDb = {
     const ex = treino.exercicios.find((e: Exercicio) => e.id === exercicioId);
     if (!ex) return false;
 
-    ex[campo] = valor;
+    if (campo === 'carga') {
+      registrarEvolucaoCargas(ex, valor);
+    } else {
+      ex[campo] = valor;
+    }
 
     await mockDb.saveAluno(aluno);
     return true;

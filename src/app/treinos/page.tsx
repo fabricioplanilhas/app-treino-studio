@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino } from "@/lib/mockData";
+import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino, registrarEvolucaoCargas } from "@/lib/mockData";
 import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical, ChevronUp, ChevronDown, FileText, TrendingUp, Printer, Download, Award, Calendar, Dumbbell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -103,7 +103,7 @@ const getDadosProgressoAluno = (aluno: Aluno | null): DadosProgressoAluno | null
   const exerciciosMap = new Map<string, {
     nomeOriginal: string;
     categoria: string;
-    versoesMap: Map<string, { carga: string; numeric: number | null; faseLabel: string; data: string }>;
+    pontosCarga: { faseLabel: string; data: string; carga: string; numeric: number | null }[];
   }>();
 
   fichasLinhaTempo.forEach((ficha) => {
@@ -117,21 +117,42 @@ const getDadosProgressoAluno = (aluno: Aluno | null): DadosProgressoAluno | null
           exerciciosMap.set(key, {
             nomeOriginal: nomeClean,
             categoria: ex.categoria || 'Geral',
-            versoesMap: new Map()
+            pontosCarga: []
           });
         }
 
         const exInfo = exerciciosMap.get(key)!;
-        const cargaStr = (ex.carga || '').trim();
-        const numVal = parseCargaNumeric(cargaStr);
 
-        if (cargaStr && cargaStr !== '-') {
-          exInfo.versoesMap.set(ficha.id, {
-            carga: cargaStr,
-            numeric: numVal,
-            faseLabel: ficha.label,
-            data: ficha.dataInicio
+        if (ex.historicoCargas && ex.historicoCargas.length > 0) {
+          ex.historicoCargas.forEach((hc) => {
+            const num = parseCargaNumeric(hc.carga);
+            if (hc.carga && hc.carga !== '-') {
+              const jaExiste = exInfo.pontosCarga.some(p => p.data === hc.data && p.carga === hc.carga);
+              if (!jaExiste) {
+                exInfo.pontosCarga.push({
+                  faseLabel: ficha.label,
+                  data: hc.data,
+                  carga: hc.carga,
+                  numeric: num
+                });
+              }
+            }
           });
+        } else {
+          const cargaStr = (ex.carga || '').trim();
+          const numVal = parseCargaNumeric(cargaStr);
+
+          if (cargaStr && cargaStr !== '-') {
+            const jaExiste = exInfo.pontosCarga.some(p => p.faseLabel === ficha.label && p.carga === cargaStr);
+            if (!jaExiste) {
+              exInfo.pontosCarga.push({
+                faseLabel: ficha.label,
+                data: ficha.dataInicio,
+                carga: cargaStr,
+                numeric: numVal
+              });
+            }
+          }
         }
       });
     });
@@ -140,22 +161,9 @@ const getDadosProgressoAluno = (aluno: Aluno | null): DadosProgressoAluno | null
   const itens: ItemProgressoCarga[] = [];
 
   exerciciosMap.forEach((info) => {
-    const historicoVersoes: { faseLabel: string; data: string; carga: string; numeric: number | null }[] = [];
+    if (info.pontosCarga.length === 0) return;
 
-    fichasLinhaTempo.forEach((ficha) => {
-      if (info.versoesMap.has(ficha.id)) {
-        const item = info.versoesMap.get(ficha.id)!;
-        historicoVersoes.push({
-          faseLabel: ficha.label,
-          data: item.data,
-          carga: item.carga,
-          numeric: item.numeric
-        });
-      }
-    });
-
-    if (historicoVersoes.length === 0) return;
-
+    const historicoVersoes = info.pontosCarga;
     const inicial = historicoVersoes[0];
     const atual = historicoVersoes[historicoVersoes.length - 1];
 
@@ -519,10 +527,12 @@ export default function TreinosPage() {
       treino.limiteBloco2 = undefined;
     }
 
-    treino.exercicios[exIndex] = {
-      ...treino.exercicios[exIndex],
-      [field]: value
-    };
+    const ex = treino.exercicios[exIndex];
+    if (field === 'carga') {
+      registrarEvolucaoCargas(ex, value);
+    } else {
+      (ex as any)[field] = value;
+    }
     
     setAlunoAtual(newAluno);
   };
