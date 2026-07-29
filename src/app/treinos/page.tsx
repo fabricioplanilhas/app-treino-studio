@@ -1568,7 +1568,7 @@ export default function TreinosPage() {
                         <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>EXERCÍCIO</label>
                             <input 
-                            value={ex.nome} 
+                            value={ex.nome ?? ''} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'nome', e.target.value)}
                             placeholder="Nome do exercício"
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-card)' }}
@@ -1578,7 +1578,7 @@ export default function TreinosPage() {
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>CATEGORIA</label>
                             <select 
-                            value={ex.categoria} 
+                            value={ex.categoria ?? 'Outros'} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'categoria', e.target.value)}
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', background: 'white' }}
                             >
@@ -1596,7 +1596,7 @@ export default function TreinosPage() {
                         <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>CARGA</label>
                             <input 
-                            value={ex.carga} 
+                            value={ex.carga ?? ''} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'carga', e.target.value)}
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
                             />
@@ -1605,7 +1605,7 @@ export default function TreinosPage() {
                         <div style={{ width: '80px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>REPS</label>
                             <input 
-                            value={ex.reps} 
+                            value={ex.reps ?? ''} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'reps', e.target.value)}
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
                             />
@@ -1614,7 +1614,7 @@ export default function TreinosPage() {
                         <div style={{ width: '80px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>SÉRIES</label>
                             <input 
-                            value={ex.series} 
+                            value={ex.series ?? ''} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'series', e.target.value)}
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
                             />

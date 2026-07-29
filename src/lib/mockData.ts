@@ -19,6 +19,9 @@ export type Exercicio = {
 };
 
 export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataStr?: string, dataFichaStr?: string) {
+  const cargaAntiga = (ex.carga || '').trim();
+  ex.carga = novaCarga;
+
   const cargaClean = (novaCarga || '').trim();
   if (!cargaClean || cargaClean === '-') return;
 
@@ -29,7 +32,6 @@ export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataSt
   }
 
   if (ex.historicoCargas.length === 0) {
-    const cargaAntiga = (ex.carga || '').trim();
     if (cargaAntiga && cargaAntiga !== '-' && cargaAntiga !== cargaClean) {
       const dataInicial = dataFichaStr || 'Ficha Inicial';
       ex.historicoCargas.push({
@@ -52,8 +54,6 @@ export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataSt
       carga: cargaClean
     });
   }
-
-  ex.carga = cargaClean;
 }
 
 export function garantirHistoricoCargasAluno(aluno: Aluno) {
