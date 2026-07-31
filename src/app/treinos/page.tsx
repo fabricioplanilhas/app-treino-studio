@@ -1763,17 +1763,22 @@ export default function TreinosPage() {
                                       style={{ display: 'flex', gap: '15px', alignItems: 'center', padding: '15px', background: draggedEx === exIdx ? 'var(--bg-hover)' : 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border-light)', cursor: 'grab', transition: 'all 0.2s' }}
                                     >
                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', paddingRight: '5px' }}>
-                                             <button 
-                                                 onClick={(e) => {
-                                                     e.stopPropagation();
-                                                     moverExercicio(activeTab, exIdx, 'up');
-                                                 }}
-                                                 disabled={exIdx === 0}
-                                                 style={{ background: 'transparent', border: 'none', padding: '2px', cursor: exIdx === 0 ? 'not-allowed' : 'pointer', color: exIdx === 0 ? 'var(--border-medium)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                 title="Mover para cima"
-                                             >
-                                                 <ChevronUp size={16} />
-                                             </button>
+                                             {(() => {
+                                              const canMoveUp = exIdx > 0 || (exIdx === 0 && limits.length > 0 && limits[0] === 0);
+                                              return (
+                                                  <button 
+                                                      onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          moverExercicio(activeTab, exIdx, 'up');
+                                                      }}
+                                                      disabled={!canMoveUp}
+                                                      style={{ background: 'transparent', border: 'none', padding: '2px', cursor: !canMoveUp ? 'not-allowed' : 'pointer', color: !canMoveUp ? 'var(--border-medium)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                      title="Mover para cima"
+                                                  >
+                                                      <ChevronUp size={16} />
+                                                  </button>
+                                              );
+                                          })()}
                                              <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Arraste para reposicionar">
                                                  <GripVertical size={16} />
                                              </div>
