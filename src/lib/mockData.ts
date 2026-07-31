@@ -185,7 +185,7 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   "Introdutório Adulto B": [],
   "Introdutório Adulto C": [],
   "Introdutório Atleta A": [
-    { id: 'mod_ita_1', nome: 'PRANCHA FRONTAL', categoria: 'Core', series: '2', reps: '35"', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_ita_1', nome: 'PRANCHA FRONTAL', categoria: 'Core', series: '2', reps: '35"', carga: '-', limitesBlocos: [5, 8] },
     { id: 'mod_ita_2', nome: 'PRANCHA LAT', categoria: 'Core', series: '2', reps: '35"', carga: '-' },
     { id: 'mod_ita_3', nome: 'AGACHA SALTA STOP', categoria: 'Potencia', series: '2', reps: '10', carga: '-' },
     { id: 'mod_ita_4', nome: 'BOLA LAT SMJ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
@@ -197,7 +197,7 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
     { id: 'mod_ita_10', nome: '1DB PRESSÃO VERT SMJ', categoria: 'Forca', series: '2', reps: '8', carga: '-' }
   ],
   "Introdutório Atleta B": [
-    { id: 'mod_itb_1', nome: 'MATA MOSQUITO', categoria: 'Core', series: '2', reps: '8/8', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_itb_1', nome: 'MATA MOSQUITO', categoria: 'Core', series: '2', reps: '8/8', carga: '-', limitesBlocos: [5, 8] },
     { id: 'mod_itb_2', nome: 'LIFT BAND SMJ', categoria: 'Core', series: '2', reps: '8/8', carga: '-' },
     { id: 'mod_itb_3', nome: 'IMPULSO LATERAL', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
     { id: 'mod_itb_4', nome: 'BOLA BAND SMJ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
@@ -210,7 +210,7 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   ],
   "Introdutório Atleta C": [],
   "Fase 2 Atleta A": [
-    { id: 'mod_f2a_1', nome: 'ROOL OUT BOLA', categoria: 'Core', series: '2', reps: '10', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_f2a_1', nome: 'ROOL OUT BOLA', categoria: 'Core', series: '2', reps: '10', carga: '-', limitesBlocos: [5, 8] },
     { id: 'mod_f2a_2', nome: 'PRANCHA LATERAL ELEVADA', categoria: 'Core', series: '2', reps: '10', carga: '-' },
     { id: 'mod_f2a_3', nome: 'AGACHA E SALTO STOP COM PESO', categoria: 'Potencia', series: '2', reps: '8', carga: '-' },
     { id: 'mod_f2a_4', nome: 'BOLA LATERAL EM PÉ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
@@ -222,7 +222,7 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
     { id: 'mod_f2a_10', nome: '1DB PRESSÃO VERTICAL', categoria: 'Forca', series: '2', reps: '3-4', carga: '-' }
   ],
   "Fase 2 Atleta B": [
-    { id: 'mod_f2b_1', nome: 'MATA BARATA', categoria: 'Core', series: '2', reps: '10/10', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_f2b_1', nome: 'MATA BARATA', categoria: 'Core', series: '2', reps: '10/10', carga: '-', limitesBlocos: [5, 8] },
     { id: 'mod_f2b_2', nome: 'LIFT BAND EM PÉ', categoria: 'Core', series: '2', reps: '10/10', carga: '-' },
     { id: 'mod_f2b_3', nome: 'ARRANQUE DB', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
     { id: 'mod_f2b_4', nome: 'BOLA BANDEJA EM PÉ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },

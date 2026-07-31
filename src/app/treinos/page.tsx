@@ -1532,6 +1532,12 @@ export default function TreinosPage() {
                                 const modeloStr = e.target.value;
                                 if (!modeloStr) return;
                                 
+                                if (modeloStr === 'MANAGE_BASES') {
+                                    setShowBasesModal(true);
+                                    e.target.value = "";
+                                    return;
+                                }
+
                                 // Check if it's a custom base (prefixed with 'custom:')
                                 const isCustom = modeloStr.startsWith('custom:');
                                 let exerciciosParaImportar: Exercicio[] = [];
@@ -1571,7 +1577,7 @@ export default function TreinosPage() {
 
                                     // Fallback for 8+ exercise workouts: separate last 2 exercises into Bloco 2 if limits not specified
                                     if (!limitesExtras && copiados.length >= 8) {
-                                        limitesExtras = [copiados.length - 2];
+                                        limitesExtras = [5, 8];
                                     }
 
                                     copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
@@ -1596,6 +1602,7 @@ export default function TreinosPage() {
                             {basesCustom.map(base => (
                                 <option key={base.id} value={`custom:${base.id}`}>⭐ {base.nome}</option>
                             ))}
+                            <option value="MANAGE_BASES">⚙️ Gerenciar / Excluir Bases...</option>
                         </select>
                         <button 
                             onClick={async () => {
@@ -1649,16 +1656,14 @@ export default function TreinosPage() {
                         >
                             <Upload size={18} /> Salvar como Base
                         </button>
-                        {basesCustom.length > 0 && (
-                            <button 
-                                onClick={() => setShowBasesModal(true)}
-                                className="premium-btn-outline"
-                                style={{ color: '#6366f1', borderColor: '#6366f1' }}
-                                title="Gerenciar bases salvas"
-                            >
-                                <BookOpen size={18} />
-                            </button>
-                        )}
+                        <button 
+                            onClick={() => setShowBasesModal(true)}
+                            className="premium-btn-outline"
+                            style={{ color: '#6366f1', borderColor: '#6366f1', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            title="Gerenciar e excluir bases de treino salvas"
+                        >
+                            <BookOpen size={18} /> Gerenciar / Excluir Bases
+                        </button>
                         <button onClick={() => removerTreinoTodo(activeTab)} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
                             <Trash2 size={18} /> Apagar
                         </button>
