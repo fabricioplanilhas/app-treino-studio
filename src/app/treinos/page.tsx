@@ -569,49 +569,52 @@ export default function TreinosPage() {
     const treino = newAluno.treinos[treinoIndex];
     const N = treino.exercicios.length;
 
-    if (direcao === 'up' && exIndex === 0) return;
+    if (direcao === 'up' && exIndex === 0) {
+      const limits = [...getBlockLimits(treino)];
+      if (limits.length > 0 && limits[0] === 0) {
+        limits[0] = 1;
+        treino.limitesBlocos = limits;
+        setAlunoAtual(newAluno);
+        return;
+      }
+      return;
+    }
     if (direcao === 'down' && exIndex === N - 1) return;
 
     const targetIndex = direcao === 'up' ? exIndex - 1 : exIndex + 1;
-    const currentLimits = getBlockLimits(treino);
-    const sortedLimits = Array.from(new Set(currentLimits))
-      .filter(idx => idx >= 0 && idx < N)
-      .sort((a, b) => a - b);
+    const limits = [...getBlockLimits(treino)];
 
-    const getAssignmentForIndex = (iIdx: number) => {
-      let bIdx = 0;
-      for (let i = 0; i < sortedLimits.length; i++) {
-        if (iIdx >= sortedLimits[i]) {
-          bIdx = i;
+    // Check if moving across a boundary
+    if (direcao === 'up') {
+      for (let k = 0; k < limits.length; k++) {
+        if (limits[k] === exIndex) {
+          limits[k]++;
+          break;
         }
       }
-      return bIdx;
-    };
-
-    const assignments = treino.exercicios.map((_, i) => getAssignmentForIndex(i));
-    assignments[exIndex] = getAssignmentForIndex(targetIndex);
+    } else {
+      for (let k = 0; k < limits.length; k++) {
+        if (limits[k] - 1 === exIndex) {
+          limits[k]--;
+          break;
+        }
+      }
+    }
 
     // Swap exercises
     const tempEx = treino.exercicios[exIndex];
     treino.exercicios[exIndex] = treino.exercicios[targetIndex];
     treino.exercicios[targetIndex] = tempEx;
 
-    const tempAssign = assignments[exIndex];
-    assignments[exIndex] = assignments[targetIndex];
-    assignments[targetIndex] = tempAssign;
-
-    // Recompute new limits
-    const mapFirstIdx = new Map<number, number>();
-    assignments.forEach((bIdx, i) => {
-      if (!mapFirstIdx.has(bIdx)) {
-        mapFirstIdx.set(bIdx, i);
-      }
+    // Sanitize limits
+    const sanitizedLimits = limits.filter((lim, idx, arr) => {
+      if (lim < 0) return false;
+      if (lim >= N) return false;
+      if (idx > 0 && lim <= arr[idx - 1]) return false;
+      return true;
     });
 
-    const activeBlocks = Array.from(mapFirstIdx.keys()).sort((a, b) => a - b);
-    const newLimits: number[] = activeBlocks.map(bIdx => mapFirstIdx.get(bIdx)!);
-
-    treino.limitesBlocos = newLimits;
+    treino.limitesBlocos = sanitizedLimits;
     treino.bloco2Desativado = undefined;
     treino.bloco3Desativado = undefined;
     treino.limiteBloco1 = undefined;
@@ -1044,10 +1047,10 @@ export default function TreinosPage() {
       .sort((a, b) => a - b);
 
     const getAssignmentForIndex = (exIdx: number) => {
-      let bIdx = 0;
+      let bIdx = -1; // -1 means above BLOCO 1
       for (let i = 0; i < sortedLimits.length; i++) {
         if (exIdx >= sortedLimits[i]) {
-          bIdx = i;
+          bIdx = i; // 0 = BLOCO 1, 1 = BLOCO 2...
         }
       }
       return bIdx;
@@ -1062,10 +1065,10 @@ export default function TreinosPage() {
     assignments.splice(draggedEx, 1);
     assignments.splice(dropIndex, 0, targetAssignment);
 
-    // Recompute limits: find start index of each active block
+    // Recompute limits: find start index of each active block (bIdx >= 0)
     const mapFirstIdx = new Map<number, number>();
     assignments.forEach((bIdx, i) => {
-      if (!mapFirstIdx.has(bIdx)) {
+      if (bIdx >= 0 && !mapFirstIdx.has(bIdx)) {
         mapFirstIdx.set(bIdx, i);
       }
     });
