@@ -1575,9 +1575,13 @@ export default function TreinosPage() {
                                         }
                                     }
 
-                                    // Fallback for 8+ exercise workouts: separate last 2 exercises into Bloco 2 if limits not specified
-                                    if (!limitesExtras && copiados.length >= 8) {
-                                        limitesExtras = [5, 8];
+                                    // Fallback when limits not specified: 5-exercise workouts get [0, 3], 8+ exercise workouts get [0, 5, 8]
+                                    if (!limitesExtras) {
+                                        if (copiados.length === 5) {
+                                            limitesExtras = [0, 3];
+                                        } else if (copiados.length >= 8) {
+                                            limitesExtras = [0, 5, 8];
+                                        }
                                     }
 
                                     copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
