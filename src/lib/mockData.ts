@@ -176,7 +176,7 @@ export const MOCK_TEMPLATES: Treino[] = [
 
 export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   "Introdutório Adulto A": [
-    { id: 'mod_iaa_1', nome: 'AGACHA G.B', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [0, 3] },
+    { id: 'mod_iaa_1', nome: 'AGACHA G.B', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [3] },
     { id: 'mod_iaa_2', nome: 'APOIO', categoria: 'Forca', carga: '', reps: '8', series: '2' },
     { id: 'mod_iaa_3', nome: 'PONTE UNI SOLO', categoria: 'Forca', carga: 'P.C', reps: '8/8', series: '2' },
     { id: 'mod_iaa_4', nome: 'PUXADA N. TRX', categoria: 'Forca', carga: 'P.C', reps: '8', series: '2' },
@@ -184,11 +184,55 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   ],
   "Introdutório Adulto B": [],
   "Introdutório Adulto C": [],
-  "Introdutório Atleta A": [],
-  "Introdutório Atleta B": [],
+  "Introdutório Atleta A": [
+    { id: 'mod_ita_1', nome: 'PRANCHA FRONTAL', categoria: 'Core', series: '2', reps: '35"', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_ita_2', nome: 'PRANCHA LAT', categoria: 'Core', series: '2', reps: '35"', carga: '-' },
+    { id: 'mod_ita_3', nome: 'AGACHA SALTA STOP', categoria: 'Potencia', series: '2', reps: '10', carga: '-' },
+    { id: 'mod_ita_4', nome: 'BOLA LAT SMJ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_ita_5', nome: 'SALTO 2P', categoria: 'Potencia', series: '2', reps: '10', carga: '-' },
+    { id: 'mod_ita_6', nome: 'AGACHA GB', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_ita_7', nome: 'APOIO BARRA', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_ita_8', nome: 'PONTE UNI SOLO', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_ita_9', nome: 'PUXADA N TRX', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_ita_10', nome: '1DB PRESSÃO VERT SMJ', categoria: 'Forca', series: '2', reps: '8', carga: '-' }
+  ],
+  "Introdutório Atleta B": [
+    { id: 'mod_itb_1', nome: 'MATA MOSQUITO', categoria: 'Core', series: '2', reps: '8/8', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_itb_2', nome: 'LIFT BAND SMJ', categoria: 'Core', series: '2', reps: '8/8', carga: '-' },
+    { id: 'mod_itb_3', nome: 'IMPULSO LATERAL', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_itb_4', nome: 'BOLA BAND SMJ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_itb_5', nome: 'SALTO 1P CXT/STEP', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_itb_6', nome: 'AFUNDO GB', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_itb_7', nome: '2DB SUPINO INC', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_itb_8', nome: 'TERRA KT', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_itb_9', nome: 'PUXADA POLIA ALTA TRIÂNGULO', categoria: 'Forca', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_itb_10', nome: 'AGACHA LAT GB', categoria: 'Forca', series: '2', reps: '8/8', carga: '-' }
+  ],
   "Introdutório Atleta C": [],
-  "Fase 2 Atleta A": [],
-  "Fase 2 Atleta B": [],
+  "Fase 2 Atleta A": [
+    { id: 'mod_f2a_1', nome: 'ROOL OUT BOLA', categoria: 'Core', series: '2', reps: '10', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_f2a_2', nome: 'PRANCHA LATERAL ELEVADA', categoria: 'Core', series: '2', reps: '10', carga: '-' },
+    { id: 'mod_f2a_3', nome: 'AGACHA E SALTO STOP COM PESO', categoria: 'Potencia', series: '2', reps: '8', carga: '-' },
+    { id: 'mod_f2a_4', nome: 'BOLA LATERAL EM PÉ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_f2a_5', nome: 'SALTO SALTINHO 2P BARREIRINHA', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_f2a_6', nome: 'AGACHA G.B', categoria: 'Forca', series: '2-3', reps: '5', carga: '-' },
+    { id: 'mod_f2a_7', nome: 'APOIO ELEVADO', categoria: 'Forca', series: '2-3', reps: '3-4', carga: '-' },
+    { id: 'mod_f2a_8', nome: 'PONTE BANCO 1P', categoria: 'Forca', series: '2-3', reps: '5/5', carga: '-' },
+    { id: 'mod_f2a_9', nome: 'PUXADA N. TRX PÉ BAIXO', categoria: 'Forca', series: '2', reps: '3-4', carga: '-' },
+    { id: 'mod_f2a_10', nome: '1DB PRESSÃO VERTICAL', categoria: 'Forca', series: '2', reps: '3-4', carga: '-' }
+  ],
+  "Fase 2 Atleta B": [
+    { id: 'mod_f2b_1', nome: 'MATA BARATA', categoria: 'Core', series: '2', reps: '10/10', carga: '-', limitesBlocos: [8] },
+    { id: 'mod_f2b_2', nome: 'LIFT BAND EM PÉ', categoria: 'Core', series: '2', reps: '10/10', carga: '-' },
+    { id: 'mod_f2b_3', nome: 'ARRANQUE DB', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_f2b_4', nome: 'BOLA BANDEJA EM PÉ', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_f2b_5', nome: 'SALTO 1P BARREIRINHA', categoria: 'Potencia', series: '2', reps: '5/5', carga: '-' },
+    { id: 'mod_f2b_6', nome: 'AFUNDO GB', categoria: 'Forca', series: '2-3', reps: '5/5', carga: '-' },
+    { id: 'mod_f2b_7', nome: '2DB SUPINO INC', categoria: 'Forca', series: '2-3', reps: '3-4', carga: '-' },
+    { id: 'mod_f2b_8', nome: 'TERRA 2KT', categoria: 'Forca', series: '2-3', reps: '5', carga: '-' },
+    { id: 'mod_f2b_9', nome: 'PUXADA POLIA ALTA TRIÂNGULO', categoria: 'Forca', series: '2-3', reps: '3/4', carga: '-' },
+    { id: 'mod_f2b_10', nome: 'AGACHA LATERAL GB', categoria: 'Forca', series: '2-3', reps: '5/5', carga: '-' }
+  ],
   "Fase 2 Atleta C": [],
   "Complex": [
     { id: 'mod_cx_1', nome: 'CORE', categoria: 'Core', carga: '', reps: '', series: '', limitesBlocos: [2, 4, 6, 8] },
@@ -417,21 +461,30 @@ export const mockDb = {
       console.error('Erro ao buscar bases:', error);
       return [];
     }
-    return (data || []).map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      nome: row.nome as string,
-      exercicios: (row.exercicios as Exercicio[]) || [],
-      created_at: row.created_at as string,
-    }));
+    return (data || []).map((row: Record<string, unknown>) => {
+      const exArr = (row.exercicios as Exercicio[]) || [];
+      const limitesBlocos = (row.limites_blocos || row.limitesBlocos || (exArr.length > 0 ? exArr[0].limitesBlocos : undefined)) as number[] | undefined;
+      return {
+        id: row.id as string,
+        nome: row.nome as string,
+        exercicios: exArr,
+        limitesBlocos: limitesBlocos ? [...limitesBlocos] : undefined,
+        created_at: row.created_at as string,
+      };
+    });
   },
 
   saveBase: async (base: BaseTreino): Promise<void> => {
+    const exerciciosCopiados = JSON.parse(JSON.stringify(base.exercicios || []));
+    if (base.limitesBlocos && exerciciosCopiados.length > 0) {
+      exerciciosCopiados[0].limitesBlocos = base.limitesBlocos;
+    }
     const { error } = await supabase
       .from('bases_treino')
       .upsert({
         id: base.id,
         nome: base.nome,
-        exercicios: base.exercicios,
+        exercicios: exerciciosCopiados,
       }, { onConflict: 'id' });
     if (error) {
       console.error('Erro ao salvar base:', error);

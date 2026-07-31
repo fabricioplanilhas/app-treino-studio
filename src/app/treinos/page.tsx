@@ -1561,18 +1561,22 @@ export default function TreinosPage() {
                                         delete copiados[0].limitesBlocos;
                                     }
 
-                                    copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
-                                    newAluno.treinos[activeTab].exercicios = copiados;
-
                                     if (isCustom) {
                                         const baseId = modeloStr.replace('custom:', '');
                                         const base = basesCustom.find(b => b.id === baseId);
-                                        if (base) {
-                                            newAluno.treinos[activeTab].limitesBlocos = limitesExtras ? [...limitesExtras] : (base.limitesBlocos ? [...base.limitesBlocos] : undefined);
+                                        if (base && base.limitesBlocos) {
+                                            limitesExtras = limitesExtras || base.limitesBlocos;
                                         }
-                                    } else {
-                                        newAluno.treinos[activeTab].limitesBlocos = limitesExtras ? [...limitesExtras] : undefined;
                                     }
+
+                                    // Fallback for 8+ exercise workouts: separate last 2 exercises into Bloco 2 if limits not specified
+                                    if (!limitesExtras && copiados.length >= 8) {
+                                        limitesExtras = [copiados.length - 2];
+                                    }
+
+                                    copiados.forEach((ex: Exercicio) => ex.id = `ex_${Date.now()}_${Math.random()}`);
+                                    newAluno.treinos[activeTab].exercicios = copiados;
+                                    newAluno.treinos[activeTab].limitesBlocos = limitesExtras ? [...limitesExtras] : undefined;
 
                                     newAluno.treinos[activeTab].bloco2Desativado = undefined;
                                     newAluno.treinos[activeTab].bloco3Desativado = undefined;
