@@ -176,21 +176,21 @@ export const MOCK_TEMPLATES: Treino[] = [
 
 export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   "Introdutório Adulto A": [
-    { id: 'mod_iaa_1', nome: 'AGACHA G.B', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [0, 3] },
+    { id: 'mod_iaa_1', nome: 'AGACHA G.B', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [3] },
     { id: 'mod_iaa_2', nome: 'APOIO', categoria: 'Forca', carga: '', reps: '8', series: '2' },
     { id: 'mod_iaa_3', nome: 'PONTE UNI SOLO', categoria: 'Forca', carga: 'P.C', reps: '8/8', series: '2' },
     { id: 'mod_iaa_4', nome: 'PUXADA N. TRX', categoria: 'Forca', carga: 'P.C', reps: '8', series: '2' },
     { id: 'mod_iaa_5', nome: '1DB PRESSÃO VERTICAL', categoria: 'Forca', carga: '', reps: '8/8', series: '2' }
   ],
   "Introdutório Adulto B": [
-    { id: 'mod_iab_1', nome: 'AFUNDO', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [0, 3] },
+    { id: 'mod_iab_1', nome: 'AFUNDO', categoria: 'Forca', carga: '', reps: '8', series: '2', limitesBlocos: [3] },
     { id: 'mod_iab_2', nome: '2DB SUPINO RETO', categoria: 'Forca', carga: '', reps: '8', series: '2' },
     { id: 'mod_iab_3', nome: 'TERRA K.T', categoria: 'Forca', carga: '', reps: '8', series: '2' },
     { id: 'mod_iab_4', nome: 'PUXADA NA POLIA ALTA', categoria: 'Forca', carga: '', reps: '8', series: '2' },
     { id: 'mod_iab_5', nome: 'AGACHA LATERAL', categoria: 'Forca', carga: '', reps: '8/8', series: '2' }
   ],
   "Introdutório Adulto C": [
-    { id: 'mod_iac_1', nome: 'CANOA ISO', categoria: 'Core', carga: '', reps: '30"', series: '2', limitesBlocos: [0, 5] },
+    { id: 'mod_iac_1', nome: 'CANOA ISO', categoria: 'Core', carga: '', reps: '30"', series: '2', limitesBlocos: [5] },
     { id: 'mod_iac_2', nome: 'CHOP BAND SMJ', categoria: 'Potencia', carga: '', reps: '8/8', series: '2' },
     { id: 'mod_iac_3', nome: 'RECUO', categoria: 'Forca', carga: '', reps: '8/8', series: '2' },
     { id: 'mod_iac_4', nome: '2DB SUPINO RETO', categoria: 'Forca', carga: '', reps: '8', series: '2' },

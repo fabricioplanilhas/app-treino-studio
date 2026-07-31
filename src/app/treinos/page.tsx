@@ -1581,12 +1581,12 @@ export default function TreinosPage() {
                                         }
                                     }
 
-                                    // Fallback when limits not specified: 5-exercise workouts get [0, 3], 8+ exercise workouts get [0, 5, 8]
+                                    // Fallback when limits not specified: 5-exercise workouts get [3], 8+ exercise workouts get [5, 8]
                                     if (!limitesExtras) {
                                         if (copiados.length === 5) {
-                                            limitesExtras = [0, 3];
+                                            limitesExtras = [3];
                                         } else if (copiados.length >= 8) {
-                                            limitesExtras = [0, 5, 8];
+                                            limitesExtras = [5, 8];
                                         }
                                     }
 
