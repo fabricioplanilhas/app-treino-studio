@@ -666,6 +666,201 @@ export default function TreinosPage() {
     return limits;
   };
 
+  const gerarPdfTreino = (aluno: Aluno) => {
+    if (!aluno) return;
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let y = 14;
+
+    // --- CABEÇALHO DA FICHA ---
+    doc.setFillColor(30, 41, 59); // Slate 800
+    doc.rect(0, 0, pageWidth, 24, 'F');
+
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text("FICHA DE TREINAMENTO INDIVIDUAL", 14, 13);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(203, 213, 225);
+    doc.text(`Emissão: ${dataHoje}`, pageWidth - 14, 13, { align: "right" });
+
+    // Box com Informações do Aluno
+    y = 28;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(14, y, pageWidth - 28, 26, 3, 3, 'FD');
+
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, y + 8);
+
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, 18, y + 15);
+    doc.text(`Início da Ficha: ${aluno.dataFichaAtual || dataHoje}`, 85, y + 15);
+    if (aluno.alturaCmj) {
+      doc.text(`CMJ: ${aluno.alturaCmj} cm`, 155, y + 15);
+    }
+
+    if (aluno.observacoes && aluno.observacoes.trim() !== '') {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(180, 83, 9);
+      doc.text(`Obs/Lesões: ${aluno.observacoes}`, 18, y + 21);
+    }
+
+    y += 32;
+
+    if (!aluno.treinos || aluno.treinos.length === 0) {
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Nenhum treino cadastrado nesta ficha.", 14, y);
+      doc.save(`Ficha_Treino_${aluno.nome.replace(/\s+/g, '_')}.pdf`);
+      return;
+    }
+
+    // --- RECORRER OS TREINOS ---
+    aluno.treinos.forEach((treino, tIdx) => {
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        y = 15;
+      }
+
+      // Banner do Treino (TREINO A, B, etc.)
+      doc.setFillColor(37, 99, 235); // Blue 600
+      doc.roundedRect(14, y, pageWidth - 28, 9, 2, 2, 'F');
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${treino.nomeTreino.toUpperCase()}`, 18, y + 6.5);
+      y += 13;
+
+      if (!treino.exercicios || treino.exercicios.length === 0) {
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        doc.setFont("helvetica", "italic");
+        doc.text("Nenhum exercício cadastrado para este dia.", 18, y);
+        y += 10;
+        return;
+      }
+
+      // Agrupar Exercícios por Blocos
+      const limits = getBlockLimits(treino);
+      const sortedLimits = Array.from(new Set(limits))
+        .filter(idx => idx > 0 && idx < treino.exercicios.length)
+        .sort((a, b) => a - b);
+
+      const blocks: { name: string; exercicios: typeof treino.exercicios }[] = [];
+      let currentStart = 0;
+
+      sortedLimits.forEach((lim) => {
+        const chunk = treino.exercicios.slice(currentStart, lim);
+        if (chunk.length > 0) {
+          blocks.push({
+            name: `BLOCO ${blocks.length + 1}`,
+            exercicios: chunk
+          });
+        }
+        currentStart = lim;
+      });
+
+      const finalChunk = treino.exercicios.slice(currentStart);
+      if (finalChunk.length > 0) {
+        blocks.push({
+          name: `BLOCO ${blocks.length + 1}`,
+          exercicios: finalChunk
+        });
+      }
+
+      // Renderizar cada bloco do treino
+      blocks.forEach((block) => {
+        if (block.exercicios.length === 0) return;
+
+        if (y > pageHeight - 35) {
+          doc.addPage();
+          y = 15;
+        }
+
+        // Subcabeçalho do Bloco
+        doc.setFillColor(241, 245, 249);
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(14, y, pageWidth - 28, 6.5, 1, 1, 'FD');
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 41, 59);
+        doc.text(block.name, 18, y + 4.5);
+        y += 6.5;
+
+        const tableData = block.exercicios.map((ex, idx) => [
+          (idx + 1).toString(),
+          ex.categoria || '-',
+          ex.nome || '-',
+          ex.series || '-',
+          ex.reps || '-',
+          ex.carga || '-'
+        ]);
+
+        autoTable(doc, {
+          startY: y,
+          head: [['#', 'Categoria', 'Exercício', 'Séries', 'Reps', 'Carga']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [51, 65, 85],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9,
+            halign: 'center'
+          },
+          styles: {
+            fontSize: 8.5,
+            cellPadding: 2.5,
+            textColor: [30, 41, 59],
+            valign: 'middle'
+          },
+          columnStyles: {
+            0: { cellWidth: 8, halign: 'center' },
+            1: { cellWidth: 32 },
+            2: { cellWidth: 'auto', fontStyle: 'bold' },
+            3: { cellWidth: 20, halign: 'center' },
+            4: { cellWidth: 20, halign: 'center' },
+            5: { cellWidth: 25, halign: 'center' }
+          },
+          margin: { left: 14, right: 14 },
+          didDrawPage: (data) => {
+            y = data.cursor ? data.cursor.y + 4 : y + 15;
+          }
+        });
+      });
+
+      y += 4;
+    });
+
+    // Adicionar Rodapé em todas as páginas
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Studio de Treinamento - Ficha de Treino (${aluno.nome})`, 14, pageHeight - 6);
+      doc.text(`Página ${i} de ${totalPages}`, pageWidth - 14, pageHeight - 6, { align: "right" });
+    }
+
+    doc.save(`Ficha_Treino_${aluno.nome.replace(/\s+/g, '_')}.pdf`);
+  };
+
   const adicionarBloco = (treinoIndex: number) => {
     if(!alunoAtual) return;
     const newAluno = { ...alunoAtual };
@@ -1207,11 +1402,11 @@ export default function TreinosPage() {
                   </div>
 
                   <button 
-                    onClick={() => setShowRelatorioModal(true)}
+                    onClick={() => alunoAtual && gerarPdfTreino(alunoAtual)}
                     className="premium-btn"
-                    style={{ marginTop: '15px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff' }}
+                    style={{ marginTop: '15px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff' }}
                   >
-                    <TrendingUp size={18} /> Gerar Relatório de Progresso para Pais
+                    <Download size={18} /> Exportar Treino para PDF
                   </button>
                 </div>
 
@@ -1473,6 +1668,14 @@ export default function TreinosPage() {
                         </button>
                         <button onClick={() => adicionarExercicio(activeTab)} className="premium-btn-outline" style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
                             <Plus size={18} /> Exercício
+                        </button>
+                        <button 
+                            onClick={() => alunoAtual && gerarPdfTreino(alunoAtual)} 
+                            className="premium-btn-outline" 
+                            style={{ color: '#2563eb', borderColor: '#2563eb' }}
+                            title="Exportar a ficha completa de treino para PDF"
+                        >
+                            <Download size={18} /> Exportar PDF
                         </button>
                     </div>
                     </div>
