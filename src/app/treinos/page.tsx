@@ -568,26 +568,56 @@ export default function TreinosPage() {
     const newAluno = { ...alunoAtual };
     const treino = newAluno.treinos[treinoIndex];
     const N = treino.exercicios.length;
-    
+
     if (direcao === 'up' && exIndex === 0) return;
     if (direcao === 'down' && exIndex === N - 1) return;
-    
+
     const targetIndex = direcao === 'up' ? exIndex - 1 : exIndex + 1;
-    
-    // Freeze the block structure before reordering
-    if (treino.limitesBlocos === undefined) {
-      treino.limitesBlocos = getBlockLimits(treino);
-      treino.bloco2Desativado = undefined;
-      treino.bloco3Desativado = undefined;
-      treino.limiteBloco1 = undefined;
-      treino.limiteBloco2 = undefined;
-    }
-    
+    const currentLimits = getBlockLimits(treino);
+    const sortedLimits = Array.from(new Set(currentLimits))
+      .filter(idx => idx >= 0 && idx < N)
+      .sort((a, b) => a - b);
+
+    const getAssignmentForIndex = (iIdx: number) => {
+      let bIdx = 0;
+      for (let i = 0; i < sortedLimits.length; i++) {
+        if (iIdx >= sortedLimits[i]) {
+          bIdx = i;
+        }
+      }
+      return bIdx;
+    };
+
+    const assignments = treino.exercicios.map((_, i) => getAssignmentForIndex(i));
+    assignments[exIndex] = getAssignmentForIndex(targetIndex);
+
     // Swap exercises
-    const temp = treino.exercicios[exIndex];
+    const tempEx = treino.exercicios[exIndex];
     treino.exercicios[exIndex] = treino.exercicios[targetIndex];
-    treino.exercicios[targetIndex] = temp;
-    
+    treino.exercicios[targetIndex] = tempEx;
+
+    const tempAssign = assignments[exIndex];
+    assignments[exIndex] = assignments[targetIndex];
+    assignments[targetIndex] = tempAssign;
+
+    // Recompute new limits
+    const mapFirstIdx = new Map<number, number>();
+    assignments.forEach((bIdx, i) => {
+      if (!mapFirstIdx.has(bIdx)) {
+        mapFirstIdx.set(bIdx, i);
+      }
+    });
+
+    const activeBlocks = Array.from(mapFirstIdx.keys()).sort((a, b) => a - b);
+    const newLimits: number[] = activeBlocks.map(bIdx => mapFirstIdx.get(bIdx)!);
+
+    treino.limitesBlocos = newLimits;
+    treino.bloco2Desativado = undefined;
+    treino.bloco3Desativado = undefined;
+    treino.limiteBloco1 = undefined;
+    treino.limiteBloco2 = undefined;
+    treino.ordenadoManualmente = true;
+
     setAlunoAtual(newAluno);
   };
 
@@ -1006,73 +1036,49 @@ export default function TreinosPage() {
     const newAluno = { ...alunoAtual };
     const treino = newAluno.treinos[treinoIndex];
     const items = Array.from(treino.exercicios);
-
-    let limits = [...getBlockLimits(treino)];
-
-    const srcIndex = draggedEx;
-    const destIndex = dropIndex;
-
-    const getBlockIndex = (index: number, isDrop: boolean) => {
-      let blockIndex = -1; // -1 significa acima do BLOCO 1
-      for (let i = 0; i < limits.length; i++) {
-        if (isDrop && draggedEx > dropIndex && index === limits[i]) {
-          break;
-        }
-        if (index >= limits[i]) {
-          blockIndex = i;
-        }
-      }
-      return blockIndex;
-    };
-
-    const srcBlockIndex = getBlockIndex(srcIndex, false);
-    const destBlockIndex = getBlockIndex(destIndex, true);
-
-    if (srcBlockIndex !== destBlockIndex) {
-      if (srcBlockIndex < destBlockIndex) {
-        for (let i = srcBlockIndex + 1; i <= destBlockIndex; i++) {
-          limits[i]--;
-        }
-      } else if (srcBlockIndex > destBlockIndex) {
-        for (let i = destBlockIndex + 1; i <= srcBlockIndex; i++) {
-          limits[i]++;
-        }
-      }
-    }
-
     const totalExercises = items.length;
 
-    // Sanitize limits
-    if (limits.length > 0) {
-      limits[0] = Math.max(0, limits[0]);
-      for (let i = 1; i < limits.length; i++) {
-        limits[i] = Math.max(limits[i - 1] + 1, limits[i]);
-      }
-      
-      let maxLimit = totalExercises - 1;
-      for (let i = limits.length - 1; i >= 0; i--) {
-        if (limits[i] > maxLimit) {
-          limits[i] = maxLimit;
-        }
-        maxLimit = limits[i] - 1;
-      }
-      
-      limits = limits.filter((val, idx) => {
-        if (val < 0) return false;
-        if (idx > 0 && val <= limits[idx - 1]) return false;
-        return true;
-      });
-    }
+    const currentLimits = getBlockLimits(treino);
+    const sortedLimits = Array.from(new Set(currentLimits))
+      .filter(idx => idx >= 0 && idx < totalExercises)
+      .sort((a, b) => a - b);
 
-    treino.limitesBlocos = limits;
+    const getAssignmentForIndex = (exIdx: number) => {
+      let bIdx = 0;
+      for (let i = 0; i < sortedLimits.length; i++) {
+        if (exIdx >= sortedLimits[i]) {
+          bIdx = i;
+        }
+      }
+      return bIdx;
+    };
+
+    const assignments = items.map((_, i) => getAssignmentForIndex(i));
+    const targetAssignment = getAssignmentForIndex(dropIndex);
+
+    const [reorderedItem] = items.splice(draggedEx, 1);
+    items.splice(dropIndex, 0, reorderedItem);
+
+    assignments.splice(draggedEx, 1);
+    assignments.splice(dropIndex, 0, targetAssignment);
+
+    // Recompute limits: find start index of each active block
+    const mapFirstIdx = new Map<number, number>();
+    assignments.forEach((bIdx, i) => {
+      if (!mapFirstIdx.has(bIdx)) {
+        mapFirstIdx.set(bIdx, i);
+      }
+    });
+
+    const activeBlocks = Array.from(mapFirstIdx.keys()).sort((a, b) => a - b);
+    const newLimits: number[] = activeBlocks.map(bIdx => mapFirstIdx.get(bIdx)!);
+
+    treino.exercicios = items;
+    treino.limitesBlocos = newLimits;
     treino.bloco2Desativado = undefined;
     treino.bloco3Desativado = undefined;
     treino.limiteBloco1 = undefined;
     treino.limiteBloco2 = undefined;
-
-    const [reorderedItem] = items.splice(draggedEx, 1);
-    items.splice(dropIndex, 0, reorderedItem);
-    treino.exercicios = items;
     treino.ordenadoManualmente = true;
 
     setAlunoAtual(newAluno);
