@@ -434,7 +434,7 @@ export default function TVPage() {
               position: 'relative'
             }}>
               <input
-                value={aluno.nome}
+                value={aluno.nome ? aluno.nome.toUpperCase() : ''}
                 onFocus={handleFocus}
                 onChange={(e) => handleNomeChange(aluno.id, e.target.value)}
                 onBlur={(e) => handleNomeBlurSave(aluno.id, e.target.value)}

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino, registrarEvolucaoCargas, garantirHistoricoCargasAluno } from "@/lib/mockData";
+import { mockDb, Aluno, Treino, Exercicio, MODELOS_ESTUDIO, BaseTreino, registrarEvolucaoCargas, garantirHistoricoCargasAluno, formatNomeAluno } from "@/lib/mockData";
 import { Save, Plus, Trash2, ArrowLeft, CopyCheck, Eraser, Upload, BookOpen, X, GripVertical, ChevronUp, ChevronDown, FileText, TrendingUp, Printer, Download, Award, Calendar, Dumbbell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1095,7 +1095,7 @@ export default function TreinosPage() {
     const newId = `a_${Date.now()}`;
     const novoAluno: Aluno = {
       id: newId,
-      nome,
+      nome: formatNomeAluno(nome),
       treinos: [],
       dataFichaAtual: new Date().toLocaleDateString('pt-BR'),
       historico: [],

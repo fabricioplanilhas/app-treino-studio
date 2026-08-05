@@ -262,12 +262,31 @@ export const MODELOS_ESTUDIO: Record<string, Exercicio[]> = {
   ]
 };
 
+// ── Helper: format student name to Title Case ──────────────────
+
+export function formatNomeAluno(nome: string): string {
+  if (!nome) return '';
+  const preposicoes = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
+  return nome
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word, index) => {
+      if (!word) return '';
+      if (index > 0 && preposicoes.has(word)) {
+        return word;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+}
+
 // ── Helper: convert DB row → Aluno object ──────────────────────
 
 function rowToAluno(row: Record<string, unknown>): Aluno {
   return {
     id: row.id as string,
-    nome: row.nome as string,
+    nome: formatNomeAluno((row.nome as string) || ''),
     foto: row.foto as string | undefined,
     treinos: (row.treinos as Treino[]) || [],
     historico: (row.historico as Historico[]) || [],
@@ -287,7 +306,7 @@ function rowToAluno(row: Record<string, unknown>): Aluno {
 function alunoToRow(aluno: Aluno) {
   return {
     id: aluno.id,
-    nome: aluno.nome,
+    nome: formatNomeAluno(aluno.nome || ''),
     foto: aluno.foto || null,
     treinos: aluno.treinos || [],
     historico: aluno.historico || [],
@@ -595,7 +614,7 @@ export const mockDb = {
     const aluno = await mockDb.getAlunoById(alunoId);
     if (!aluno) return false;
 
-    aluno.nome = valor;
+    aluno.nome = formatNomeAluno(valor);
 
     await mockDb.saveAluno(aluno);
     return true;
