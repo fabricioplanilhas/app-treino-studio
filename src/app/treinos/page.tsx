@@ -1815,6 +1815,7 @@ export default function TreinosPage() {
                             <option value="Core">Core</option>
                             <option value="Potencia">Potência</option>
                             <option value="Forca">Força</option>
+                            <option value="Isometria">Isometria</option>
                             <option value="ACC">ACC</option>
                             <option value="DCC">DCC</option>
                             <option value="OSC">OSC</option>
@@ -1833,10 +1834,13 @@ export default function TreinosPage() {
                         </div>
 
                         <div style={{ width: '80px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>REPS</label>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>
+                                {(ex.categoria || '').toUpperCase() === 'ISOMETRIA' ? 'TEMPO' : 'REPS'}
+                            </label>
                             <input 
                             value={ex.reps ?? ''} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'reps', e.target.value)}
+                            placeholder={(ex.categoria || '').toUpperCase() === 'ISOMETRIA' ? 'Ex: 30"' : ''}
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
                             />
                         </div>
@@ -2137,7 +2141,9 @@ export default function TreinosPage() {
                                                             <div style={{ color: '#475569', fontWeight: 'bold' }}>{ex.carga || '-'}</div>
                                                         </div>
                                                         <div style={{ width: '60px', textAlign: 'center' }}>
-                                                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>REPS</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>
+                                                                {(ex.categoria || '').toUpperCase() === 'ISOMETRIA' ? 'TEMPO' : 'REPS'}
+                                                            </div>
                                                             <div style={{ color: '#475569' }}>{ex.reps || '-'}</div>
                                                         </div>
                                                         <div style={{ width: '60px', textAlign: 'center' }}>

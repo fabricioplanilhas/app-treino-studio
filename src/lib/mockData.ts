@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 
-export type CategoriaExercicio = 'Core' | 'Potencia' | 'Forca' | 'Outros';
+export type CategoriaExercicio = 'Core' | 'Potencia' | 'Forca' | 'Isometria' | 'Outros';
 
 export type RegistroCarga = {
   data: string;

@@ -228,7 +228,9 @@ export default function TVPage() {
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>REPS</span>
+            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+              {(ex.categoria || '').toUpperCase() === 'ISOMETRIA' ? 'TEMPO' : 'REPS'}
+            </span>
             <input
               value={ex.reps}
               onFocus={handleFocus}
@@ -331,6 +333,7 @@ export default function TVPage() {
       if (catUpper.includes('CORE')) return 'var(--cat-core)';
       if (catUpper.includes('POTEN') || catUpper.includes('POTÊNCIA')) return 'var(--cat-explosao)';
       if (catUpper.includes('FORC') || catUpper.includes('FORÇ')) return 'var(--cat-forca)';
+      if (catUpper.includes('ISOMETRI') || catUpper.includes('ISOMETRIA')) return '#0284c7';
       if (catUpper.includes('ACC') || catUpper.includes('DCC') || catUpper.includes('OSC') || catUpper.includes('AFSM')) return 'var(--cat-forca)';
       return 'var(--text-secondary)';
     };
