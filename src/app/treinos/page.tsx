@@ -695,7 +695,6 @@ export default function TreinosPage() {
         }
       }
     });
-    
     return limits;
   };
 
@@ -711,119 +710,151 @@ export default function TreinosPage() {
     const dataHoje = new Date().toLocaleDateString('pt-BR');
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    let y = 14;
 
-    // --- CABEÇALHO DA FICHA ---
-    doc.setFillColor(30, 41, 59); // Slate 800
-    doc.rect(0, 0, pageWidth, 24, 'F');
+    // Helper para renderizar o cabeçalho superior em cada página
+    const renderPageHeader = (isFirstPage: boolean) => {
+      // Faixa Superior (Dark Slate)
+      doc.setFillColor(30, 41, 59); // Slate 800
+      doc.rect(0, 0, pageWidth, 18, 'F');
 
-    doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.text("FICHA DE TREINAMENTO INDIVIDUAL", 14, 13);
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(203, 213, 225);
-    doc.text(`Emissão: ${dataHoje}`, pageWidth - 14, 13, { align: "right" });
-
-    // Box com Informações do Aluno
-    y = 28;
-    doc.setFillColor(248, 250, 252);
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(14, y, pageWidth - 28, 26, 3, 3, 'FD');
-
-    doc.setFontSize(13);
-    doc.setTextColor(15, 23, 42);
-    doc.setFont("helvetica", "bold");
-    doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, y + 8);
-
-    doc.setFontSize(9.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(71, 85, 105);
-    doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, 18, y + 15);
-    doc.text(`Início da Ficha: ${aluno.dataFichaAtual || dataHoje}`, 85, y + 15);
-    if (aluno.alturaCmj) {
-      doc.text(`CMJ: ${aluno.alturaCmj} cm`, 155, y + 15);
-    }
-
-    if (aluno.observacoes && aluno.observacoes.trim() !== '') {
+      doc.setFontSize(13);
+      doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(180, 83, 9);
-      doc.text(`Obs/Lesões: ${aluno.observacoes}`, 18, y + 21);
-    }
+      doc.text("FICHA DE TREINAMENTO INDIVIDUAL", 14, 11);
 
-    y += 32;
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(203, 213, 225);
+      doc.text(`Emissão: ${dataHoje}`, pageWidth - 14, 11, { align: "right" });
+
+      if (isFirstPage) {
+        // Box de Informações do Aluno para a primeira página
+        const yBox = 22;
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(14, yBox, pageWidth - 28, 24, 3, 3, 'FD');
+
+        doc.setFontSize(12);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont("helvetica", "bold");
+        doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, yBox + 7);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, 18, yBox + 14);
+        doc.text(`Início da Ficha: ${aluno.dataFichaAtual || dataHoje}`, 85, yBox + 14);
+        if (aluno.alturaCmj) {
+          doc.text(`CMJ: ${aluno.alturaCmj} cm`, 155, yBox + 14);
+        }
+
+        if (aluno.observacoes && aluno.observacoes.trim() !== '') {
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(180, 83, 9);
+          doc.text(`Obs/Lesões: ${aluno.observacoes}`, 18, yBox + 20);
+        }
+        return 50;
+      } else {
+        // Cabeçalho Compacto do Aluno para as páginas seguintes
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(14, 21, pageWidth - 28, 10, 2, 2, 'FD');
+
+        doc.setFontSize(9.5);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont("helvetica", "bold");
+        doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, 27.5);
+
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, pageWidth - 18, 27.5, { align: "right" });
+        return 34;
+      }
+    };
 
     if (!aluno.treinos || aluno.treinos.length === 0) {
+      const y = renderPageHeader(true);
       doc.setFontSize(11);
       doc.setTextColor(100, 116, 139);
-      doc.text("Nenhum treino cadastrado nesta ficha.", 14, y);
+      doc.text("Nenhum treino cadastrado nesta ficha.", 14, y + 10);
       doc.save(`Ficha_Treino_${aluno.nome.replace(/\s+/g, '_')}.pdf`);
       return;
     }
 
-    // --- RECORRER OS TREINOS ---
-    aluno.treinos.forEach((treino, tIdx) => {
-      if (y > pageHeight - 40) {
-        doc.addPage();
-        y = 15;
-      }
+    let isFirstBlockOverall = true;
 
-      // Banner do Treino (TREINO A, B, etc.)
-      doc.setFillColor(37, 99, 235); // Blue 600
-      doc.roundedRect(14, y, pageWidth - 28, 9, 2, 2, 'F');
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text(`${treino.nomeTreino.toUpperCase()}`, 18, y + 6.5);
-      y += 13;
-
-      if (!treino.exercicios || treino.exercicios.length === 0) {
-        doc.setFontSize(9);
-        doc.setTextColor(148, 163, 184);
-        doc.setFont("helvetica", "italic");
-        doc.text("Nenhum exercício cadastrado para este dia.", 18, y);
-        y += 10;
-        return;
-      }
-
+    aluno.treinos.forEach((treino) => {
       // Agrupar Exercícios por Blocos
       const limits = getBlockLimits(treino);
       const sortedLimits = Array.from(new Set(limits))
-        .filter(idx => idx > 0 && idx < treino.exercicios.length)
+        .filter(idx => idx > 0 && idx < (treino.exercicios?.length || 0))
         .sort((a, b) => a - b);
 
       const blocks: { name: string; exercicios: typeof treino.exercicios }[] = [];
       let currentStart = 0;
 
-      sortedLimits.forEach((lim) => {
-        const chunk = treino.exercicios.slice(currentStart, lim);
-        if (chunk.length > 0) {
+      if (treino.exercicios && treino.exercicios.length > 0) {
+        sortedLimits.forEach((lim) => {
+          const chunk = treino.exercicios.slice(currentStart, lim);
+          if (chunk.length > 0) {
+            blocks.push({
+              name: `BLOCO ${blocks.length + 1}`,
+              exercicios: chunk
+            });
+          }
+          currentStart = lim;
+        });
+
+        const finalChunk = treino.exercicios.slice(currentStart);
+        if (finalChunk.length > 0) {
           blocks.push({
             name: `BLOCO ${blocks.length + 1}`,
-            exercicios: chunk
+            exercicios: finalChunk
           });
         }
-        currentStart = lim;
-      });
-
-      const finalChunk = treino.exercicios.slice(currentStart);
-      if (finalChunk.length > 0) {
-        blocks.push({
-          name: `BLOCO ${blocks.length + 1}`,
-          exercicios: finalChunk
-        });
       }
 
-      // Renderizar cada bloco do treino
-      blocks.forEach((block) => {
-        if (block.exercicios.length === 0) return;
-
-        if (y > pageHeight - 35) {
+      if (blocks.length === 0) {
+        if (!isFirstBlockOverall) {
           doc.addPage();
-          y = 15;
         }
+        let y = renderPageHeader(isFirstBlockOverall);
+        isFirstBlockOverall = false;
+
+        // Banner do Treino
+        doc.setFillColor(37, 99, 235); // Blue 600
+        doc.roundedRect(14, y + 2, pageWidth - 28, 8, 2, 2, 'F');
+        doc.setFontSize(10.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${treino.nomeTreino.toUpperCase()}`, 18, y + 7.5);
+        y += 13;
+
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        doc.setFont("helvetica", "italic");
+        doc.text("Nenhum exercício cadastrado para este dia.", 18, y);
+        return;
+      }
+
+      // Renderizar CADA BLOCO em uma nova página exclusiva
+      blocks.forEach((block) => {
+        if (!isFirstBlockOverall) {
+          doc.addPage();
+        }
+        let y = renderPageHeader(isFirstBlockOverall);
+        isFirstBlockOverall = false;
+
+        // Banner do Treino (ex: TREINO A - BLOCO 1)
+        doc.setFillColor(37, 99, 235); // Blue 600
+        doc.roundedRect(14, y + 2, pageWidth - 28, 8, 2, 2, 'F');
+        doc.setFontSize(10.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        const subTitle = blocks.length > 1 ? ` - ${block.name}` : '';
+        doc.text(`${treino.nomeTreino.toUpperCase()}${subTitle}`, 18, y + 7.5);
+        y += 12;
 
         // Subcabeçalho do Bloco
         doc.setFillColor(241, 245, 249);
@@ -870,17 +901,12 @@ export default function TreinosPage() {
             4: { cellWidth: 20, halign: 'center' },
             5: { cellWidth: 25, halign: 'center' }
           },
-          margin: { left: 14, right: 14 },
-          didDrawPage: (data) => {
-            y = data.cursor ? data.cursor.y + 4 : y + 15;
-          }
+          margin: { left: 14, right: 14 }
         });
       });
-
-      y += 4;
     });
 
-    // Adicionar Rodapé em todas as páginas
+    // Rodapé em todas as páginas
     const totalPages = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
