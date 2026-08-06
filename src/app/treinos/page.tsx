@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { RUMPEL_LOGO_BASE64 } from "@/lib/logoBase64";
 
 function parseCargaNumeric(cargaStr: string | undefined): number | null {
   if (!cargaStr) return null;
@@ -711,65 +712,78 @@ export default function TreinosPage() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Helper para renderizar o cabeçalho superior em cada página
+    // Helper para renderizar o cabeçalho superior Rumpel Training com logo em cada página
     const renderPageHeader = (isFirstPage: boolean) => {
-      // Faixa Superior (Dark Slate)
-      doc.setFillColor(30, 41, 59); // Slate 800
-      doc.rect(0, 0, pageWidth, 18, 'F');
+      // Faixa Superior (Verde Escuro Rumpel - #15803d)
+      doc.setFillColor(21, 128, 61); // Green 700 (#15803d)
+      doc.rect(0, 0, pageWidth, 22, 'F');
 
-      doc.setFontSize(13);
+      // Tentar desenhar o Logo Rumpel Training no cabeçalho
+      try {
+        doc.addImage(RUMPEL_LOGO_BASE64, 'JPEG', 12, 2.5, 17, 17);
+      } catch (e) {
+        console.error("Erro ao carregar imagem no PDF:", e);
+      }
+
+      // Título e Subtítulo Rumpel Training
+      doc.setFontSize(14);
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.text("FICHA DE TREINAMENTO INDIVIDUAL", 14, 11);
+      doc.text("RUMPEL TRAINING", 33, 11);
 
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(203, 213, 225);
-      doc.text(`Emissão: ${dataHoje}`, pageWidth - 14, 11, { align: "right" });
+      doc.setTextColor(220, 252, 231); // Soft green text
+      doc.text("FICHA DE TREINAMENTO INDIVIDUAL", 33, 17);
+
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(220, 252, 231);
+      doc.text(`Emissão: ${dataHoje}`, pageWidth - 14, 14, { align: "right" });
 
       if (isFirstPage) {
-        // Box de Informações do Aluno para a primeira página
-        const yBox = 22;
-        doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(14, yBox, pageWidth - 28, 24, 3, 3, 'FD');
+        // Box de Informações do Aluno para a primeira página (Fundo Verde Claro Suave #F0FDF4, Borda #BBF7D0)
+        const yBox = 25;
+        doc.setFillColor(240, 253, 244);
+        doc.setDrawColor(187, 247, 208);
+        doc.roundedRect(14, yBox, pageWidth - 28, 25, 3, 3, 'FD');
 
         doc.setFontSize(12);
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(22, 101, 52); // Dark Green #166534
         doc.setFont("helvetica", "bold");
         doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, yBox + 7);
 
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.setTextColor(71, 85, 105);
-        doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, 18, yBox + 14);
-        doc.text(`Início da Ficha: ${aluno.dataFichaAtual || dataHoje}`, 85, yBox + 14);
+        doc.setTextColor(55, 65, 81);
+        doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, 18, yBox + 15);
+        doc.text(`Início da Ficha: ${aluno.dataFichaAtual || dataHoje}`, 85, yBox + 15);
         if (aluno.alturaCmj) {
-          doc.text(`CMJ: ${aluno.alturaCmj} cm`, 155, yBox + 14);
+          doc.text(`CMJ: ${aluno.alturaCmj} cm`, 155, yBox + 15);
         }
 
         if (aluno.observacoes && aluno.observacoes.trim() !== '') {
           doc.setFont("helvetica", "bold");
           doc.setTextColor(180, 83, 9);
-          doc.text(`Obs/Lesões: ${aluno.observacoes}`, 18, yBox + 20);
+          doc.text(`Obs/Lesões: ${aluno.observacoes}`, 18, yBox + 21);
         }
-        return 50;
+        return 54;
       } else {
         // Cabeçalho Compacto do Aluno para as páginas seguintes
-        doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(14, 21, pageWidth - 28, 10, 2, 2, 'FD');
+        doc.setFillColor(240, 253, 244);
+        doc.setDrawColor(187, 247, 208);
+        doc.roundedRect(14, 24, pageWidth - 28, 10, 2, 2, 'FD');
 
         doc.setFontSize(9.5);
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(22, 101, 52);
         doc.setFont("helvetica", "bold");
-        doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, 27.5);
+        doc.text(`ALUNO(A): ${aluno.nome.toUpperCase()}`, 18, 30.5);
 
         doc.setFontSize(8.5);
         doc.setFont("helvetica", "normal");
-        doc.setTextColor(71, 85, 105);
-        doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, pageWidth - 18, 27.5, { align: "right" });
-        return 34;
+        doc.setTextColor(55, 65, 81);
+        doc.text(`Fase: ${aluno.faseTreinamento || 'Geral'}`, pageWidth - 18, 30.5, { align: "right" });
+        return 37;
       }
     };
 
@@ -789,14 +803,14 @@ export default function TreinosPage() {
       }
       let y = renderPageHeader(tIdx === 0);
 
-      // Banner do Treino (ex: TREINO A)
-      doc.setFillColor(37, 99, 235); // Blue 600
-      doc.roundedRect(14, y + 2, pageWidth - 28, 8, 2, 2, 'F');
-      doc.setFontSize(10.5);
+      // Banner do Treino (Verde Rumpel #16a34a)
+      doc.setFillColor(22, 163, 74); // Green 600
+      doc.roundedRect(14, y + 2, pageWidth - 28, 8.5, 2, 2, 'F');
+      doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(255, 255, 255);
       doc.text(`${treino.nomeTreino.toUpperCase()}`, 18, y + 7.5);
-      y += 13;
+      y += 13.5;
 
       // Agrupar Exercícios por Blocos
       const limits = getBlockLimits(treino);
@@ -844,13 +858,13 @@ export default function TreinosPage() {
           y = renderPageHeader(false);
         }
 
-        // Subcabeçalho do Bloco
-        doc.setFillColor(241, 245, 249);
-        doc.setDrawColor(203, 213, 225);
+        // Subcabeçalho do Bloco (Verde Suave #DCFCE7 com Borda #86EFAC)
+        doc.setFillColor(220, 252, 231);
+        doc.setDrawColor(134, 239, 172);
         doc.roundedRect(14, y, pageWidth - 28, 6.5, 1, 1, 'FD');
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(30, 41, 59);
+        doc.setTextColor(20, 83, 45); // Dark Green #14532d
         doc.text(block.name, 18, y + 4.5);
         y += 6.5;
 
@@ -869,7 +883,7 @@ export default function TreinosPage() {
           body: tableData,
           theme: 'grid',
           headStyles: {
-            fillColor: [51, 65, 85],
+            fillColor: [21, 128, 61], // Rumpel Green #15803d
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             fontSize: 9,
@@ -903,11 +917,18 @@ export default function TreinosPage() {
     const totalPages = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
+
+      // Linha Divisória de Rodapé
+      doc.setDrawColor(187, 247, 208);
+      doc.line(14, pageHeight - 10, pageWidth - 14, pageHeight - 10);
+
       doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184);
+      doc.setTextColor(22, 101, 52);
+      doc.setFont("helvetica", "bold");
+      doc.text(`RUMPEL TRAINING - Studio de Treinamento | Aluno(a): ${aluno.nome}`, 14, pageHeight - 5);
       doc.setFont("helvetica", "normal");
-      doc.text(`Studio de Treinamento - Ficha de Treino (${aluno.nome})`, 14, pageHeight - 6);
-      doc.text(`Página ${i} de ${totalPages}`, pageWidth - 14, pageHeight - 6, { align: "right" });
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Página ${i} de ${totalPages}`, pageWidth - 14, pageHeight - 5, { align: "right" });
     }
 
     doc.save(`Ficha_Treino_${aluno.nome.replace(/\s+/g, '_')}.pdf`);
