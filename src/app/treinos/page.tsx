@@ -998,12 +998,19 @@ export default function TreinosPage() {
   };
 
   const removerTreinoTodo = (treinoIndex: number) => {
-      if(confirm("Tem certeza que deseja apagar a ficha inteira desse dia?")) {
+      if(confirm("Tem certeza que deseja apagar todos os exercícios deste treino?")) {
          if(!alunoAtual) return;
          const newAluno = { ...alunoAtual };
-         newAluno.treinos.splice(treinoIndex, 1);
+         const treino = newAluno.treinos[treinoIndex];
+         if (treino) {
+           treino.exercicios = [];
+           treino.limitesBlocos = undefined;
+           treino.bloco2Desativado = undefined;
+           treino.bloco3Desativado = undefined;
+           treino.limiteBloco1 = undefined;
+           treino.limiteBloco2 = undefined;
+         }
          setAlunoAtual(newAluno);
-         setActiveTab(Math.max(0, treinoIndex - 1));
       }
   }
 
