@@ -997,8 +997,8 @@ export default function TreinosPage() {
      setActiveTab(newAluno.treinos.length - 1);
   };
 
-  const removerTreinoTodo = (treinoIndex: number) => {
-      if(confirm("Tem certeza que deseja apagar os nomes de todos os exercícios deste treino?")) {
+  const limparNomesExercicios = (treinoIndex: number) => {
+      if(confirm("Tem certeza que deseja limpar os nomes de todos os exercícios deste treino?")) {
          if(!alunoAtual) return;
          const newAluno = { ...alunoAtual };
          const treino = newAluno.treinos[treinoIndex];
@@ -1008,6 +1008,16 @@ export default function TreinosPage() {
            });
          }
          setAlunoAtual(newAluno);
+      }
+  };
+
+  const excluirTreinoDia = (treinoIndex: number) => {
+      if(confirm("Tem certeza que deseja excluir o treino deste dia?")) {
+         if(!alunoAtual) return;
+         const newAluno = { ...alunoAtual };
+         newAluno.treinos.splice(treinoIndex, 1);
+         setAlunoAtual(newAluno);
+         setActiveTab(Math.max(0, treinoIndex - 1));
       }
   };
 
@@ -1693,20 +1703,20 @@ export default function TreinosPage() {
                             <BookOpen size={18} /> Gerenciar / Excluir Bases
                         </button>
                         <button 
-                            onClick={() => removerTreinoTodo(activeTab)} 
+                            onClick={() => limparNomesExercicios(activeTab)} 
                             className="premium-btn-outline" 
-                            style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}
+                            style={{ color: '#d97706', borderColor: '#d97706' }}
                             title="Limpar o nome de todos os exercícios deste treino"
                         >
-                            <Trash2 size={18} /> Apagar
+                            <Eraser size={18} /> Limpar
                         </button>
                         <button 
-                            onClick={() => removerUltimoBloco(activeTab)} 
+                            onClick={() => excluirTreinoDia(activeTab)} 
                             className="premium-btn-outline" 
-                            style={{ color: '#dc2626', borderColor: '#dc2626' }} 
-                            title="Deletar a divisão de bloco"
+                            style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }} 
+                            title="Deletar o treino do dia selecionado"
                         >
-                            <Trash2 size={18} /> Deletar Bloco
+                            <Trash2 size={18} /> Deletar Treino
                         </button>
                         <button 
                             onClick={() => adicionarBloco(activeTab)} 
@@ -1718,14 +1728,6 @@ export default function TreinosPage() {
                         </button>
                         <button onClick={() => adicionarExercicio(activeTab)} className="premium-btn-outline" style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
                             <Plus size={18} /> Exercício
-                        </button>
-                        <button 
-                            onClick={() => alunoAtual && gerarPdfTreino(alunoAtual)} 
-                            className="premium-btn-outline" 
-                            style={{ color: '#2563eb', borderColor: '#2563eb' }}
-                            title="Exportar a ficha completa de treino para PDF"
-                        >
-                            <Download size={18} /> Exportar PDF
                         </button>
                     </div>
                     </div>
