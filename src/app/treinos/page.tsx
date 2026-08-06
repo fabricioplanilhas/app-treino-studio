@@ -1164,13 +1164,13 @@ export default function TreinosPage() {
   };
 
   if (loading) return (
-    <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+    <div style={{ padding: '30px 20px', maxWidth: '1300px', margin: '0 auto 0 30px', textAlign: 'center' }}>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>Carregando dados do Supabase...</p>
     </div>
   );
 
   if (alunos.length === 0) return (
-    <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '30px 20px', maxWidth: '1300px', margin: '0 auto 0 30px' }}>
         <button onClick={handleNovoAluno} className="premium-btn">
           <Plus size={20} /> Cadastrar Primeiro Aluno
         </button>
@@ -1181,7 +1181,7 @@ export default function TreinosPage() {
   const progresso = getProgressoTreinos(alunoAtual);
 
   return (
-    <div style={{ padding: '40px', maxWidth: isComparing && versaoComparacaoId ? '1600px' : '1000px', margin: '0 auto', transition: 'max-width 0.3s ease' }}>
+    <div style={{ padding: '30px 20px 40px 30px', maxWidth: isComparing && versaoComparacaoId ? '1600px' : '1300px', margin: '0 auto 0 30px', transition: 'max-width 0.3s ease' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
         <div>
           <Link href="/" style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
@@ -1823,7 +1823,6 @@ export default function TreinosPage() {
                             <option value="Potencia">Potência</option>
                             <option value="Forca">Força</option>
                             <option value="Isometria">Isometria</option>
-                            <option value="Outros">Outros</option>
                             </select>
                         </div>
 
