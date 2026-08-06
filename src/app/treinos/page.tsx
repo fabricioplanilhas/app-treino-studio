@@ -782,9 +782,22 @@ export default function TreinosPage() {
       return;
     }
 
-    let isFirstBlockOverall = true;
+    aluno.treinos.forEach((treino, tIdx) => {
+      // Cada treino (Treino A, Treino B, etc.) sempre começa em uma PÁGINA NOVA!
+      if (tIdx > 0) {
+        doc.addPage();
+      }
+      let y = renderPageHeader(tIdx === 0);
 
-    aluno.treinos.forEach((treino) => {
+      // Banner do Treino (ex: TREINO A)
+      doc.setFillColor(37, 99, 235); // Blue 600
+      doc.roundedRect(14, y + 2, pageWidth - 28, 8, 2, 2, 'F');
+      doc.setFontSize(10.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${treino.nomeTreino.toUpperCase()}`, 18, y + 7.5);
+      y += 13;
+
       // Agrupar Exercícios por Blocos
       const limits = getBlockLimits(treino);
       const sortedLimits = Array.from(new Set(limits))
@@ -816,21 +829,6 @@ export default function TreinosPage() {
       }
 
       if (blocks.length === 0) {
-        if (!isFirstBlockOverall) {
-          doc.addPage();
-        }
-        let y = renderPageHeader(isFirstBlockOverall);
-        isFirstBlockOverall = false;
-
-        // Banner do Treino
-        doc.setFillColor(37, 99, 235); // Blue 600
-        doc.roundedRect(14, y + 2, pageWidth - 28, 8, 2, 2, 'F');
-        doc.setFontSize(10.5);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(255, 255, 255);
-        doc.text(`${treino.nomeTreino.toUpperCase()}`, 18, y + 7.5);
-        y += 13;
-
         doc.setFontSize(9);
         doc.setTextColor(148, 163, 184);
         doc.setFont("helvetica", "italic");
@@ -838,23 +836,13 @@ export default function TreinosPage() {
         return;
       }
 
-      // Renderizar CADA BLOCO em uma nova página exclusiva
+      // Renderizar blocos do treino em sequência na mesma página do treino
       blocks.forEach((block) => {
-        if (!isFirstBlockOverall) {
+        // Se a página estiver quase cheia antes de iniciar um novo bloco, adiciona página
+        if (y > pageHeight - 35) {
           doc.addPage();
+          y = renderPageHeader(false);
         }
-        let y = renderPageHeader(isFirstBlockOverall);
-        isFirstBlockOverall = false;
-
-        // Banner do Treino (ex: TREINO A - BLOCO 1)
-        doc.setFillColor(37, 99, 235); // Blue 600
-        doc.roundedRect(14, y + 2, pageWidth - 28, 8, 2, 2, 'F');
-        doc.setFontSize(10.5);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(255, 255, 255);
-        const subTitle = blocks.length > 1 ? ` - ${block.name}` : '';
-        doc.text(`${treino.nomeTreino.toUpperCase()}${subTitle}`, 18, y + 7.5);
-        y += 12;
 
         // Subcabeçalho do Bloco
         doc.setFillColor(241, 245, 249);
@@ -903,6 +891,11 @@ export default function TreinosPage() {
           },
           margin: { left: 14, right: 14 }
         });
+
+        const lastTable = (doc as any).lastAutoTable;
+        if (lastTable && lastTable.finalY) {
+          y = lastTable.finalY + 6;
+        }
       });
     });
 
