@@ -555,7 +555,7 @@ export default function TreinosPage() {
     treino.exercicios.push({
       id: newId,
       nome: "",
-      categoria: "Outros",
+      categoria: "Core",
       series: "3",
       reps: "10",
       carga: "-"
@@ -1808,7 +1808,7 @@ export default function TreinosPage() {
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>CATEGORIA</label>
                             <select 
-                            value={ex.categoria ?? 'Outros'} 
+                            value={ex.categoria ?? 'Core'} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'categoria', e.target.value)}
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', background: 'white' }}
                             >
@@ -1816,10 +1816,6 @@ export default function TreinosPage() {
                             <option value="Potencia">Potência</option>
                             <option value="Forca">Força</option>
                             <option value="Isometria">Isometria</option>
-                            <option value="ACC">ACC</option>
-                            <option value="DCC">DCC</option>
-                            <option value="OSC">OSC</option>
-                            <option value="AFSM">AFSM</option>
                             <option value="Outros">Outros</option>
                             </select>
                         </div>
