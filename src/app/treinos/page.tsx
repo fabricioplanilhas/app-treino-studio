@@ -998,21 +998,29 @@ export default function TreinosPage() {
   };
 
   const removerTreinoTodo = (treinoIndex: number) => {
-      if(confirm("Tem certeza que deseja apagar todos os exercícios deste treino?")) {
+      if(confirm("Tem certeza que deseja apagar os nomes de todos os exercícios deste treino?")) {
          if(!alunoAtual) return;
          const newAluno = { ...alunoAtual };
          const treino = newAluno.treinos[treinoIndex];
-         if (treino) {
-           treino.exercicios = [];
-           treino.limitesBlocos = undefined;
-           treino.bloco2Desativado = undefined;
-           treino.bloco3Desativado = undefined;
-           treino.limiteBloco1 = undefined;
-           treino.limiteBloco2 = undefined;
+         if (treino && treino.exercicios) {
+           treino.exercicios.forEach(ex => {
+             ex.nome = "";
+           });
          }
          setAlunoAtual(newAluno);
       }
-  }
+  };
+
+  const removerUltimoBloco = (treinoIndex: number) => {
+      if (!alunoAtual) return;
+      const treino = alunoAtual.treinos[treinoIndex];
+      const limits = getBlockLimits(treino);
+      if (limits.length === 0) {
+        alert("Este treino não possui nenhum bloco para deletar.");
+        return;
+      }
+      removerBloco(treinoIndex, limits.length - 1);
+  };
 
   const limparTreinoEstrutura = (treinoIndex: number) => {
       if(confirm("Deseja apagar as cargas, repetições e nomes dos exercícios mantendo a estrutura (categorias)?")) {
@@ -1684,8 +1692,21 @@ export default function TreinosPage() {
                         >
                             <BookOpen size={18} /> Gerenciar / Excluir Bases
                         </button>
-                        <button onClick={() => removerTreinoTodo(activeTab)} className="premium-btn-outline" style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}>
+                        <button 
+                            onClick={() => removerTreinoTodo(activeTab)} 
+                            className="premium-btn-outline" 
+                            style={{ color: 'var(--cat-explosao)', borderColor: 'var(--cat-explosao)' }}
+                            title="Limpar o nome de todos os exercícios deste treino"
+                        >
                             <Trash2 size={18} /> Apagar
+                        </button>
+                        <button 
+                            onClick={() => removerUltimoBloco(activeTab)} 
+                            className="premium-btn-outline" 
+                            style={{ color: '#dc2626', borderColor: '#dc2626' }} 
+                            title="Deletar a divisão de bloco"
+                        >
+                            <Trash2 size={18} /> Deletar Bloco
                         </button>
                         <button 
                             onClick={() => adicionarBloco(activeTab)} 
