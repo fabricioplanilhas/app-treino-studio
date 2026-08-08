@@ -285,6 +285,10 @@ export function formatNomeAluno(nome: string): string {
 // ── Helper: convert DB row → Aluno object ──────────────────────
 
 function rowToAluno(row: Record<string, unknown>): Aluno {
+  const rawObs = (row.observacoes as string) || '';
+  const isIntro = Boolean(row.is_introdutorio || row.isIntrodutorio || rawObs.includes('[INTRODUTORIO]'));
+  const cleanObs = rawObs.replace(/\[INTRODUTORIO\]/g, '').trim();
+
   return {
     id: row.id as string,
     nome: formatNomeAluno((row.nome as string) || ''),
@@ -292,20 +296,25 @@ function rowToAluno(row: Record<string, unknown>): Aluno {
     treinos: (row.treinos as Treino[]) || [],
     historico: (row.historico as Historico[]) || [],
     versoesAnteriores: (row.versoes_anteriores as VersaoTreino[]) || [],
-    observacoes: (row.observacoes as string) || '',
+    observacoes: cleanObs,
     faseTreinamento: (row.fase_treinamento as string) || '',
     dataFichaAtual: (row.data_ficha_atual as string) || '',
     status: (row.status as string) || 'ativo',
     deletedAt: (row.deleted_at as string) || undefined,
     alturaCmj: (row.altura_cmj as string) || '',
     semanasConcluidas: typeof row.semanas_concluidas === 'number' ? row.semanas_concluidas : 0,
-    isIntrodutorio: Boolean(row.is_introdutorio || row.isIntrodutorio || false),
+    isIntrodutorio: isIntro,
   };
 }
 
 // ── Helper: convert Aluno object → DB row for upsert ──────────
 
 function alunoToRow(aluno: Aluno) {
+  let obs = (aluno.observacoes || '').replace(/\[INTRODUTORIO\]/g, '').trim();
+  if (aluno.isIntrodutorio) {
+    obs = obs ? `${obs} [INTRODUTORIO]` : '[INTRODUTORIO]';
+  }
+
   return {
     id: aluno.id,
     nome: formatNomeAluno(aluno.nome || ''),
@@ -313,14 +322,13 @@ function alunoToRow(aluno: Aluno) {
     treinos: aluno.treinos || [],
     historico: aluno.historico || [],
     versoes_anteriores: aluno.versoesAnteriores || [],
-    observacoes: aluno.observacoes || '',
+    observacoes: obs,
     fase_treinamento: aluno.faseTreinamento || '',
     data_ficha_atual: aluno.dataFichaAtual || '',
     status: aluno.status || 'ativo',
     deleted_at: aluno.deletedAt || null,
     altura_cmj: aluno.alturaCmj || '',
     semanas_concluidas: aluno.semanasConcluidas || 0,
-    is_introdutorio: aluno.isIntrodutorio ?? false,
   };
 }
 
@@ -370,7 +378,7 @@ export const mockDb = {
 
     const { data, error } = await supabase
       .from('alunos')
-      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas, is_introdutorio')
+      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar alunos:', error);
@@ -385,7 +393,7 @@ export const mockDb = {
 
     const { data, error } = await supabase
       .from('alunos')
-      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas, is_introdutorio')
+      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar alunos da lixeira:', error);
