@@ -124,6 +124,7 @@ export type Aluno = {
   deletedAt?: string;
   alturaCmj?: string;
   semanasConcluidas?: number;
+  isIntrodutorio?: boolean;
 };
 
 export type BaseTreino = {
@@ -298,6 +299,7 @@ function rowToAluno(row: Record<string, unknown>): Aluno {
     deletedAt: (row.deleted_at as string) || undefined,
     alturaCmj: (row.altura_cmj as string) || '',
     semanasConcluidas: typeof row.semanas_concluidas === 'number' ? row.semanas_concluidas : 0,
+    isIntrodutorio: Boolean(row.is_introdutorio || row.isIntrodutorio || false),
   };
 }
 
@@ -318,6 +320,7 @@ function alunoToRow(aluno: Aluno) {
     deleted_at: aluno.deletedAt || null,
     altura_cmj: aluno.alturaCmj || '',
     semanas_concluidas: aluno.semanasConcluidas || 0,
+    is_introdutorio: aluno.isIntrodutorio ?? false,
   };
 }
 
@@ -367,7 +370,7 @@ export const mockDb = {
 
     const { data, error } = await supabase
       .from('alunos')
-      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
+      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas, is_introdutorio')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar alunos:', error);
@@ -382,7 +385,7 @@ export const mockDb = {
 
     const { data, error } = await supabase
       .from('alunos')
-      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas')
+      .select('id, nome, foto, treinos, historico, observacoes, fase_treinamento, data_ficha_atual, status, deleted_at, altura_cmj, semanas_concluidas, is_introdutorio')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar alunos da lixeira:', error);
@@ -615,6 +618,16 @@ export const mockDb = {
     if (!aluno) return false;
 
     aluno.nome = formatNomeAluno(valor);
+
+    await mockDb.saveAluno(aluno);
+    return true;
+  },
+
+  updateIntrodutorioAluno: async (alunoId: string, valor: boolean): Promise<boolean> => {
+    const aluno = await mockDb.getAlunoById(alunoId);
+    if (!aluno) return false;
+
+    aluno.isIntrodutorio = valor;
 
     await mockDb.saveAluno(aluno);
     return true;

@@ -436,27 +436,41 @@ export default function TVPage() {
               textAlign: 'center',
               position: 'relative'
             }}>
-              <input
-                value={aluno.nome ? aluno.nome.toUpperCase() : ''}
-                onFocus={handleFocus}
-                onChange={(e) => handleNomeChange(aluno.id, e.target.value)}
-                onBlur={(e) => handleNomeBlurSave(aluno.id, e.target.value)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  fontSize: s(0.9),
-                  fontWeight: 600,
-                  textAlign: 'center',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  outline: 'none',
-                  width: '100%',
-                  padding: 0,
-                  margin: 0,
-                  cursor: 'pointer'
-                }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: px(4), flexWrap: 'wrap' }}>
+                <input
+                  value={aluno.nome ? aluno.nome.toUpperCase() : ''}
+                  onFocus={handleFocus}
+                  onChange={(e) => handleNomeChange(aluno.id, e.target.value)}
+                  onBlur={(e) => handleNomeBlurSave(aluno.id, e.target.value)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-primary)',
+                    fontSize: s(0.9),
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    outline: 'none',
+                    width: 'auto',
+                    maxWidth: '100%',
+                    padding: 0,
+                    margin: 0,
+                    cursor: 'pointer'
+                  }}
+                />
+                {aluno.isIntrodutorio && (
+                  <span style={{
+                    color: '#2563eb',
+                    fontSize: s(0.75),
+                    fontWeight: 700,
+                    letterSpacing: '0.5px',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    Introdutório
+                  </span>
+                )}
+              </div>
               <div style={{
                 display: 'inline-block', background: 'var(--accent-primary)',
                 color: 'white', padding: `${px(1)} ${px(4)}`, borderRadius: px(4),

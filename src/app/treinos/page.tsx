@@ -407,6 +407,9 @@ export default function TreinosPage() {
   const [basesCustom, setBasesCustom] = useState<BaseTreino[]>([]);
   const [showBasesModal, setShowBasesModal] = useState(false);
   const [showRelatorioModal, setShowRelatorioModal] = useState(false);
+  const [showNovoAlunoModal, setShowNovoAlunoModal] = useState(false);
+  const [novoAlunoNome, setNovoAlunoNome] = useState("");
+  const [novoAlunoIntrodutorio, setNovoAlunoIntrodutorio] = useState(false);
   const [semanasInput, setSemanasInput] = useState<string>("");
 
   useEffect(() => {
@@ -1153,25 +1156,36 @@ export default function TreinosPage() {
     setDraggedEx(null);
   };
 
-  const handleNovoAluno = async () => {
-    const nome = window.prompt("Nome do novo aluno (ex: João Santos):");
-    if (!nome) return;
-    
+  const handleNovoAluno = () => {
+    setNovoAlunoNome("");
+    setNovoAlunoIntrodutorio(false);
+    setShowNovoAlunoModal(true);
+  };
+
+  const confirmarCriarAluno = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!novoAlunoNome.trim()) {
+      alert("Por favor, digite o nome do aluno.");
+      return;
+    }
+
     const newId = `a_${Date.now()}`;
     const novoAluno: Aluno = {
       id: newId,
-      nome: formatNomeAluno(nome),
+      nome: formatNomeAluno(novoAlunoNome),
       treinos: [],
       dataFichaAtual: new Date().toLocaleDateString('pt-BR'),
       historico: [],
       observacoes: "",
-      faseTreinamento: ""
+      faseTreinamento: "",
+      isIntrodutorio: novoAlunoIntrodutorio,
     };
-    
+
     await mockDb.saveAluno(novoAluno);
     const updatedAlunos = await mockDb.getAlunos();
     setAlunos(updatedAlunos);
     selecionarAluno(newId, updatedAlunos);
+    setShowNovoAlunoModal(false);
   };
 
   const alunosVencidos = (() => {
@@ -1335,8 +1349,20 @@ export default function TreinosPage() {
                     value={alunoAtual.faseTreinamento || ""} 
                     onChange={(e) => setAlunoAtual({...alunoAtual, faseTreinamento: e.target.value})}
                     placeholder="Ex: Adaptação, Força..."
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)', marginBottom: '10px' }}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-medium)', outline: 'none', background: 'var(--bg-main)', color: 'var(--text-primary)', marginBottom: '8px' }}
                   />
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                      <input 
+                        type="checkbox"
+                        checked={!!alunoAtual.isIntrodutorio}
+                        onChange={(e) => setAlunoAtual({...alunoAtual, isIntrodutorio: e.target.checked})}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#2563eb' }}
+                      />
+                      <span>Treino Introdutório</span>
+                      <span style={{ fontSize: '0.78rem', color: '#2563eb', fontWeight: 600 }}>(Exibe em azul na TV)</span>
+                    </label>
+                  </div>
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                     <div style={{ flex: 1 }}>
                       <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '4px' }}>
@@ -2541,6 +2567,91 @@ export default function TreinosPage() {
           </div>
         );
       })()}
+
+      {/* MODAL NOVO ALUNO */}
+      {showNovoAlunoModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)', borderRadius: '16px',
+            border: '1px solid var(--border-medium)', padding: '28px',
+            maxWidth: '450px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)'
+          }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Cadastrar Novo Aluno
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+              Digite o nome do aluno e defina se é um treino introdutório.
+            </p>
+
+            <form onSubmit={confirmarCriarAluno}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px' }}>
+                  NOME DO ALUNO
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={novoAlunoNome}
+                  onChange={(e) => setNovoAlunoNome(e.target.value)}
+                  placeholder="Ex: João Santos"
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: '8px',
+                    border: '1px solid var(--border-medium)', background: 'var(--bg-main)',
+                    color: 'var(--text-primary)', fontSize: '1rem', outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{
+                background: 'var(--bg-main)', padding: '14px 16px', borderRadius: '10px',
+                border: '1px solid var(--border-light)', marginBottom: '24px'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={novoAlunoIntrodutorio}
+                    onChange={(e) => setNovoAlunoIntrodutorio(e.target.checked)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#2563eb' }}
+                  />
+                  <div>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>
+                      Treino Introdutório
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 600 }}>
+                      Exibirá "Introdutório" em azul na Tela da TV
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowNovoAlunoModal(false)}
+                  style={{
+                    padding: '10px 18px', borderRadius: '8px', border: '1px solid var(--border-medium)',
+                    background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="premium-btn"
+                  style={{ padding: '10px 20px', fontWeight: 700 }}
+                >
+                  Criar Ficha do Aluno
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

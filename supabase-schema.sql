@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS alunos (
   deleted_at TEXT,
   altura_cmj TEXT DEFAULT '',
   semanas_concluidas INTEGER DEFAULT 0,
+  is_introdutorio BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS alunos (
 -- Se você já rodou o script acima anteriormente, rode apenas isto:
 -- ALTER TABLE alunos ADD COLUMN status TEXT DEFAULT 'ativo';
 -- ALTER TABLE alunos ADD COLUMN deleted_at TEXT;
+-- ALTER TABLE alunos ADD COLUMN is_introdutorio BOOLEAN DEFAULT false;
 -- =============================================================
 
 -- 2. Tabela de Sessão da TV
