@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Dumbbell, LayoutDashboard, ClipboardEdit } from 'lucide-react';
+import { Dumbbell, LayoutDashboard, ClipboardEdit, ClipboardCheck } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -19,6 +19,10 @@ export default function Home() {
         <Link href="/tv" className="premium-btn-outline" style={{ padding: '16px 24px', fontSize: '1.1rem' }}>
           <Dumbbell size={24} />
           Tela da TV
+        </Link>
+        <Link href="/primeira-aula" className="premium-btn" style={{ padding: '16px 24px', fontSize: '1.1rem', background: '#10b981' }}>
+          <ClipboardCheck size={24} />
+          Primeira Aula
         </Link>
       </div>
     </div>

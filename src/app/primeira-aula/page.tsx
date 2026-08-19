@@ -1,0 +1,1213 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { mockDb, Aluno, FichaAvaliativa, ExercicioAvaliativo } from "@/lib/mockData";
+import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { RUMPEL_LOGO_BASE64 } from "@/lib/logoBase64";
+
+// Templates padrão para formulários
+const INITIAL_MOBILIDADE: ExercicioAvaliativo[] = [
+  { nome: "Agachamento Overhead", score: 0, reps: "6-8", obs: "" },
+  { nome: "Terra Unilateral", score: 0, reps: "6-8", esq: "", dir: "", regressao: false, regressaoTexto: "Terra Unilateral Assistido (TRX/HACK/PAREDE)", obs: "" },
+  { nome: "Toca os Pés", score: 0, reps: "3-5", obs: "" },
+  { nome: "Prancha Frontal (35seg.)", score: 0, reps: "35seg", obs: "" },
+  { nome: "Leg Lower", score: 0, reps: "6-10", esq: "", dir: "", regressao: false, regressaoTexto: "Leg Lower Assistido (Super Band/ Hack/ Barede)", obs: "" },
+  { nome: "Ombro Desliza Solo", score: 0, reps: "5-8", progressao: false, progressaoTexto: "Ombro Desliza Parede", obs: "" },
+];
+
+const INITIAL_AQUECIMENTO: ExercicioAvaliativo[] = [
+  { nome: "Skipp Frontal (Pista)", score: 0, regressao: false, regressaoTexto: "Marcha na Pista", obs: "" },
+  { nome: "Skipp Lateral (Pista)", score: 0, regressao: false, regressaoTexto: "Marcha Lateral", obs: "" },
+  { nome: "Joelho Alto (Pista)", score: 0, regressao: false, regressaoTexto: "Corrida no lugar", obs: "" },
+];
+
+const INITIAL_POTENCIA: ExercicioAvaliativo[] = [
+  { nome: "Agachamento com salto Stop", score: 0, reps: "6-8", obs: "" },
+  { nome: "Bola Lateral Semi Ajoelhado", score: 0, reps: "5/5", obs: "" },
+  { nome: "Impulso Lateral Stop", score: 0, reps: "5/5", obs: "" },
+];
+
+const INITIAL_FORCA: ExercicioAvaliativo[] = [
+  { nome: "Agachamento GB", score: 0, carga: "", reps: "8-10", obs: "" },
+  { nome: "Apoio Solo", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Apoio na barra", progressao: false, progressaoTexto: "Apoio pés elevados (step/caixa/banco)", obs: "" },
+  { nome: "Ponte 1P Solo", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Ponte 2 pés Solo", progressao: false, progressaoTexto: "Ponte 1P Banco", obs: "" },
+  { nome: "Puxada Neutra TRX", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Ponte 2 pés Solo", progressao: false, progressaoTexto: "Ponte 1P Banco", obs: "" },
+];
+
+export default function PrimeiraAulaPage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"Adulto" | "Atleta" | "Historico">("Adulto");
+  const [alunosList, setAlunosList] = useState<Aluno[]>([]);
+  const [historicoFichas, setHistoricoFichas] = useState<FichaAvaliativa[]>([]);
+  const [buscaHistorico, setBuscaHistorico] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Form State
+  const [fichaId, setFichaId] = useState<string>("");
+  const [nomeAluno, setNomeAluno] = useState("");
+  const [dataAvaliacao, setDataAvaliacao] = useState(new Date().toLocaleDateString("pt-BR"));
+  const [alunoSelecionadoId, setAlunoSelecionadoId] = useState<string>("");
+
+  const [seriesMobilidade, setSeriesMobilidade] = useState("1");
+  const [mobilidade, setMobilidade] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
+
+  const [seriesAquecimento, setSeriesAquecimento] = useState("1");
+  const [aquecimento, setAquecimento] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
+
+  const [potencia, setPotencia] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
+
+  const [seriesForca, setSeriesForca] = useState("2");
+  const [forcaFuncional, setForcaFuncional] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_FORCA)));
+
+  // Recommendations
+  const [recomendacaoSemana, setRecomendacaoSemana] = useState("2x");
+  const [recomendacaoMinimo, setRecomendacaoMinimo] = useState("3 meses");
+  const [recomendacaoForaTreino, setRecomendacaoForaTreino] = useState("");
+  const [aporteNutricional, setAporteNutricional] = useState("Sim, conforme objetivo");
+
+  useEffect(() => {
+    (async () => {
+      const dataAlunos = await mockDb.getAlunos();
+      setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
+      carregarHistorico();
+    })();
+  }, []);
+
+  const carregarHistorico = () => {
+    const list = mockDb.getFichasAvaliativas();
+    setHistoricoFichas(list);
+  };
+
+  const resetForm = (tipo: "Adulto" | "Atleta" = "Adulto") => {
+    setFichaId("");
+    setNomeAluno("");
+    setAlunoSelecionadoId("");
+    setDataAvaliacao(new Date().toLocaleDateString("pt-BR"));
+    setSeriesMobilidade("1");
+    setMobilidade(JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
+    setSeriesAquecimento("1");
+    setAquecimento(JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
+    setPotencia(JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
+    setSeriesForca("2");
+    setForcaFuncional(JSON.parse(JSON.stringify(INITIAL_FORCA)));
+    setRecomendacaoSemana("2x");
+    setRecomendacaoMinimo("3 meses");
+    setRecomendacaoForaTreino("");
+    setAporteNutricional("Sim, conforme objetivo");
+  };
+
+  const calcSoma = (items: ExercicioAvaliativo[]) => {
+    return items.reduce((acc, curr) => acc + (curr.score || 0), 0);
+  };
+
+  const handleSelectAluno = (alunoId: string) => {
+    setAlunoSelecionadoId(alunoId);
+    if (!alunoId) return;
+    const found = alunosList.find(a => a.id === alunoId);
+    if (found) {
+      setNomeAluno(found.nome);
+    }
+  };
+
+  const carregarFichaParaEdicao = (ficha: FichaAvaliativa) => {
+    setFichaId(ficha.id);
+    setNomeAluno(ficha.nomeAluno);
+    setDataAvaliacao(ficha.data);
+    setSeriesMobilidade(ficha.seriesMobilidade || "1");
+    setMobilidade(ficha.mobilidade ? JSON.parse(JSON.stringify(ficha.mobilidade)) : JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
+    
+    if (ficha.tipo === "Atleta") {
+      setSeriesAquecimento(ficha.seriesAquecimento || "1");
+      setAquecimento(ficha.aquecimento ? JSON.parse(JSON.stringify(ficha.aquecimento)) : JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
+      setPotencia(ficha.potencia ? JSON.parse(JSON.stringify(ficha.potencia)) : JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
+    }
+    
+    setSeriesForca(ficha.seriesForca || "2");
+    setForcaFuncional(ficha.forcaFuncional ? JSON.parse(JSON.stringify(ficha.forcaFuncional)) : JSON.parse(JSON.stringify(INITIAL_FORCA)));
+    
+    setRecomendacaoSemana(ficha.recomendacaoSemana || "2x");
+    setRecomendacaoMinimo(ficha.recomendacaoMinimo || "3 meses");
+    setRecomendacaoForaTreino(ficha.recomendacaoForaTreino || "");
+    setAporteNutricional(ficha.aporteNutricional || "Sim, conforme objetivo");
+    
+    setActiveTab(ficha.tipo);
+  };
+
+  const construirObjetoFicha = (tipo: "Adulto" | "Atleta"): FichaAvaliativa => {
+    return {
+      id: fichaId || `ficha_${Date.now()}`,
+      alunoId: alunoSelecionadoId,
+      nomeAluno: nomeAluno.trim() || "Aluno sem nome",
+      data: dataAvaliacao || new Date().toLocaleDateString("pt-BR"),
+      tipo,
+      seriesMobilidade,
+      mobilidade,
+      somaMobilidade: calcSoma(mobilidade),
+      seriesAquecimento: tipo === "Atleta" ? seriesAquecimento : undefined,
+      aquecimento: tipo === "Atleta" ? aquecimento : undefined,
+      somaAquecimento: tipo === "Atleta" ? calcSoma(aquecimento) : undefined,
+      potencia: tipo === "Atleta" ? potencia : undefined,
+      somaPotencia: tipo === "Atleta" ? calcSoma(potencia) : undefined,
+      seriesForca,
+      forcaFuncional,
+      somaForca: calcSoma(forcaFuncional),
+      recomendacaoSemana,
+      recomendacaoMinimo,
+      recomendacaoForaTreino,
+      aporteNutricional,
+      createdAt: new Date().toISOString(),
+    };
+  };
+
+  const handleSalvarFicha = () => {
+    if (!nomeAluno.trim()) {
+      alert("Por favor, preencha o Nome e Sobrenome do aluno.");
+      return;
+    }
+    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
+    const ficha = construirObjetoFicha(tipo);
+    mockDb.salvarFichaAvaliativa(ficha);
+    setFichaId(ficha.id);
+    carregarHistorico();
+    alert("Ficha Avaliativa salva no histórico com sucesso!");
+  };
+
+  const handleSalvarECriarTreinoA = async (fichaParaUsar?: FichaAvaliativa) => {
+    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
+    const ficha = fichaParaUsar || construirObjetoFicha(tipo);
+
+    if (!ficha.nomeAluno || ficha.nomeAluno === "Aluno sem nome") {
+      alert("Por favor, informe o nome do aluno antes de criar o treino.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const alunoAtualizado = await mockDb.salvarEGerarTreinoA(ficha);
+      carregarHistorico();
+      alert(`Ficha avaliativa salva e Treino A criado com sucesso para o aluno ${alunoAtualizado.nome}!`);
+      router.push(`/treinos?alunoId=${alunoAtualizado.id}`);
+    } catch (err) {
+      console.error(err);
+      alert("Ocorreu um erro ao criar o Treino A.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletarFicha = (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta ficha avaliativa do histórico?")) return;
+    const atual = mockDb.getFichasAvaliativas();
+    const filtrado = atual.filter(f => f.id !== id);
+    localStorage.setItem("fichas_avaliativas_v1", JSON.stringify(filtrado));
+    carregarHistorico();
+  };
+
+  const handleGerarPDF = (fichaParaPdf?: FichaAvaliativa) => {
+    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
+    const ficha = fichaParaPdf || construirObjetoFicha(tipo);
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const greenBg = [76, 175, 80];
+
+    // Página 1: Cabeçalho com Logo
+    doc.setFillColor(greenBg[0], greenBg[1], greenBg[2]);
+    doc.rect(0, 0, 210, 30, "F");
+
+    try {
+      doc.addImage(RUMPEL_LOGO_BASE64, "JPEG", 80, 2, 50, 24);
+    } catch (e) {
+      console.error("Logo PDF error", e);
+    }
+
+    // Título Principal
+    doc.setFillColor(0, 166, 80);
+    doc.rect(14, 34, 182, 8, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`1º AULA ${ficha.tipo.toUpperCase()} - TREINAMENTO`, 105, 39.5, { align: "center" });
+
+    // Nome e Data
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.text(`NOME E SOBRENOME: ${ficha.nomeAluno.toUpperCase()}`, 14, 48);
+    doc.text(`Data: ${ficha.data}`, 150, 48);
+    doc.line(14, 50, 196, 50);
+
+    let currentY = 56;
+
+    // Seção 1: MOBILIDADE AVALIATIVA
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`MOBILIDADE AVALIATIVA - Séries: 1 (${ficha.seriesMobilidade === "1" ? "X" : " "}) - 2 (${ficha.seriesMobilidade === "2" ? "X" : " "})`, 14, currentY);
+    currentY += 4;
+
+    const bodyMobilidade = ficha.mobilidade.map((item, idx) => {
+      let extra = "";
+      if (item.esq || item.dir) extra += ` (ESQ: ${item.esq || "-"} | DIR: ${item.dir || "-"})`;
+      if (item.regressao) extra += ` [Regressão: ${item.regressaoTexto}]`;
+      if (item.progressao) extra += ` [Progressão: ${item.progressaoTexto}]`;
+      if (item.obs) extra += ` - Obs: ${item.obs}`;
+      return [
+        `${idx + 1}. ${item.nome}${extra}`,
+        `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`,
+        `REP: ${item.reps || ""}`,
+      ];
+    });
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [["Exercício / Observações", "Nota", "Repetições"]],
+      body: bodyMobilidade,
+      theme: "grid",
+      headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 2 },
+      columnStyles: { 0: { cellWidth: 120 }, 1: { cellWidth: 35 }, 2: { cellWidth: 27 } },
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 4;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Soma Mobilidade: ( ${ficha.somaMobilidade} )`, 140, currentY);
+    currentY += 8;
+
+    // Seção para Atleta: AQUECIMENTO & POTÊNCIA
+    if (ficha.tipo === "Atleta" && ficha.aquecimento) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`AQUECIMENTO AVALIATIVO - Séries: 1 (${ficha.seriesAquecimento === "1" ? "X" : " "}) - 2 (${ficha.seriesAquecimento === "2" ? "X" : " "})`, 14, currentY);
+      currentY += 4;
+
+      const bodyAquecimento = ficha.aquecimento.map((item, idx) => {
+        let extra = item.regressao ? ` [Regressão: ${item.regressaoTexto}]` : "";
+        if (item.obs) extra += ` - Obs: ${item.obs}`;
+        return [
+          `${idx + 1}. ${item.nome}${extra}`,
+          `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`,
+        ];
+      });
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Exercício / Regressão", "Nota"]],
+        body: bodyAquecimento,
+        theme: "grid",
+        headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255] },
+        styles: { fontSize: 9, cellPadding: 2 },
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 4;
+      doc.text(`Soma Aquecimento: ( ${ficha.somaAquecimento || 0} )`, 140, currentY);
+      currentY += 8;
+    }
+
+    // Segunda Página para Força Funcional / Potência
+    doc.addPage();
+    let yPage2 = 20;
+
+    if (ficha.tipo === "Atleta" && ficha.potencia) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("POTÊNCIA AVALIATIVA", 14, yPage2);
+      yPage2 += 4;
+
+      const bodyPotencia = ficha.potencia.map((item, idx) => [
+        `${idx + 1}. ${item.nome}${item.obs ? ` - Obs: ${item.obs}` : ""}`,
+        `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`,
+        `REP: ${item.reps || ""}`,
+      ]);
+
+      autoTable(doc, {
+        startY: yPage2,
+        head: [["Exercício", "Nota", "Repetições"]],
+        body: bodyPotencia,
+        theme: "grid",
+        headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255] },
+        styles: { fontSize: 9, cellPadding: 2 },
+      });
+
+      yPage2 = (doc as any).lastAutoTable.finalY + 4;
+      doc.text(`Soma Potência: ( ${ficha.somaPotencia || 0} )`, 140, yPage2);
+      yPage2 += 8;
+    }
+
+    // Seção FORÇA FUNCIONAL AVALIATIVA
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`FORÇA FUNCIONAL AVALIATIVA - Séries: 2 (${ficha.seriesForca === "2" ? "X" : " "}) - 3 (${ficha.seriesForca === "3" ? "X" : " "})`, 14, yPage2);
+    yPage2 += 4;
+
+    const bodyForca = ficha.forcaFuncional.map((item, idx) => {
+      let extra = "";
+      if (item.regressao) extra += ` [Reg: ${item.regressaoTexto}]`;
+      if (item.progressao) extra += ` [Prog: ${item.progressaoTexto}]`;
+      if (item.obs) extra += ` - ${item.obs}`;
+      return [
+        `${idx + 1}. ${item.nome}${extra}`,
+        `1(${item.score === 1 ? "X" : " "}) 2(${item.score === 2 ? "X" : " "}) 3(${item.score === 3 ? "X" : " "})`,
+        `Carga: ${item.carga || "-"} | REP: ${item.reps || "8-10"}`,
+      ];
+    });
+
+    autoTable(doc, {
+      startY: yPage2,
+      head: [["Exercício", "Nota", "Carga & Repetições"]],
+      body: bodyForca,
+      theme: "grid",
+      headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255] },
+      styles: { fontSize: 9, cellPadding: 2 },
+    });
+
+    yPage2 = (doc as any).lastAutoTable.finalY + 6;
+    doc.text(`Soma Força Funcional: ( ${ficha.somaForca} )`, 140, yPage2);
+    yPage2 += 12;
+
+    // Recomendações Finais
+    doc.setFontSize(10);
+    doc.text(`Recomendação Inicial de Treinamento: ${ficha.recomendacaoSemana || "___"} na semana por no mínimo ${ficha.recomendacaoMinimo || "___"}`, 14, yPage2);
+    yPage2 += 6;
+    doc.text(`Recomendações fora do Treinamento: ${ficha.recomendacaoForaTreino || "Nenhuma"}`, 14, yPage2);
+    yPage2 += 6;
+    doc.text(`Requer aporte nutricional conforme objetivo?: ${ficha.aporteNutricional || "Não informado"}`, 14, yPage2);
+
+    doc.save(`Ficha_Avaliativa_${ficha.tipo}_${ficha.nomeAluno.replace(/\s+/g, "_")}.pdf`);
+  };
+
+  const renderScoreButtons = (
+    list: ExercicioAvaliativo[],
+    setList: React.Dispatch<React.SetStateAction<ExercicioAvaliativo[]>>,
+    index: number
+  ) => {
+    const currentScore = list[index].score;
+    return (
+      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+        {[1, 2, 3].map((val) => {
+          const isSelected = currentScore === val;
+          let bg = "var(--bg-hover)";
+          let color = "var(--text-primary)";
+          if (isSelected) {
+            if (val === 1) { bg = "#ef4444"; color = "#fff"; }
+            else if (val === 2) { bg = "#f59e0b"; color = "#fff"; }
+            else if (val === 3) { bg = "#10b981"; color = "#fff"; }
+          }
+          return (
+            <button
+              key={val}
+              type="button"
+              onClick={() => {
+                const next = [...list];
+                next[index].score = isSelected ? 0 : val;
+                setList(next);
+              }}
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "6px",
+                border: isSelected ? "none" : "1px solid var(--border-medium)",
+                background: bg,
+                color: color,
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              {val}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const historicoFiltrado = historicoFichas.filter((f) =>
+    f.nomeAluno.toLowerCase().includes(buscaHistorico.toLowerCase()) ||
+    f.data.includes(buscaHistorico)
+  );
+
+  return (
+    <div style={{ padding: "30px 40px", maxWidth: "1200px", margin: "0 auto" }}>
+      {/* Header */}
+      <header style={{ marginBottom: "30px" }}>
+        <Link
+          href="/"
+          style={{
+            color: "var(--text-secondary)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "12px",
+            textDecoration: "none",
+          }}
+        >
+          <ArrowLeft size={16} /> Voltar ao Início
+        </Link>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div>
+            <h1 style={{ fontSize: "2.2rem", fontWeight: 800, color: "var(--text-primary)" }}>
+              1º Aula - Ficha Avaliativa
+            </h1>
+            <p style={{ color: "var(--text-secondary)" }}>
+              Avaliação de mobilidade, potência e força para novos alunos
+            </p>
+          </div>
+
+          {/* Abas */}
+          <div
+            style={{
+              display: "flex",
+              background: "var(--bg-card)",
+              padding: "4px",
+              borderRadius: "10px",
+              border: "1px solid var(--border-medium)",
+              gap: "4px",
+            }}
+          >
+            <button
+              className={activeTab === "Adulto" ? "premium-btn" : "premium-btn-outline"}
+              onClick={() => {
+                if (activeTab !== "Adulto" && !fichaId) resetForm("Adulto");
+                setActiveTab("Adulto");
+              }}
+              style={{ padding: "8px 16px" }}
+            >
+              <Dumbbell size={18} /> Adulto
+            </button>
+            <button
+              className={activeTab === "Atleta" ? "premium-btn" : "premium-btn-outline"}
+              onClick={() => {
+                if (activeTab !== "Atleta" && !fichaId) resetForm("Atleta");
+                setActiveTab("Atleta");
+              }}
+              style={{ padding: "8px 16px", background: activeTab === "Atleta" ? "#3b82f6" : undefined }}
+            >
+              <Sparkles size={18} /> Atleta
+            </button>
+            <button
+              className={activeTab === "Historico" ? "premium-btn" : "premium-btn-outline"}
+              onClick={() => setActiveTab("Historico")}
+              style={{ padding: "8px 16px", background: activeTab === "Historico" ? "#8b5cf6" : undefined }}
+            >
+              <FileText size={18} /> Histórico ({historicoFichas.length})
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ABA 3: HISTÓRICO DE FICHAS */}
+      {activeTab === "Historico" && (
+        <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: 700 }}>Histórico de Avaliações Realizadas</h2>
+            <div style={{ position: "relative", width: "300px" }}>
+              <input
+                type="text"
+                placeholder="🔎 Buscar por aluno ou data..."
+                value={buscaHistorico}
+                onChange={(e) => setBuscaHistorico(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-medium)",
+                  background: "var(--bg-card)",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </div>
+
+          {historicoFiltrado.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-secondary)" }}>
+              Nenhuma ficha avaliativa encontrada no histórico.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "14px" }}>
+              {historicoFiltrado.map((ficha) => (
+                <div
+                  key={ficha.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "16px 20px",
+                    background: "var(--bg-card)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-light)",
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span
+                        style={{
+                          background: ficha.tipo === "Atleta" ? "#dbeafe" : "#dcfce7",
+                          color: ficha.tipo === "Atleta" ? "#1e40af" : "#166534",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        1º AULA {ficha.tipo.toUpperCase()}
+                      </span>
+                      <strong style={{ fontSize: "1.1rem" }}>{ficha.nomeAluno}</strong>
+                    </div>
+                    <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                      Data: {ficha.data} | Soma Mobilidade: <strong>{ficha.somaMobilidade}</strong> | Soma Força: <strong>{ficha.somaForca}</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      className="premium-btn-outline"
+                      onClick={() => carregarFichaParaEdicao(ficha)}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                    >
+                      Visualizar / Editar
+                    </button>
+                    <button
+                      className="premium-btn-outline"
+                      onClick={() => handleGerarPDF(ficha)}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                    >
+                      <Printer size={16} /> PDF
+                    </button>
+                    <button
+                      className="premium-btn"
+                      onClick={() => handleSalvarECriarTreinoA(ficha)}
+                      style={{ padding: "6px 12px", fontSize: "0.85rem", background: "#3b82f6" }}
+                    >
+                      ⚡ Criar Treino A
+                    </button>
+                    <button
+                      className="premium-btn-outline"
+                      onClick={() => handleDeletarFicha(ficha.id)}
+                      style={{ padding: "6px 10px", color: "#dc2626", borderColor: "#fca5a5" }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ABAS DE PREENCHIMENTO: ADULTO OU ATLETA */}
+      {(activeTab === "Adulto" || activeTab === "Atleta") && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          {/* Header Card do Aluno */}
+          <div
+            style={{
+              background: "var(--bg-panel)",
+              padding: "20px 24px",
+              borderRadius: "12px",
+              border: "1px solid var(--border-light)",
+              display: "grid",
+              gridTemplateColumns: "2fr 1fr 1fr",
+              gap: "16px",
+              alignItems: "end",
+            }}
+          >
+            <div>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                NOME E SOBRENOME DO ALUNO
+              </label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  type="text"
+                  placeholder="Digite ou selecione o aluno..."
+                  value={nomeAluno}
+                  onChange={(e) => {
+                    setNomeAluno(e.target.value);
+                    setAlunoSelecionadoId("");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-medium)",
+                    fontSize: "1rem",
+                    outline: "none",
+                  }}
+                />
+                {alunosList.length > 0 && (
+                  <select
+                    value={alunoSelecionadoId}
+                    onChange={(e) => handleSelectAluno(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-medium)",
+                      background: "var(--bg-card)",
+                    }}
+                  >
+                    <option value="">-- Selecionar Existente --</option>
+                    {alunosList.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.nome}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                DATA DA AVALIAÇÃO
+              </label>
+              <input
+                type="text"
+                value={dataAvaliacao}
+                onChange={(e) => setDataAvaliacao(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-medium)",
+                  fontSize: "1rem",
+                }}
+              />
+            </div>
+
+            <div style={{ textAlign: "right" }}>
+              <button className="premium-btn-outline" onClick={() => resetForm(activeTab)} style={{ fontSize: "0.85rem" }}>
+                Limpar Formulário
+              </button>
+            </div>
+          </div>
+
+          {/* SEÇÃO 1: MOBILIDADE AVALIATIVA */}
+          <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--accent-primary)" }}>
+                MOBILIDADE AVALIATIVA
+              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.9rem" }}>
+                <span>Séries:</span>
+                {["1", "2"].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSeriesMobilidade(s)}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border-medium)",
+                      background: seriesMobilidade === s ? "var(--accent-primary)" : "transparent",
+                      color: seriesMobilidade === s ? "#fff" : "var(--text-primary)",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {mobilidade.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
+                    gap: "12px",
+                    alignItems: "center",
+                    padding: "12px",
+                    background: "var(--bg-card)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-light)",
+                  }}
+                >
+                  <div>
+                    <strong style={{ fontSize: "0.95rem" }}>
+                      {idx + 1}. {item.nome}
+                    </strong>
+                    {item.regressaoTexto && (
+                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                        <input
+                          type="checkbox"
+                          checked={item.regressao || false}
+                          onChange={(e) => {
+                            const next = [...mobilidade];
+                            next[idx].regressao = e.target.checked;
+                            setMobilidade(next);
+                          }}
+                        />{" "}
+                        Regressão: {item.regressaoTexto}
+                      </label>
+                    )}
+                    {item.progressaoTexto && (
+                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                        <input
+                          type="checkbox"
+                          checked={item.progressao || false}
+                          onChange={(e) => {
+                            const next = [...mobilidade];
+                            next[idx].progressao = e.target.checked;
+                            setMobilidade(next);
+                          }}
+                        />{" "}
+                        Progressão: {item.progressaoTexto}
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Rating 1 2 3 */}
+                  {renderScoreButtons(mobilidade, setMobilidade, idx)}
+
+                  {/* Reps ou Lados ESQ / DIR */}
+                  <div>
+                    {item.esq !== undefined ? (
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <input
+                          type="text"
+                          placeholder="ESQ"
+                          value={item.esq || ""}
+                          onChange={(e) => {
+                            const next = [...mobilidade];
+                            next[idx].esq = e.target.value;
+                            setMobilidade(next);
+                          }}
+                          style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="DIR"
+                          value={item.dir || ""}
+                          onChange={(e) => {
+                            const next = [...mobilidade];
+                            next[idx].dir = e.target.value;
+                            setMobilidade(next);
+                          }}
+                          style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
+                        />
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                        REP: {item.reps}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Anotações */}
+                  <input
+                    type="text"
+                    placeholder="Observações..."
+                    value={item.obs || ""}
+                    onChange={(e) => {
+                      const next = [...mobilidade];
+                      next[idx].obs = e.target.value;
+                      setMobilidade(next);
+                    }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "0.85rem",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
+              Soma Mobilidade: <span style={{ color: "var(--accent-primary)" }}>{calcSoma(mobilidade)}</span>
+            </div>
+          </div>
+
+          {/* SEÇÕES ADICIONAIS DO ATLETA (AQUECIMENTO & POTÊNCIA) */}
+          {activeTab === "Atleta" && (
+            <>
+              {/* Aquecimento Avaliativo */}
+              <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#3b82f6" }}>
+                    AQUECIMENTO AVALIATIVO
+                  </h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.9rem" }}>
+                    <span>Séries:</span>
+                    {["1", "2"].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setSeriesAquecimento(s)}
+                        style={{
+                          padding: "4px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid var(--border-medium)",
+                          background: seriesAquecimento === s ? "#3b82f6" : "transparent",
+                          color: seriesAquecimento === s ? "#fff" : "var(--text-primary)",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {aquecimento.map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "3fr 1fr 2fr",
+                        gap: "12px",
+                        alignItems: "center",
+                        padding: "12px",
+                        background: "var(--bg-card)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-light)",
+                      }}
+                    >
+                      <div>
+                        <strong style={{ fontSize: "0.95rem" }}>
+                          {idx + 1}. {item.nome}
+                        </strong>
+                        {item.regressaoTexto && (
+                          <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                            <input
+                              type="checkbox"
+                              checked={item.regressao || false}
+                              onChange={(e) => {
+                                const next = [...aquecimento];
+                                next[idx].regressao = e.target.checked;
+                                setAquecimento(next);
+                              }}
+                            />{" "}
+                            Regressão: {item.regressaoTexto}
+                          </label>
+                        )}
+                      </div>
+
+                      {renderScoreButtons(aquecimento, setAquecimento, idx)}
+
+                      <input
+                        type="text"
+                        placeholder="Observações..."
+                        value={item.obs || ""}
+                        onChange={(e) => {
+                          const next = [...aquecimento];
+                          next[idx].obs = e.target.value;
+                          setAquecimento(next);
+                        }}
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid var(--border-medium)",
+                          fontSize: "0.85rem",
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
+                  Soma Aquecimento: <span style={{ color: "#3b82f6" }}>{calcSoma(aquecimento)}</span>
+                </div>
+              </div>
+
+              {/* Potência Avaliativa */}
+              <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
+                <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#8b5cf6", marginBottom: "16px" }}>
+                  POTÊNCIA AVALIATIVA
+                </h2>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {potencia.map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
+                        gap: "12px",
+                        alignItems: "center",
+                        padding: "12px",
+                        background: "var(--bg-card)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-light)",
+                      }}
+                    >
+                      <strong style={{ fontSize: "0.95rem" }}>
+                        {idx + 1}. {item.nome}
+                      </strong>
+
+                      {renderScoreButtons(potencia, setPotencia, idx)}
+
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                        REP: {item.reps}
+                      </span>
+
+                      <input
+                        type="text"
+                        placeholder="Observações..."
+                        value={item.obs || ""}
+                        onChange={(e) => {
+                          const next = [...potencia];
+                          next[idx].obs = e.target.value;
+                          setPotencia(next);
+                        }}
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid var(--border-medium)",
+                          fontSize: "0.85rem",
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
+                  Soma Potência: <span style={{ color: "#8b5cf6" }}>{calcSoma(potencia)}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* SEÇÃO FORÇA FUNCIONAL AVALIATIVA */}
+          <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--cat-forca)" }}>
+                FORÇA FUNCIONAL AVALIATIVA
+              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.9rem" }}>
+                <span>Séries:</span>
+                {["2", "3"].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSeriesForca(s)}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border-medium)",
+                      background: seriesForca === s ? "var(--cat-forca)" : "transparent",
+                      color: seriesForca === s ? "#fff" : "var(--text-primary)",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {forcaFuncional.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
+                    gap: "12px",
+                    alignItems: "center",
+                    padding: "12px",
+                    background: "var(--bg-card)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-light)",
+                  }}
+                >
+                  <div>
+                    <strong style={{ fontSize: "0.95rem" }}>
+                      {idx + 1}. {item.nome}
+                    </strong>
+                    {item.regressaoTexto && (
+                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                        <input
+                          type="checkbox"
+                          checked={item.regressao || false}
+                          onChange={(e) => {
+                            const next = [...forcaFuncional];
+                            next[idx].regressao = e.target.checked;
+                            setForcaFuncional(next);
+                          }}
+                        />{" "}
+                        Reg: {item.regressaoTexto}
+                      </label>
+                    )}
+                    {item.progressaoTexto && (
+                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                        <input
+                          type="checkbox"
+                          checked={item.progressao || false}
+                          onChange={(e) => {
+                            const next = [...forcaFuncional];
+                            next[idx].progressao = e.target.checked;
+                            setForcaFuncional(next);
+                          }}
+                        />{" "}
+                        Prog: {item.progressaoTexto}
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Score 1 2 3 */}
+                  {renderScoreButtons(forcaFuncional, setForcaFuncional, idx)}
+
+                  {/* Carga & Reps */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Carga:</span>
+                      <input
+                        type="text"
+                        placeholder="ex: 12kg"
+                        value={item.carga || ""}
+                        onChange={(e) => {
+                          const next = [...forcaFuncional];
+                          next[idx].carga = e.target.value;
+                          setForcaFuncional(next);
+                        }}
+                        style={{
+                          width: "75px",
+                          padding: "4px",
+                          fontSize: "0.85rem",
+                          borderRadius: "4px",
+                          border: "1px solid var(--border-medium)",
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      REP: {item.reps}
+                    </span>
+                  </div>
+
+                  {/* Observações */}
+                  <input
+                    type="text"
+                    placeholder="Observações..."
+                    value={item.obs || ""}
+                    onChange={(e) => {
+                      const next = [...forcaFuncional];
+                      next[idx].obs = e.target.value;
+                      setForcaFuncional(next);
+                    }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "0.85rem",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
+              Soma Força Funcional: <span style={{ color: "var(--cat-forca)" }}>{calcSoma(forcaFuncional)}</span>
+            </div>
+          </div>
+
+          {/* RECOMENDAÇÕES FINAIS */}
+          <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "16px" }}>Recomendações e Orientações</h2>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
+                  Frequência Semanal Recomendada
+                </label>
+                <input
+                  type="text"
+                  placeholder="ex: 2x a 3x"
+                  value={recomendacaoSemana}
+                  onChange={(e) => setRecomendacaoSemana(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-medium)" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
+                  Tempo Mínimo na Semana
+                </label>
+                <input
+                  type="text"
+                  placeholder="ex: 3 meses"
+                  value={recomendacaoMinimo}
+                  onChange={(e) => setRecomendacaoMinimo(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-medium)" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
+                Recomendações fora do Treinamento
+              </label>
+              <input
+                type="text"
+                placeholder="ex: Alongamentos diários, caminhadas..."
+                value={recomendacaoForaTreino}
+                onChange={(e) => setRecomendacaoForaTreino(e.target.value)}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-medium)" }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
+                Requer aporte nutricional conforme objetivo?
+              </label>
+              <input
+                type="text"
+                placeholder="ex: Sim / Não / Encaminhar ao nutricionista"
+                value={aporteNutricional}
+                onChange={(e) => setAporteNutricional(e.target.value)}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-medium)" }}
+              />
+            </div>
+          </div>
+
+          {/* BARRA DE AÇÕES (BOTTOM) */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "16px 24px",
+              background: "var(--bg-panel)",
+              borderRadius: "12px",
+              border: "1px solid var(--border-light)",
+              position: "sticky",
+              bottom: "20px",
+              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button className="premium-btn-outline" onClick={handleSalvarFicha}>
+                <Save size={18} /> Salvar Ficha
+              </button>
+              <button className="premium-btn-outline" onClick={() => handleGerarPDF()}>
+                <Printer size={18} /> Imprimir / PDF
+              </button>
+            </div>
+
+            <button
+              className="premium-btn"
+              onClick={() => handleSalvarECriarTreinoA()}
+              disabled={saving}
+              style={{ background: "#10b981", fontSize: "1rem", padding: "12px 24px" }}
+            >
+              <Sparkles size={20} />
+              {saving ? "Gerando..." : "Salvar e Criar Treino A"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

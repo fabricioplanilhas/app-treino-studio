@@ -640,4 +640,206 @@ export const mockDb = {
     await mockDb.saveAluno(aluno);
     return true;
   },
+
+  // ─── FICHAS AVALIATIVAS ────────────────────────────────────
+
+  getFichasAvaliativas: (): FichaAvaliativa[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const data = localStorage.getItem('fichas_avaliativas_v1');
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  salvarFichaAvaliativa: (ficha: FichaAvaliativa): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      const fichas = mockDb.getFichasAvaliativas();
+      const idx = fichas.findIndex(f => f.id === ficha.id);
+      if (idx >= 0) {
+        fichas[idx] = ficha;
+      } else {
+        fichas.unshift(ficha);
+      }
+      localStorage.setItem('fichas_avaliativas_v1', JSON.stringify(fichas));
+    } catch (err) {
+      console.error('Erro ao salvar ficha avaliativa:', err);
+    }
+  },
+
+  salvarEGerarTreinoA: async (ficha: FichaAvaliativa): Promise<Aluno> => {
+    // 1. Salva a ficha avaliativa no histórico
+    mockDb.salvarFichaAvaliativa(ficha);
+
+    // 2. Busca ou cria o aluno
+    const alunos = await mockDb.getAlunos();
+    const nomeFormatado = formatNomeAluno(ficha.nomeAluno);
+    
+    let aluno = alunos.find(a => a.nome.toLowerCase() === nomeFormatado.toLowerCase());
+
+    if (!aluno) {
+      aluno = {
+        id: 'aluno_' + Date.now(),
+        nome: nomeFormatado,
+        treinos: [],
+        historico: [],
+        versoesAnteriores: [],
+        observacoes: `Ficha Avaliativa (${ficha.tipo}) realizada em ${ficha.data}`,
+        faseTreinamento: `1ª Aula ${ficha.tipo}`,
+        dataFichaAtual: ficha.data,
+        status: 'ativo'
+      };
+    } else {
+      aluno.dataFichaAtual = ficha.data;
+      aluno.faseTreinamento = `1ª Aula ${ficha.tipo}`;
+    }
+
+    // 3. Extrai cargas dos exercícios de força da ficha
+    const exForcaMap = new Map<string, string>();
+    (ficha.forcaFuncional || []).forEach(item => {
+      exForcaMap.set(item.nome.trim().toUpperCase(), (item.carga || '').trim());
+    });
+
+    const cargaAgachaGB = exForcaMap.get('AGACHAMENTO GB') || exForcaMap.get('AGACHA GB') || '-';
+    const cargaApoio = exForcaMap.get('APOIO SOLO') || exForcaMap.get('APOIO') || '-';
+    const cargaPonte = exForcaMap.get('PONTE 1P SOLO') || exForcaMap.get('PONTE') || '-';
+    const cargaPuxada = exForcaMap.get('PUXADA NEUTRA TRX') || exForcaMap.get('PUXADA TRX') || '-';
+
+    // 4. Monta os exercícios para o Treino A
+    const exerciciosTreinoA: Exercicio[] = [
+      {
+        id: 'ex_ta_' + Date.now() + '_1',
+        nome: 'PRANCHA FRONTAL',
+        categoria: 'Core',
+        series: '2',
+        reps: '35"',
+        carga: '-'
+      }
+    ];
+
+    if (ficha.tipo === 'Atleta') {
+      exerciciosTreinoA.push(
+        {
+          id: 'ex_ta_' + Date.now() + '_2',
+          nome: 'AGACHA SALTA STOP',
+          categoria: 'Potencia',
+          series: '2',
+          reps: '6-8',
+          carga: '-'
+        },
+        {
+          id: 'ex_ta_' + Date.now() + '_3',
+          nome: 'BOLA LAT SMJ',
+          categoria: 'Potencia',
+          series: '2',
+          reps: '5/5',
+          carga: '-'
+        }
+      );
+    }
+
+    exerciciosTreinoA.push(
+      {
+        id: 'ex_ta_' + Date.now() + '_4',
+        nome: 'AGACHA G.B',
+        categoria: 'Forca',
+        series: '2-3',
+        reps: '8-10',
+        carga: cargaAgachaGB !== '' ? cargaAgachaGB : '-'
+      },
+      {
+        id: 'ex_ta_' + Date.now() + '_5',
+        nome: 'APOIO',
+        categoria: 'Forca',
+        series: '2-3',
+        reps: '8-10',
+        carga: cargaApoio !== '' ? cargaApoio : '-'
+      },
+      {
+        id: 'ex_ta_' + Date.now() + '_6',
+        nome: 'PONTE UNI SOLO',
+        categoria: 'Forca',
+        series: '2-3',
+        reps: '8-10',
+        carga: cargaPonte !== '' ? cargaPonte : '-'
+      },
+      {
+        id: 'ex_ta_' + Date.now() + '_7',
+        nome: 'PUXADA N. TRX',
+        categoria: 'Forca',
+        series: '2-3',
+        reps: '8-10',
+        carga: cargaPuxada !== '' ? cargaPuxada : '-'
+      }
+    );
+
+    // Registra evolução de cargas inicial se houver carga definida
+    exerciciosTreinoA.forEach(ex => {
+      if (ex.carga && ex.carga !== '-') {
+        registrarEvolucaoCargas(ex, ex.carga, ficha.data, ficha.data);
+      }
+    });
+
+    // 5. Atualiza o Treino A do aluno
+    const novoTreinoA: Treino = {
+      id: 'treino_A_' + Date.now(),
+      nomeTreino: 'Treino A',
+      exercicios: exerciciosTreinoA
+    };
+
+    const indexA = aluno.treinos.findIndex(t => t.nomeTreino === 'Treino A');
+    if (indexA >= 0) {
+      aluno.treinos[indexA] = novoTreinoA;
+    } else {
+      aluno.treinos.unshift(novoTreinoA);
+    }
+
+    garantirHistoricoCargasAluno(aluno);
+
+    // 6. Salva no banco de dados / Supabase
+    await mockDb.saveAluno(aluno);
+
+    return aluno;
+  }
 };
+
+export type ExercicioAvaliativo = {
+  nome: string;
+  score: number; // 1, 2, 3 or 0 (unselected)
+  esq?: string;
+  dir?: string;
+  regressao?: boolean;
+  regressaoTexto?: string;
+  progressao?: boolean;
+  progressaoTexto?: string;
+  carga?: string;
+  reps?: string;
+  obs?: string;
+};
+
+export type FichaAvaliativa = {
+  id: string;
+  alunoId?: string;
+  nomeAluno: string;
+  data: string;
+  tipo: 'Adulto' | 'Atleta';
+  seriesMobilidade: string;
+  mobilidade: ExercicioAvaliativo[];
+  somaMobilidade: number;
+  seriesAquecimento?: string;
+  aquecimento?: ExercicioAvaliativo[];
+  somaAquecimento?: number;
+  potencia?: ExercicioAvaliativo[];
+  somaPotencia?: number;
+  seriesForca: string;
+  forcaFuncional: ExercicioAvaliativo[];
+  somaForca: number;
+  recomendacaoSemana?: string;
+  recomendacaoMinimo?: string;
+  recomendacaoForaTreino?: string;
+  aporteNutricional?: string;
+  createdAt: string;
+};
+
