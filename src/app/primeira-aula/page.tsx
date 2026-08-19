@@ -40,7 +40,7 @@ const INITIAL_FORCA: ExercicioAvaliativo[] = [
 
 export default function PrimeiraAulaPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"Adulto" | "Atleta" | "Historico">("Adulto");
+  const [activeTab, setActiveTab] = useState<"Menu" | "Adulto" | "Atleta" | "Historico">("Menu");
   const [alunosList, setAlunosList] = useState<Aluno[]>([]);
   const [historicoFichas, setHistoricoFichas] = useState<FichaAvaliativa[]>([]);
   const [buscaHistorico, setBuscaHistorico] = useState("");
@@ -437,70 +437,212 @@ export default function PrimeiraAulaPage() {
     <div style={{ padding: "30px 40px", maxWidth: "1200px", margin: "0 auto" }}>
       {/* Header */}
       <header style={{ marginBottom: "30px" }}>
-        <Link
-          href="/"
-          style={{
-            color: "var(--text-secondary)",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "12px",
-            textDecoration: "none",
-          }}
-        >
-          <ArrowLeft size={16} /> Voltar ao Início
-        </Link>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <div>
+            {activeTab !== "Menu" ? (
+              <button
+                className="premium-btn-outline"
+                onClick={() => setActiveTab("Menu")}
+                style={{ marginBottom: "12px", fontSize: "0.9rem" }}
+              >
+                <ArrowLeft size={16} /> Voltar ao Menu de Escolha
+              </button>
+            ) : (
+              <Link
+                href="/"
+                style={{
+                  color: "var(--text-secondary)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "12px",
+                  textDecoration: "none",
+                }}
+              >
+                <ArrowLeft size={16} /> Voltar ao Início
+              </Link>
+            )}
             <h1 style={{ fontSize: "2.2rem", fontWeight: 800, color: "var(--text-primary)" }}>
               1º Aula - Ficha Avaliativa
             </h1>
             <p style={{ color: "var(--text-secondary)" }}>
-              Avaliação de mobilidade, potência e força para novos alunos
+              {activeTab === "Menu"
+                ? "Selecione o tipo de avaliação ou consulte o histórico"
+                : `Avaliação de 1ª Aula (${activeTab.toUpperCase()})`}
             </p>
           </div>
 
-          {/* Abas */}
+          {/* Abas Superiores (quando fora do menu) */}
+          {activeTab !== "Menu" && (
+            <div
+              style={{
+                display: "flex",
+                background: "var(--bg-card)",
+                padding: "4px",
+                borderRadius: "10px",
+                border: "1px solid var(--border-medium)",
+                gap: "4px",
+              }}
+            >
+              <button
+                className={activeTab === "Adulto" ? "premium-btn" : "premium-btn-outline"}
+                onClick={() => {
+                  if (activeTab !== "Adulto" && !fichaId) resetForm("Adulto");
+                  setActiveTab("Adulto");
+                }}
+                style={{ padding: "8px 16px" }}
+              >
+                <Dumbbell size={18} /> Adulto
+              </button>
+              <button
+                className={activeTab === "Atleta" ? "premium-btn" : "premium-btn-outline"}
+                onClick={() => {
+                  if (activeTab !== "Atleta" && !fichaId) resetForm("Atleta");
+                  setActiveTab("Atleta");
+                }}
+                style={{ padding: "8px 16px", background: activeTab === "Atleta" ? "#3b82f6" : undefined }}
+              >
+                <Sparkles size={18} /> Atleta
+              </button>
+              <button
+                className={activeTab === "Historico" ? "premium-btn" : "premium-btn-outline"}
+                onClick={() => setActiveTab("Historico")}
+                style={{ padding: "8px 16px", background: activeTab === "Historico" ? "#8b5cf6" : undefined }}
+              >
+                <FileText size={18} /> Histórico ({historicoFichas.length})
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* TELA DE MENU INICIAL (ESCOLHA OBRIGATÓRIA) */}
+      {activeTab === "Menu" && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", marginTop: "20px" }}>
+          {/* Card 1: Adulto */}
           <div
-            style={{
-              display: "flex",
-              background: "var(--bg-card)",
-              padding: "4px",
-              borderRadius: "10px",
-              border: "1px solid var(--border-medium)",
-              gap: "4px",
+            onClick={() => {
+              resetForm("Adulto");
+              setActiveTab("Adulto");
             }}
+            style={{
+              background: "var(--bg-panel)",
+              padding: "40px 30px",
+              borderRadius: "16px",
+              border: "2px solid var(--accent-primary)",
+              cursor: "pointer",
+              textAlign: "center",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
+            onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
           >
-            <button
-              className={activeTab === "Adulto" ? "premium-btn" : "premium-btn-outline"}
-              onClick={() => {
-                if (activeTab !== "Adulto" && !fichaId) resetForm("Adulto");
-                setActiveTab("Adulto");
+            <div
+              style={{
+                width: "70px",
+                height: "70px",
+                borderRadius: "50%",
+                background: "rgba(76, 175, 80, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px auto",
               }}
-              style={{ padding: "8px 16px" }}
             >
-              <Dumbbell size={18} /> Adulto
+              <Dumbbell size={36} color="var(--accent-primary)" />
+            </div>
+            <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "8px" }}>1º Aula Adulto</h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
+              Ficha avaliativa com testes de mobilidade física e força funcional para alunos adultos.
+            </p>
+            <button className="premium-btn" style={{ marginTop: "24px", width: "100%", justifyContent: "center" }}>
+              Abrir Ficha Adulto
             </button>
-            <button
-              className={activeTab === "Atleta" ? "premium-btn" : "premium-btn-outline"}
-              onClick={() => {
-                if (activeTab !== "Atleta" && !fichaId) resetForm("Atleta");
-                setActiveTab("Atleta");
+          </div>
+
+          {/* Card 2: Atleta */}
+          <div
+            onClick={() => {
+              resetForm("Atleta");
+              setActiveTab("Atleta");
+            }}
+            style={{
+              background: "var(--bg-panel)",
+              padding: "40px 30px",
+              borderRadius: "16px",
+              border: "2px solid #3b82f6",
+              cursor: "pointer",
+              textAlign: "center",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
+            onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            <div
+              style={{
+                width: "70px",
+                height: "70px",
+                borderRadius: "50%",
+                background: "rgba(59, 130, 246, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px auto",
               }}
-              style={{ padding: "8px 16px", background: activeTab === "Atleta" ? "#3b82f6" : undefined }}
             >
-              <Sparkles size={18} /> Atleta
+              <Sparkles size={36} color="#3b82f6" />
+            </div>
+            <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "8px" }}>1º Aula Atleta</h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
+              Ficha completa com testes de mobilidade, aquecimento de pista, potência e força funcional.
+            </p>
+            <button className="premium-btn" style={{ marginTop: "24px", width: "100%", justifyContent: "center", background: "#3b82f6" }}>
+              Abrir Ficha Atleta
             </button>
-            <button
-              className={activeTab === "Historico" ? "premium-btn" : "premium-btn-outline"}
-              onClick={() => setActiveTab("Historico")}
-              style={{ padding: "8px 16px", background: activeTab === "Historico" ? "#8b5cf6" : undefined }}
+          </div>
+
+          {/* Card 3: Histórico */}
+          <div
+            onClick={() => setActiveTab("Historico")}
+            style={{
+              background: "var(--bg-panel)",
+              padding: "40px 30px",
+              borderRadius: "16px",
+              border: "2px solid #8b5cf6",
+              cursor: "pointer",
+              textAlign: "center",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-4px)")}
+            onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            <div
+              style={{
+                width: "70px",
+                height: "70px",
+                borderRadius: "50%",
+                background: "rgba(139, 92, 246, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px auto",
+              }}
             >
-              <FileText size={18} /> Histórico ({historicoFichas.length})
+              <FileText size={36} color="#8b5cf6" />
+            </div>
+            <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "8px" }}>Histórico de Fichas</h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
+              Consulte avaliações realizadas ({historicoFichas.length}), reimprima PDFs ou crie o Treino A.
+            </p>
+            <button className="premium-btn" style={{ marginTop: "24px", width: "100%", justifyContent: "center", background: "#8b5cf6" }}>
+              Ver Histórico ({historicoFichas.length})
             </button>
           </div>
         </div>
-      </header>
+      )}
 
       {/* ABA 3: HISTÓRICO DE FICHAS */}
       {activeTab === "Historico" && (
