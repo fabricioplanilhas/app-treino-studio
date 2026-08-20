@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, FichaAvaliativa, ExercicioAvaliativo } from "@/lib/mockData";
-import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
@@ -46,6 +46,7 @@ export default function PrimeiraAulaPage() {
   const [historicoFichas, setHistoricoFichas] = useState<FichaAvaliativa[]>([]);
   const [buscaHistorico, setBuscaHistorico] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showOverheadGuide, setShowOverheadGuide] = useState(false);
 
   // Form State
   const [fichaId, setFichaId] = useState<string>("");
@@ -1003,6 +1004,31 @@ export default function PrimeiraAulaPage() {
                         Progressão: {item.progressaoTexto}
                       </label>
                     )}
+
+                    {item.nome === "Agachamento Overhead" && (
+                      <button
+                        type="button"
+                        onClick={() => setShowOverheadGuide(!showOverheadGuide)}
+                        style={{
+                          marginTop: "8px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          background: showOverheadGuide ? "var(--accent-primary)" : "var(--bg-panel)",
+                          color: showOverheadGuide ? "#fff" : "var(--text-secondary)",
+                          border: "1px solid var(--border-medium)",
+                          borderRadius: "6px",
+                          padding: "4px 8px",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {showOverheadGuide ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {showOverheadGuide ? "Ocultar Guia Visual" : "Guia de Pontuação (1, 2, 3)"}
+                      </button>
+                    )}
                   </div>
 
                   {/* Rating 1 2 3 */}
@@ -1059,6 +1085,75 @@ export default function PrimeiraAulaPage() {
                       fontSize: "0.85rem",
                     }}
                   />
+
+                  {/* Guia Visual do Agachamento Overhead (Collapsible) */}
+                  {item.nome === "Agachamento Overhead" && showOverheadGuide && (
+                    <div
+                      style={{
+                        gridColumn: "1 / -1",
+                        marginTop: "8px",
+                        padding: "16px",
+                        background: "var(--bg-panel)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-medium)",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                          📖 Guia Visual para Avaliação do Agachamento Overhead (Critérios de Notas 1 a 3):
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowOverheadGuide(false)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--text-secondary)",
+                            cursor: "pointer",
+                            fontSize: "0.8rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <ChevronUp size={14} /> Ocultar
+                        </button>
+                      </div>
+
+                      <img
+                        src="/overhead-squat-guide.jpg"
+                        alt="Guia Visual Agachamento Overhead"
+                        style={{
+                          width: "100%",
+                          maxHeight: "360px",
+                          borderRadius: "8px",
+                          filter: "grayscale(100%)",
+                          border: "1px solid var(--border-medium)",
+                          objectFit: "contain",
+                          background: "#000",
+                        }}
+                      />
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px", width: "100%", fontSize: "0.8rem" }}>
+                        <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "10px", borderRadius: "6px", borderLeft: "3px solid #ef4444" }}>
+                          <strong style={{ color: "#ef4444", display: "block", marginBottom: "4px" }}>Nota 1 (Compensações Severas):</strong>
+                          Incapacidade de manter a postura: tronco excessivamente inclinado, braços caem à frente da linha da cabeça ou calcanhares saem do solo.
+                        </div>
+                        <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "10px", borderRadius: "6px", borderLeft: "3px solid #f59e0b" }}>
+                          <strong style={{ color: "#f59e0b", display: "block", marginBottom: "4px" }}>Nota 2 (Compensações Leves):</strong>
+                          Executa o agachamento com flexão sutil dos cotovelos ou leve inclinação anterior do tronco, mantendo amplitude.
+                        </div>
+                        <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "10px", borderRadius: "6px", borderLeft: "3px solid #10b981" }}>
+                          <strong style={{ color: "#10b981", display: "block", marginBottom: "4px" }}>Nota 3 (Execução Perfeita):</strong>
+                          Tronco ereto paralelo às tíbias, fêmur abaixo da linha horizontal (profundo) e bastão perfeitamente alinhado acima dos pés.
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
