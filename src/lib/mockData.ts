@@ -808,6 +808,8 @@ export const mockDb = {
 export type ExercicioAvaliativo = {
   nome: string;
   score: number; // 1, 2, 3 or 0 (unselected)
+  scoreEsq?: number; // 1, 2, 3 or 0
+  scoreDir?: number; // 1, 2, 3 or 0
   esq?: string;
   dir?: string;
   regressao?: boolean;

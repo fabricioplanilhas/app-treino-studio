@@ -12,10 +12,11 @@ import { RUMPEL_LOGO_BASE64 } from "@/lib/logoBase64";
 // Templates padrão para formulários
 const INITIAL_MOBILIDADE: ExercicioAvaliativo[] = [
   { nome: "Agachamento Overhead", score: 0, reps: "6-8", obs: "" },
-  { nome: "Terra Unilateral", score: 0, reps: "6-8", esq: "", dir: "", regressao: false, regressaoTexto: "Terra Unilateral Assistido (TRX/HACK/PAREDE)", obs: "" },
+  { nome: "Terra Unilateral", score: 0, scoreEsq: 0, scoreDir: 0, reps: "6-8", esq: "", dir: "", regressao: false, regressaoTexto: "Terra Unilateral Assistido (TRX/HACK/PAREDE)", obs: "" },
+  { nome: "Split Squat", score: 0, scoreEsq: 0, scoreDir: 0, reps: "6-8", esq: "", dir: "", regressao: false, regressaoTexto: "Split Squat Assistido (TRX/HACK/PAREDE)", obs: "" },
   { nome: "Toca os Pés", score: 0, reps: "3-5", obs: "" },
   { nome: "Prancha Frontal (35seg.)", score: 0, reps: "35seg", obs: "" },
-  { nome: "Leg Lower", score: 0, reps: "6-10", esq: "", dir: "", regressao: false, regressaoTexto: "Leg Lower Assistido (Super Band/ Hack/ Barede)", obs: "" },
+  { nome: "Leg Lower", score: 0, scoreEsq: 0, scoreDir: 0, reps: "6-10", esq: "", dir: "", regressao: false, regressaoTexto: "Leg Lower Assistido (Super Band/ Hack/ Barede)", obs: "" },
   { nome: "Ombro Desliza Solo", score: 0, reps: "5-8", progressao: false, progressaoTexto: "Ombro Desliza Parede", obs: "" },
 ];
 
@@ -118,7 +119,18 @@ export default function PrimeiraAulaPage() {
     setNomeAluno(ficha.nomeAluno);
     setDataAvaliacao(ficha.data);
     setSeriesMobilidade(ficha.seriesMobilidade || "1");
-    setMobilidade(ficha.mobilidade ? JSON.parse(JSON.stringify(ficha.mobilidade)) : JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
+    if (ficha.mobilidade) {
+      const mobCopy = JSON.parse(JSON.stringify(ficha.mobilidade));
+      mobCopy.forEach((item: ExercicioAvaliativo) => {
+        if (item.nome === "Terra Unilateral" || item.nome === "Split Squat" || item.nome === "Leg Lower" || item.esq !== undefined) {
+          if (item.scoreEsq === undefined) item.scoreEsq = item.score || 0;
+          if (item.scoreDir === undefined) item.scoreDir = item.score || 0;
+        }
+      });
+      setMobilidade(mobCopy);
+    } else {
+      setMobilidade(JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
+    }
     
     if (ficha.tipo === "Atleta") {
       setSeriesAquecimento(ficha.seriesAquecimento || "1");
@@ -258,9 +270,17 @@ export default function PrimeiraAulaPage() {
       if (item.regressao) extra += ` [Regressão: ${item.regressaoTexto}]`;
       if (item.progressao) extra += ` [Progressão: ${item.progressaoTexto}]`;
       if (item.obs) extra += ` - Obs: ${item.obs}`;
+
+      let notaText = `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`;
+      if (item.scoreEsq !== undefined || item.scoreDir !== undefined) {
+        const sE = item.scoreEsq || 0;
+        const sD = item.scoreDir || 0;
+        notaText = `E: 1(${sE === 1 ? "X" : " "}) 2(${sE === 2 ? "X" : " "}) 3(${sE === 3 ? "X" : " "})\nD: 1(${sD === 1 ? "X" : " "}) 2(${sD === 2 ? "X" : " "}) 3(${sD === 3 ? "X" : " "})`;
+      }
+
       return [
         `${idx + 1}. ${item.nome}${extra}`,
-        `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`,
+        notaText,
         `REP: ${item.reps || ""}`,
       ];
     });
@@ -387,6 +407,84 @@ export default function PrimeiraAulaPage() {
     setList: React.Dispatch<React.SetStateAction<ExercicioAvaliativo[]>>,
     index: number
   ) => {
+    const item = list[index];
+    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined;
+
+    if (isUnilateral) {
+      const scoreEsq = item.scoreEsq || 0;
+      const scoreDir = item.scoreDir || 0;
+
+      const handleScoreChange = (side: "esq" | "dir", val: number) => {
+        const next = [...list];
+        const target = next[index];
+        if (side === "esq") {
+          target.scoreEsq = target.scoreEsq === val ? 0 : val;
+        } else {
+          target.scoreDir = target.scoreDir === val ? 0 : val;
+        }
+
+        const sE = target.scoreEsq || 0;
+        const sD = target.scoreDir || 0;
+        if (sE > 0 && sD > 0) {
+          target.score = Math.min(sE, sD);
+        } else {
+          target.score = sE || sD || 0;
+        }
+        setList(next);
+      };
+
+      const renderSideRow = (label: string, side: "esq" | "dir", currentVal: number) => (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, width: "32px", color: "var(--text-secondary)" }}>
+            {label}:
+          </span>
+          {[1, 2, 3].map((val) => {
+            const isSelected = currentVal === val;
+            let bg = "var(--bg-hover)";
+            let color = "var(--text-primary)";
+            if (isSelected) {
+              if (val === 1) { bg = "#ef4444"; color = "#fff"; }
+              else if (val === 2) { bg = "#f59e0b"; color = "#fff"; }
+              else if (val === 3) { bg = "#10b981"; color = "#fff"; }
+            }
+            return (
+              <button
+                key={`${side}-${val}`}
+                type="button"
+                onClick={() => handleScoreChange(side, val)}
+                style={{
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "6px",
+                  border: isSelected ? "none" : "1px solid var(--border-medium)",
+                  background: bg,
+                  color: color,
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {val}
+              </button>
+            );
+          })}
+        </div>
+      );
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {renderSideRow("ESQ", "esq", scoreEsq)}
+          {renderSideRow("DIR", "dir", scoreDir)}
+          {item.score > 0 && (
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+              Nota final: <strong style={{ color: "var(--accent-primary)" }}>{item.score}</strong>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     const currentScore = list[index].score;
     return (
       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -864,7 +962,7 @@ export default function PrimeiraAulaPage() {
                   key={idx}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
+                    gridTemplateColumns: "2.2fr 1.3fr 1fr 2fr",
                     gap: "12px",
                     alignItems: "center",
                     padding: "12px",
