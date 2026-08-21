@@ -1213,22 +1213,35 @@ export default function PrimeiraAulaPage() {
                             </div>
                           </div>
 
-                          {/* Grid dos Critérios Oficiais FMS */}
+                          {/* Grid dos Critérios Oficiais FMS (0, 1, 2, 3 da esquerda para a direita) */}
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
-                            {/* NOTA 3 */}
-                            <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #10b981" }}>
+                            {/* NOTA 0 */}
+                            <div style={{ background: "rgba(107, 114, 128, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #6b7280" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#10b981", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  3
+                                <span style={{ background: "#6b7280", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  0
                                 </span>
-                                <strong style={{ color: "#10b981", fontSize: "0.95rem" }}>Padrão Ideal (No Solo)</strong>
+                                <strong style={{ color: "#6b7280", fontSize: "0.95rem" }}>Presença de Dor (Stop)</strong>
+                              </div>
+                              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                Um indivíduo recebe <strong>pontuação zero (0)</strong> se <strong>qualquer dor</strong> estiver associada a qualquer parte desse teste. Um profissional médico/clínico deve realizar uma avaliação aprofundada da área dolorosa.
+                              </p>
+                            </div>
+
+                            {/* NOTA 1 */}
+                            <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #ef4444" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <span style={{ background: "#ef4444", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  1
+                                </span>
+                                <strong style={{ color: "#ef4444", fontSize: "0.95rem" }}>Disfunção / Compensações</strong>
                               </div>
                               <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                <li><strong>Tronco paralelo à tíbia</strong> ou em direção vertical.</li>
-                                <li><strong>Fêmur abaixo da horizontal</strong> (agachamento profundo completo).</li>
-                                <li><strong>Joelhos alinhados</strong> sobre os pés (sem colapso em valgo).</li>
-                                <li><strong>Bastão alinhado</strong> verticalmente sobre os pés.</li>
-                                <li>Calcanhares apoiados totalmente no solo.</li>
+                                <li>Tíbia e tronco <strong>NÃO estão paralelos</strong> (tronco cai à frente).</li>
+                                <li>Fêmur <strong>NÃO fica abaixo da horizontal</strong>.</li>
+                                <li>Joelhos <strong>NÃO estão alinhados</strong> sobre os pés (valgo).</li>
+                                <li>O bastão <strong>NÃO está alinhado</strong> sobre os pés.</li>
+                                <li>Incapacidade de atingir os critérios mesmo com a prancha.</li>
                               </ul>
                             </div>
 
@@ -1249,34 +1262,21 @@ export default function PrimeiraAulaPage() {
                               </ul>
                             </div>
 
-                            {/* NOTA 1 */}
-                            <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #ef4444" }}>
+                            {/* NOTA 3 */}
+                            <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #10b981" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#ef4444", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  1
+                                <span style={{ background: "#10b981", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  3
                                 </span>
-                                <strong style={{ color: "#ef4444", fontSize: "0.95rem" }}>Disfunção / Compensações</strong>
+                                <strong style={{ color: "#10b981", fontSize: "0.95rem" }}>Padrão Ideal (No Solo)</strong>
                               </div>
                               <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                <li>Tíbia e tronco <strong>NÃO estão paralelos</strong> (tronco cai à frente).</li>
-                                <li>Fêmur <strong>NÃO fica abaixo da horizontal</strong>.</li>
-                                <li>Joelhos <strong>NÃO estão alinhados</strong> sobre os pés (valgo).</li>
-                                <li>O bastão <strong>NÃO está alinhado</strong> sobre os pés.</li>
-                                <li>Incapacidade de atingir os critérios mesmo com a prancha.</li>
+                                <li><strong>Tronco paralelo à tíbia</strong> ou em direção vertical.</li>
+                                <li><strong>Fêmur abaixo da horizontal</strong> (agachamento profundo completo).</li>
+                                <li><strong>Joelhos alinhados</strong> sobre os pés (sem colapso em valgo).</li>
+                                <li><strong>Bastão alinhado</strong> verticalmente sobre os pés.</li>
+                                <li>Calcanhares apoiados totalmente no solo.</li>
                               </ul>
-                            </div>
-
-                            {/* NOTA 0 */}
-                            <div style={{ background: "rgba(107, 114, 128, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #6b7280" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#6b7280", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  0
-                                </span>
-                                <strong style={{ color: "#6b7280", fontSize: "0.95rem" }}>Presença de Dor (Stop)</strong>
-                              </div>
-                              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                Um indivíduo recebe <strong>pontuação zero (0)</strong> se <strong>qualquer dor</strong> estiver associada a qualquer parte desse teste. Um profissional médico/clínico deve realizar uma avaliação aprofundada da área dolorosa.
-                              </p>
                             </div>
                           </div>
                         </div>
