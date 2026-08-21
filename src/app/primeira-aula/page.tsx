@@ -1196,21 +1196,20 @@ export default function PrimeiraAulaPage() {
                       {/* ABA 1: CRITÉRIOS DE PONTUAÇÃO & DIAGRAMA */}
                       {overheadGuideTab === "criterios" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                          {/* Imagem de Referência em Preto e Branco */}
-                          <div style={{ textAlign: "center", background: "#09090b", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-medium)" }}>
+                          {/* Imagem Oficial Extraída do Manual FMS */}
+                          <div style={{ textAlign: "center", background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid var(--border-medium)", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
                             <img
-                              src="/overhead-squat-guide.jpg"
-                              alt="Referência FMS Deep Squat"
+                              src="/fms-deep-squat-official.png"
+                              alt="Pontuação do Deep Squat (Manual Oficial FMS)"
                               style={{
                                 maxWidth: "100%",
-                                maxHeight: "300px",
+                                maxHeight: "480px",
                                 borderRadius: "6px",
-                                filter: "grayscale(100%)",
                                 objectFit: "contain",
                               }}
                             />
-                            <div style={{ fontSize: "0.75rem", color: "#a1a1aa", marginTop: "6px" }}>
-                              Ilustração do Padrão de Movimento: Compensações Severas (1), Compensações Leves/Tábua (2) e Padrão Perfeito no Solo (3)
+                            <div style={{ fontSize: "0.75rem", color: "#52525b", marginTop: "8px", fontWeight: 600 }}>
+                              Fotografias Oficiais FMS: Vista Frontal e Lateral para as Notas 3 (Solo), 2 (Prancha) e 1 (Compensações)
                             </div>
                           </div>
 
