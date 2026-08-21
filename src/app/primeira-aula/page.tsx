@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { mockDb, Aluno, FichaAvaliativa, ExercicioAvaliativo } from "@/lib/mockData";
-import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
@@ -47,6 +47,7 @@ export default function PrimeiraAulaPage() {
   const [buscaHistorico, setBuscaHistorico] = useState("");
   const [saving, setSaving] = useState(false);
   const [showOverheadGuide, setShowOverheadGuide] = useState(false);
+  const [overheadGuideTab, setOverheadGuideTab] = useState<"criterios" | "instrucoes" | "implicacoes">("criterios");
 
   // Form State
   const [fichaId, setFichaId] = useState<string>("");
@@ -1086,26 +1087,32 @@ export default function PrimeiraAulaPage() {
                     }}
                   />
 
-                  {/* Guia Visual do Agachamento Overhead (Collapsible) */}
+                  {/* Guia Oficial FMS - Agachamento Overhead / Deep Squat (Collapsible) */}
                   {item.nome === "Agachamento Overhead" && showOverheadGuide && (
                     <div
                       style={{
                         gridColumn: "1 / -1",
-                        marginTop: "8px",
-                        padding: "16px",
+                        marginTop: "10px",
+                        padding: "20px",
                         background: "var(--bg-panel)",
-                        borderRadius: "8px",
+                        borderRadius: "12px",
                         border: "1px solid var(--border-medium)",
                         display: "flex",
                         flexDirection: "column",
-                        alignItems: "center",
-                        gap: "12px",
+                        gap: "16px",
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                          📖 Guia Visual para Avaliação do Agachamento Overhead (Critérios de Notas 1 a 3):
-                        </span>
+                      {/* Header do Guia */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-light)", paddingBottom: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 800 }}>
+                            MANUAL OFICIAL FMS
+                          </span>
+                          <strong style={{ fontSize: "1.05rem", color: "var(--text-primary)" }}>
+                            Deep Squat Movement Pattern (Agachamento Profundo)
+                          </strong>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setShowOverheadGuide(false)}
@@ -1114,44 +1121,235 @@ export default function PrimeiraAulaPage() {
                             border: "none",
                             color: "var(--text-secondary)",
                             cursor: "pointer",
-                            fontSize: "0.8rem",
+                            fontSize: "0.85rem",
                             display: "flex",
                             alignItems: "center",
                             gap: "4px",
+                            fontWeight: 600,
                           }}
                         >
-                          <ChevronUp size={14} /> Ocultar
+                          <ChevronUp size={16} /> Fechar Guia
                         </button>
                       </div>
 
-                      <img
-                        src="/overhead-squat-guide.jpg"
-                        alt="Guia Visual Agachamento Overhead"
-                        style={{
-                          width: "100%",
-                          maxHeight: "360px",
-                          borderRadius: "8px",
-                          filter: "grayscale(100%)",
-                          border: "1px solid var(--border-medium)",
-                          objectFit: "contain",
-                          background: "#000",
-                        }}
-                      />
-
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px", width: "100%", fontSize: "0.8rem" }}>
-                        <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "10px", borderRadius: "6px", borderLeft: "3px solid #ef4444" }}>
-                          <strong style={{ color: "#ef4444", display: "block", marginBottom: "4px" }}>Nota 1 (Compensações Severas):</strong>
-                          Incapacidade de manter a postura: tronco excessivamente inclinado, braços caem à frente da linha da cabeça ou calcanhares saem do solo.
-                        </div>
-                        <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "10px", borderRadius: "6px", borderLeft: "3px solid #f59e0b" }}>
-                          <strong style={{ color: "#f59e0b", display: "block", marginBottom: "4px" }}>Nota 2 (Compensações Leves):</strong>
-                          Executa o agachamento com flexão sutil dos cotovelos ou leve inclinação anterior do tronco, mantendo amplitude.
-                        </div>
-                        <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "10px", borderRadius: "6px", borderLeft: "3px solid #10b981" }}>
-                          <strong style={{ color: "#10b981", display: "block", marginBottom: "4px" }}>Nota 3 (Execução Perfeita):</strong>
-                          Tronco ereto paralelo às tíbias, fêmur abaixo da linha horizontal (profundo) e bastão perfeitamente alinhado acima dos pés.
-                        </div>
+                      {/* Sub-abas de Navegação do Guia */}
+                      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-light)", paddingBottom: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() => setOverheadGuideTab("criterios")}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: "6px",
+                            border: overheadGuideTab === "criterios" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                            background: overheadGuideTab === "criterios" ? "var(--accent-primary)" : "var(--bg-card)",
+                            color: overheadGuideTab === "criterios" ? "#fff" : "var(--text-secondary)",
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <BookOpen size={14} /> Critérios de Pontuação (3, 2, 1, 0)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOverheadGuideTab("instrucoes")}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: "6px",
+                            border: overheadGuideTab === "instrucoes" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                            background: overheadGuideTab === "instrucoes" ? "var(--accent-primary)" : "var(--bg-card)",
+                            color: overheadGuideTab === "instrucoes" ? "#fff" : "var(--text-secondary)",
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <HelpCircle size={14} /> Instruções Verbais & Roteiro
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOverheadGuideTab("implicacoes")}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: "6px",
+                            border: overheadGuideTab === "implicacoes" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                            background: overheadGuideTab === "implicacoes" ? "var(--accent-primary)" : "var(--bg-card)",
+                            color: overheadGuideTab === "implicacoes" ? "#fff" : "var(--text-secondary)",
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <AlertTriangle size={14} /> Implicações Biomecânicas
+                        </button>
                       </div>
+
+                      {/* ABA 1: CRITÉRIOS DE PONTUAÇÃO & DIAGRAMA */}
+                      {overheadGuideTab === "criterios" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                          {/* Imagem de Referência em Preto e Branco */}
+                          <div style={{ textAlign: "center", background: "#09090b", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-medium)" }}>
+                            <img
+                              src="/overhead-squat-guide.jpg"
+                              alt="Referência FMS Deep Squat"
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: "300px",
+                                borderRadius: "6px",
+                                filter: "grayscale(100%)",
+                                objectFit: "contain",
+                              }}
+                            />
+                            <div style={{ fontSize: "0.75rem", color: "#a1a1aa", marginTop: "6px" }}>
+                              Ilustração do Padrão de Movimento: Compensações Severas (1), Compensações Leves/Tábua (2) e Padrão Perfeito no Solo (3)
+                            </div>
+                          </div>
+
+                          {/* Grid dos Critérios Oficiais FMS */}
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
+                            {/* NOTA 3 */}
+                            <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #10b981" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <span style={{ background: "#10b981", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  3
+                                </span>
+                                <strong style={{ color: "#10b981", fontSize: "0.95rem" }}>Padrão Ideal (No Solo)</strong>
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                <li><strong>Tronco paralelo à tíbia</strong> ou em direção vertical.</li>
+                                <li><strong>Fêmur abaixo da horizontal</strong> (agachamento profundo completo).</li>
+                                <li><strong>Joelhos alinhados</strong> sobre os pés (sem colapso em valgo).</li>
+                                <li><strong>Bastão alinhado</strong> verticalmente sobre os pés.</li>
+                                <li>Calcanhares apoiados totalmente no solo.</li>
+                              </ul>
+                            </div>
+
+                            {/* NOTA 2 */}
+                            <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #f59e0b" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <span style={{ background: "#f59e0b", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  2
+                                </span>
+                                <strong style={{ color: "#f59e0b", fontSize: "0.95rem" }}>Com Calcanhares Elevados</strong>
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                <li><strong>Tronco paralelo à tíbia</strong> ou em direção vertical.</li>
+                                <li><strong>Fêmur abaixo da horizontal</strong>.</li>
+                                <li><strong>Joelhos alinhados</strong> sobre os pés.</li>
+                                <li><strong>Bastão alinhado</strong> sobre os pés.</li>
+                                <li><strong>Executado com os calcanhares sobre a prancha/tábua FMS</strong>.</li>
+                              </ul>
+                            </div>
+
+                            {/* NOTA 1 */}
+                            <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #ef4444" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <span style={{ background: "#ef4444", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  1
+                                </span>
+                                <strong style={{ color: "#ef4444", fontSize: "0.95rem" }}>Disfunção / Compensações</strong>
+                              </div>
+                              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                <li>Tíbia e tronco <strong>NÃO estão paralelos</strong> (tronco cai à frente).</li>
+                                <li>Fêmur <strong>NÃO fica abaixo da horizontal</strong>.</li>
+                                <li>Joelhos <strong>NÃO estão alinhados</strong> sobre os pés (valgo).</li>
+                                <li>O bastão <strong>NÃO está alinhado</strong> sobre os pés.</li>
+                                <li>Incapacidade de atingir os critérios mesmo com a prancha.</li>
+                              </ul>
+                            </div>
+
+                            {/* NOTA 0 */}
+                            <div style={{ background: "rgba(107, 114, 128, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #6b7280" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                <span style={{ background: "#6b7280", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                  0
+                                </span>
+                                <strong style={{ color: "#6b7280", fontSize: "0.95rem" }}>Presença de Dor (Stop)</strong>
+                              </div>
+                              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                Um indivíduo recebe <strong>pontuação zero (0)</strong> se <strong>qualquer dor</strong> estiver associada a qualquer parte desse teste. Um profissional médico/clínico deve realizar uma avaliação aprofundada da área dolorosa.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ABA 2: INSTRUÇÕES VERBAIS & DICAS */}
+                      {overheadGuideTab === "instrucoes" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "0.85rem" }}>
+                          <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid var(--accent-primary)" }}>
+                            <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
+                              🗣️ Roteiro de Instruções Verbais (O que falar para o aluno):
+                            </strong>
+                            <p style={{ fontStyle: "italic", color: "var(--text-secondary)", margin: "0 0 8px 0" }}>
+                              "Por favor, informe se há dor enquanto executa o movimento."
+                            </p>
+                            <ol style={{ margin: 0, paddingLeft: "20px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                              <li><strong>"Fique em pé com os pés separados aproximadamente na largura dos ombros e com os dedos do pé apontados para frente."</strong></li>
+                              <li><strong>"Segure o bastão com ambas as mãos horizontalmente sobre a cabeça, mantendo os ombros e cotovelos em um ângulo de 90 graus."</strong></li>
+                              <li><strong>"Levante o bastão de forma que ele fique diretamente acima da sua cabeça."</strong></li>
+                              <li><strong>"Inicie o agachamento e desça o mais baixo possível, mas mantenha a coluna vertebral ereta e mantenha o bastão sobre a cabeça e os calcanhares no chão."</strong></li>
+                              <li><strong>"Mantenha a posição descendente e conte até um, e então retorne à posição inicial."</strong></li>
+                              <li><strong>"Você compreendeu as instruções?"</strong></li>
+                            </ol>
+                          </div>
+
+                          <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+                            <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
+                              💡 Dicas Oficiais para o Avaliador:
+                            </strong>
+                            <ul style={{ margin: 0, paddingLeft: "20px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                              <li>O cliente pode executar o movimento <strong>até 3 vezes</strong> se necessário.</li>
+                              <li>Se uma pontuação de 3 não for alcançada no solo, repita as instruções usando a <strong>plataforma sob os calcanhares</strong> do cliente.</li>
+                              <li>Observe o cliente de <strong>frente</strong> e de <strong>perfil (lado)</strong>.</li>
+                              <li>Todas as posições, incluindo o alinhamento dos pés, deverão permanecer inalteradas quando os calcanhares estiverem elevados.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ABA 3: IMPLICAÇÕES BIOMECÂNICAS */}
+                      {overheadGuideTab === "implicacoes" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.85rem" }}>
+                          <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+                            <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
+                              🎯 Objetivo do Teste:
+                            </strong>
+                            <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                              O agachamento profundo demonstra mobilidade e estabilidade extrema completamente coordenadas com quadris e ombros em posições simétricas. Avalia mobilidade e estabilidade funcional bilateral dos quadris, joelhos, tornozelos, ombros, região escapular e coluna torácica.
+                            </p>
+                          </div>
+
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid #3b82f6" }}>
+                              <strong style={{ color: "#3b82f6", display: "block", marginBottom: "6px" }}>
+                                🦴 Membros Superiores & Coluna:
+                              </strong>
+                              <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                Limitação nos membros superiores pode ser atribuída à mobilidade deficiente pela articulação glenoumeral, pela coluna torácica (falta de extensão torácica) ou ambas.
+                              </p>
+                            </div>
+
+                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid #8b5cf6" }}>
+                              <strong style={{ color: "#8b5cf6", display: "block", marginBottom: "6px" }}>
+                                🦵 Membros Inferiores & Tornozelo:
+                              </strong>
+                              <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                Limitação nas extremidades inferiores inclui dorsiflexão de cadeia cinética fechada deficiente pelo tornozelo, ou flexão limitada pelos joelhos e quadris.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
