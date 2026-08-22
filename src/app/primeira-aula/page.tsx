@@ -572,47 +572,6 @@ export default function PrimeiraAulaPage() {
             </p>
           </div>
 
-          {/* Abas Superiores (quando fora do menu) */}
-          {activeTab !== "Menu" && (
-            <div
-              style={{
-                display: "flex",
-                background: "var(--bg-card)",
-                padding: "4px",
-                borderRadius: "10px",
-                border: "1px solid var(--border-medium)",
-                gap: "4px",
-              }}
-            >
-              <button
-                className={activeTab === "Adulto" ? "premium-btn" : "premium-btn-outline"}
-                onClick={() => {
-                  if (activeTab !== "Adulto" && !fichaId) resetForm("Adulto");
-                  setActiveTab("Adulto");
-                }}
-                style={{ padding: "8px 16px" }}
-              >
-                <Dumbbell size={18} /> Adulto
-              </button>
-              <button
-                className={activeTab === "Atleta" ? "premium-btn" : "premium-btn-outline"}
-                onClick={() => {
-                  if (activeTab !== "Atleta" && !fichaId) resetForm("Atleta");
-                  setActiveTab("Atleta");
-                }}
-                style={{ padding: "8px 16px", background: activeTab === "Atleta" ? "#3b82f6" : undefined }}
-              >
-                <Sparkles size={18} /> Atleta
-              </button>
-              <button
-                className={activeTab === "Historico" ? "premium-btn" : "premium-btn-outline"}
-                onClick={() => setActiveTab("Historico")}
-                style={{ padding: "8px 16px", background: activeTab === "Historico" ? "#8b5cf6" : undefined }}
-              >
-                <FileText size={18} /> Histórico ({historicoFichas.length})
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
