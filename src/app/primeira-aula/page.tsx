@@ -1209,7 +1209,7 @@ export default function PrimeiraAulaPage() {
                               }}
                             />
                             <div style={{ fontSize: "0.75rem", color: "#52525b", marginTop: "8px", fontWeight: 600 }}>
-                              Fotografias Oficiais FMS: Vista Frontal e Lateral para as Notas 3 (Solo), 2 (Prancha) e 1 (Compensações)
+                              Fotografias Oficiais FMS: Vista Frontal e Lateral para as Notas 1 (Compensações), 2 (Prancha) e 3 (Solo)
                             </div>
                           </div>
 
