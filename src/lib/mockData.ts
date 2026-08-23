@@ -827,6 +827,10 @@ export type FichaAvaliativa = {
   nomeAluno: string;
   data: string;
   tipo: 'Adulto' | 'Atleta';
+  clube?: string;
+  posicao?: string;
+  responsavel?: string;
+  dataNascimento?: string;
   seriesMobilidade: string;
   mobilidade: ExercicioAvaliativo[];
   somaMobilidade: number;

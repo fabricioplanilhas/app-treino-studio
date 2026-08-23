@@ -52,6 +52,10 @@ export default function PrimeiraAulaPage() {
   // Form State
   const [fichaId, setFichaId] = useState<string>("");
   const [nomeAluno, setNomeAluno] = useState("");
+  const [clube, setClube] = useState("");
+  const [posicao, setPosicao] = useState("");
+  const [responsavel, setResponsavel] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
   const [dataAvaliacao, setDataAvaliacao] = useState(new Date().toLocaleDateString("pt-BR"));
   const [alunoSelecionadoId, setAlunoSelecionadoId] = useState<string>("");
 
@@ -88,6 +92,10 @@ export default function PrimeiraAulaPage() {
   const resetForm = (tipo: "Adulto" | "Atleta" = "Adulto") => {
     setFichaId("");
     setNomeAluno("");
+    setClube("");
+    setPosicao("");
+    setResponsavel("");
+    setDataNascimento("");
     setAlunoSelecionadoId("");
     setDataAvaliacao(new Date().toLocaleDateString("pt-BR"));
     setSeriesMobilidade("1");
@@ -119,6 +127,10 @@ export default function PrimeiraAulaPage() {
   const carregarFichaParaEdicao = (ficha: FichaAvaliativa) => {
     setFichaId(ficha.id);
     setNomeAluno(ficha.nomeAluno);
+    setClube(ficha.clube || "");
+    setPosicao(ficha.posicao || "");
+    setResponsavel(ficha.responsavel || "");
+    setDataNascimento(ficha.dataNascimento || "");
     setDataAvaliacao(ficha.data);
     setSeriesMobilidade(ficha.seriesMobilidade || "1");
     if (ficha.mobilidade) {
@@ -158,6 +170,10 @@ export default function PrimeiraAulaPage() {
       nomeAluno: nomeAluno.trim() || "Aluno sem nome",
       data: dataAvaliacao || new Date().toLocaleDateString("pt-BR"),
       tipo,
+      clube: tipo === "Atleta" ? clube.trim() : undefined,
+      posicao: tipo === "Atleta" ? posicao.trim() : undefined,
+      responsavel: tipo === "Atleta" ? responsavel.trim() : undefined,
+      dataNascimento: tipo === "Atleta" ? dataNascimento.trim() : undefined,
       seriesMobilidade,
       mobilidade,
       somaMobilidade: calcSoma(mobilidade),
@@ -251,14 +267,59 @@ export default function PrimeiraAulaPage() {
     doc.setFontSize(12);
     doc.text(`1º AULA ${ficha.tipo.toUpperCase()} - TREINAMENTO`, 105, 39.5, { align: "center" });
 
-    // Nome e Data
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    doc.text(`NOME E SOBRENOME: ${ficha.nomeAluno.toUpperCase()}`, 14, 48);
-    doc.text(`Data: ${ficha.data}`, 150, 48);
-    doc.line(14, 50, 196, 50);
-
     let currentY = 56;
+
+    if (ficha.tipo === "Atleta") {
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
+
+      // Linha 1: Nome do Atleta e Data da Avaliação
+      doc.setFont("helvetica", "bold");
+      doc.text(`ATLETA:`, 14, 46);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 31, 46);
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`DATA AVALIAÇÃO:`, 140, 46);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.data}`, 174, 46);
+
+      // Linha 2: Clube e Posição
+      doc.setFont("helvetica", "bold");
+      doc.text(`CLUBE:`, 14, 51.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${(ficha.clube || "-").toUpperCase()}`, 29, 51.5);
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`POSIÇÃO:`, 110, 51.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${(ficha.posicao || "-").toUpperCase()}`, 129, 51.5);
+
+      // Linha 3: Responsável e Data de Nascimento
+      doc.setFont("helvetica", "bold");
+      doc.text(`RESPONSÁVEL:`, 14, 57);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${(ficha.responsavel || "-").toUpperCase()}`, 41, 57);
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`DATA DE NASCIMENTO:`, 110, 57);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.dataNascimento || "-"}`, 154, 57);
+
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, 60, 196, 60);
+
+      currentY = 66;
+    } else {
+      // Nome e Data Adulto
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.text(`NOME E SOBRENOME: ${ficha.nomeAluno.toUpperCase()}`, 14, 48);
+      doc.text(`Data: ${ficha.data}`, 150, 48);
+      doc.line(14, 50, 196, 50);
+
+      currentY = 56;
+    }
 
     // Seção 1: MOBILIDADE AVALIATIVA
     doc.setFont("helvetica", "bold");
@@ -530,7 +591,10 @@ export default function PrimeiraAulaPage() {
 
   const historicoFiltrado = historicoFichas.filter((f) =>
     f.nomeAluno.toLowerCase().includes(buscaHistorico.toLowerCase()) ||
-    f.data.includes(buscaHistorico)
+    f.data.includes(buscaHistorico) ||
+    (f.clube && f.clube.toLowerCase().includes(buscaHistorico.toLowerCase())) ||
+    (f.posicao && f.posicao.toLowerCase().includes(buscaHistorico.toLowerCase())) ||
+    (f.responsavel && f.responsavel.toLowerCase().includes(buscaHistorico.toLowerCase()))
   );
 
   return (
@@ -762,7 +826,12 @@ export default function PrimeiraAulaPage() {
                       <strong style={{ fontSize: "1.1rem" }}>{ficha.nomeAluno}</strong>
                     </div>
                     <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-                      Data: {ficha.data} | Soma Mobilidade: <strong>{ficha.somaMobilidade}</strong> | Soma Força: <strong>{ficha.somaForca}</strong>
+                      Data: {ficha.data}
+                      {ficha.clube && <span> | Clube: <strong>{ficha.clube}</strong></span>}
+                      {ficha.posicao && <span> | Posição: <strong>{ficha.posicao}</strong></span>}
+                      {ficha.responsavel && <span> | Responsável: <strong>{ficha.responsavel}</strong></span>}
+                      {ficha.dataNascimento && <span> | Nasc.: <strong>{ficha.dataNascimento}</strong></span>}
+                      <span> | Soma Mobilidade: <strong>{ficha.somaMobilidade}</strong> | Soma Força: <strong>{ficha.somaForca}</strong></span>
                     </div>
                   </div>
 
@@ -813,79 +882,176 @@ export default function PrimeiraAulaPage() {
               padding: "20px 24px",
               borderRadius: "12px",
               border: "1px solid var(--border-light)",
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr 1fr",
+              display: "flex",
+              flexDirection: "column",
               gap: "16px",
-              alignItems: "end",
             }}
           >
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                NOME E SOBRENOME DO ALUNO
-              </label>
-              <div style={{ display: "flex", gap: "8px" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr auto",
+                gap: "16px",
+                alignItems: "end",
+              }}
+            >
+              <div>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  {activeTab === "Atleta" ? "NOME E SOBRENOME DO ATLETA" : "NOME E SOBRENOME DO ALUNO"}
+                </label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="text"
+                    placeholder={activeTab === "Atleta" ? "Digite ou selecione o atleta..." : "Digite ou selecione o aluno..."}
+                    value={nomeAluno}
+                    onChange={(e) => {
+                      setNomeAluno(e.target.value);
+                      setAlunoSelecionadoId("");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "1rem",
+                      outline: "none",
+                    }}
+                  />
+                  {alunosList.length > 0 && (
+                    <select
+                      value={alunoSelecionadoId}
+                      onChange={(e) => handleSelectAluno(e.target.value)}
+                      style={{
+                        padding: "10px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-medium)",
+                        background: "var(--bg-card)",
+                      }}
+                    >
+                      <option value="">-- Selecionar Existente --</option>
+                      {alunosList.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.nome}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  DATA DA AVALIAÇÃO
+                </label>
                 <input
                   type="text"
-                  placeholder="Digite ou selecione o aluno..."
-                  value={nomeAluno}
-                  onChange={(e) => {
-                    setNomeAluno(e.target.value);
-                    setAlunoSelecionadoId("");
-                  }}
+                  value={dataAvaliacao}
+                  onChange={(e) => setDataAvaliacao(e.target.value)}
                   style={{
-                    flex: 1,
+                    width: "100%",
                     padding: "10px 14px",
                     borderRadius: "8px",
                     border: "1px solid var(--border-medium)",
                     fontSize: "1rem",
-                    outline: "none",
                   }}
                 />
-                {alunosList.length > 0 && (
-                  <select
-                    value={alunoSelecionadoId}
-                    onChange={(e) => handleSelectAluno(e.target.value)}
-                    style={{
-                      padding: "10px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-medium)",
-                      background: "var(--bg-card)",
-                    }}
-                  >
-                    <option value="">-- Selecionar Existente --</option>
-                    {alunosList.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.nome}
-                      </option>
-                    ))}
-                  </select>
-                )}
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <button className="premium-btn-outline" onClick={() => resetForm(activeTab)} style={{ fontSize: "0.85rem" }}>
+                  Limpar Formulário
+                </button>
               </div>
             </div>
 
-            <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                DATA DA AVALIAÇÃO
-              </label>
-              <input
-                type="text"
-                value={dataAvaliacao}
-                onChange={(e) => setDataAvaliacao(e.target.value)}
+            {/* Campos exclusivos do Cabeçalho da Ficha Avaliativa do Atleta */}
+            {activeTab === "Atleta" && (
+              <div
                 style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--border-medium)",
-                  fontSize: "1rem",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "16px",
+                  paddingTop: "14px",
+                  borderTop: "1px solid var(--border-light)",
                 }}
-              />
-            </div>
+              >
+                <div>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                    CLUBE
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Grêmio, Internacional, etc."
+                    value={clube}
+                    onChange={(e) => setClube(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "0.95rem",
+                    }}
+                  />
+                </div>
 
-            <div style={{ textAlign: "right" }}>
-              <button className="premium-btn-outline" onClick={() => resetForm(activeTab)} style={{ fontSize: "0.85rem" }}>
-                Limpar Formulário
-              </button>
-            </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                    POSIÇÃO
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Meia, Atacante, Zagueiro..."
+                    value={posicao}
+                    onChange={(e) => setPosicao(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "0.95rem",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                    RESPONSÁVEL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Pai, Mãe ou Agente..."
+                    value={responsavel}
+                    onChange={(e) => setResponsavel(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "0.95rem",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                    DATA DE NASCIMENTO
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="DD/MM/AAAA"
+                    value={dataNascimento}
+                    onChange={(e) => setDataNascimento(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-medium)",
+                      fontSize: "0.95rem",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* SEÇÃO 1: MOBILIDADE AVALIATIVA */}
