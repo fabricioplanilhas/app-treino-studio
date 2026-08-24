@@ -2360,13 +2360,94 @@ export default function PrimeiraAulaPage() {
               <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                 Recomendações fora do Treinamento
               </label>
-              <input
-                type="text"
-                placeholder="ex: Alongamentos diários, caminhadas..."
-                value={recomendacaoForaTreino}
-                onChange={(e) => setRecomendacaoForaTreino(e.target.value)}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-medium)" }}
-              />
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <select
+                  value={
+                    ["Alongamento Diário", "Caminhada Diária", "Nutricionista", "Alongamento Diário + Caminhada Diária", "Alongamento Diário + Nutricionista", "Caminhada Diária + Nutricionista", "Alongamento Diário + Caminhada Diária + Nutricionista"].includes(recomendacaoForaTreino)
+                      ? recomendacaoForaTreino
+                      : recomendacaoForaTreino ? "outro" : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value !== "outro") {
+                      setRecomendacaoForaTreino(e.target.value);
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--border-medium)",
+                    background: "var(--bg-card)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.9rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">Selecione uma recomendação...</option>
+                  <option value="Alongamento Diário">Alongamento Diário</option>
+                  <option value="Caminhada Diária">Caminhada Diária</option>
+                  <option value="Nutricionista">Nutricionista</option>
+                  <option value="Alongamento Diário + Caminhada Diária">Alongamento Diário + Caminhada Diária</option>
+                  <option value="Alongamento Diário + Nutricionista">Alongamento Diário + Nutricionista</option>
+                  <option value="Caminhada Diária + Nutricionista">Caminhada Diária + Nutricionista</option>
+                  <option value="Alongamento Diário + Caminhada Diária + Nutricionista">Alongamento Diário + Caminhada Diária + Nutricionista</option>
+                  <option value="outro">Outro (Personalizado)...</option>
+                </select>
+
+                {/* Chips de seleção rápida */}
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Opções rápidas:</span>
+                  {["Alongamento Diário", "Caminhada Diária", "Nutricionista"].map((op) => {
+                    const selected = recomendacaoForaTreino.includes(op);
+                    return (
+                      <button
+                        key={op}
+                        type="button"
+                        onClick={() => {
+                          if (selected) {
+                            const parts = recomendacaoForaTreino.split(" + ").filter(p => p !== op);
+                            setRecomendacaoForaTreino(parts.join(" + "));
+                          } else {
+                            const current = recomendacaoForaTreino ? recomendacaoForaTreino.split(" + ").filter(Boolean) : [];
+                            if (!current.includes(op)) current.push(op);
+                            setRecomendacaoForaTreino(current.join(" + "));
+                          }
+                        }}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: "16px",
+                          border: selected ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                          background: selected ? "rgba(16, 185, 129, 0.15)" : "transparent",
+                          color: selected ? "var(--accent-primary)" : "var(--text-secondary)",
+                          fontSize: "0.78rem",
+                          fontWeight: selected ? 700 : 500,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {selected ? "✓ " : "+ "}{op}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Input de texto personalizado */}
+                <input
+                  type="text"
+                  placeholder="Texto da recomendação (ou digite personalizado)..."
+                  value={recomendacaoForaTreino}
+                  onChange={(e) => setRecomendacaoForaTreino(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--border-medium)",
+                    fontSize: "0.85rem",
+                    color: "var(--text-primary)",
+                    background: "var(--bg-card)",
+                  }}
+                />
+              </div>
             </div>
 
             <div>
