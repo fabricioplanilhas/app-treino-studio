@@ -96,6 +96,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Passo sobre a Barreira",
     nomeOficial: "Hurdle Step (Passo sobre a Barreira)",
     padraoNome: "Hurdle Step Movement Pattern",
+    imagemUrl: "/fms-hurdle-step.jpg",
+    imagemLegenda: "Guia Visual Oficial FMS: Vistas Frontal e Lateral para as Notas 3 (Alinhamento Perfeito), 2 (Compensação de Tronco) e 1 (Contato com Barreira)",
     criterios: {
       nota0: "Presença de qualquer dor associada a qualquer parte do teste.",
       nota1: [
@@ -139,6 +141,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Avanço em Linha",
     nomeOficial: "Inline Lunge (Avanço em Linha)",
     padraoNome: "Inline Lunge Movement Pattern",
+    imagemUrl: "/fms-inline-lunge.jpg",
+    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Postura Vertical e 3 Pontos de Contato no Bastão), 2 (Inclinação do Tronco) e 1 (Perda de Equilíbrio)",
     criterios: {
       nota0: "Presença de dor durante o teste.",
       nota1: [
@@ -182,6 +186,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Mobilidade de Ombro",
     nomeOficial: "Shoulder Mobility (Mobilidade de Ombro)",
     padraoNome: "Shoulder Mobility Movement Pattern",
+    imagemUrl: "/fms-shoulder-mobility.jpg",
+    imagemLegenda: "Guia Visual Oficial FMS: Vistas Posteriores para as Notas 3 (≤ 1 Mão), 2 (≤ 1,5 Mão), 1 (> 1,5 Mão) e Teste de Exclusão (Impacto de Ombro)",
     criterios: {
       nota0: "Presença de dor no teste ou no teste de exclusão (Shoulder Clearing Test).",
       nota1: [
@@ -225,6 +231,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Elevação da Perna Estendida Ativa",
     nomeOficial: "Active Straight-Leg Raise (ASLR)",
     padraoNome: "Active Straight-Leg Raise Movement Pattern",
+    imagemUrl: "/fms-aslr.jpg",
+    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Maléolo Ultrapassa Ponto Médio da Coxa), 2 (Entre Coxa e Joelho) e 1 (Abaixo do Joelho)",
     criterios: {
       nota0: "Presença de dor durante qualquer parte do teste.",
       nota1: [
@@ -262,6 +270,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Flexão com Estabilidade de Tronco",
     nomeOficial: "Trunk Stability Push-Up (Flexão com Estabilidade de Tronco)",
     padraoNome: "Trunk Stability Push-Up Movement Pattern",
+    imagemUrl: "/fms-push-up.jpg",
+    imagemLegenda: "Guia Visual Oficial FMS: Posições das Mãos para Notas 3 (Testa/Cabeça), 2 (Queixo), 1 (Arqueamento Lombar) e Teste de Exclusão (Extensão de Coluna)",
     criterios: {
       nota0: "Presença de dor no teste ou no teste de exclusão (Extensão Lombar).",
       nota1: [
@@ -308,6 +318,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Estabilidade Rotatória",
     nomeOficial: "Rotary Stability (Estabilidade Rotatória)",
     padraoNome: "Rotary Stability Movement Pattern",
+    imagemUrl: "/fms-rotary-stability.jpg",
+    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Ipsilateral - Mesmo Lado), 2 (Diagonal Cruzada), 1 (Instabilidade) e Teste de Exclusão (Flexão de Coluna)",
     criterios: {
       nota0: "Presença de dor no teste ou no teste de exclusão (Flexão Lombar).",
       nota1: [
