@@ -393,6 +393,109 @@ const INITIAL_FORCA: ExercicioAvaliativo[] = [
   { nome: "Pressão Vertical", score: 0, carga: "", reps: "8-10", obs: "" },
 ];
 
+export interface ClassificacaoFMS {
+  total: number;
+  max: number;
+  nivel: "excelente" | "adequado" | "alto_risco" | "dor";
+  titulo: string;
+  descricao: string;
+  cor: string;
+  bgCor: string;
+  badge: string;
+  temDor: boolean;
+  assimetrias: { exercicio: string; esq: number; dir: number }[];
+}
+
+export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): ClassificacaoFMS => {
+  let temDor = false;
+  const assimetrias: { exercicio: string; esq: number; dir: number }[] = [];
+  let total = 0;
+
+  itens.forEach((item) => {
+    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined;
+    if (isUnilateral) {
+      const sE = item.scoreEsq;
+      const sD = item.scoreDir;
+      if (sE === 0 || sD === 0) {
+        temDor = true;
+      }
+      if (sE !== undefined && sD !== undefined && sE !== sD && sE >= 0 && sD >= 0) {
+        assimetrias.push({ exercicio: item.nome, esq: sE, dir: sD });
+      }
+      if (sE !== undefined && sD !== undefined) {
+        total += Math.min(sE, sD);
+      } else if (sE !== undefined) {
+        total += sE;
+      } else if (sD !== undefined) {
+        total += sD;
+      }
+    } else {
+      if (item.score === 0 && item.obs?.toLowerCase().includes("dor")) {
+        temDor = true;
+      }
+      total += item.score || 0;
+    }
+  });
+
+  if (temDor) {
+    return {
+      total,
+      max: 21,
+      nivel: "dor",
+      titulo: "Presença de Dor (Alerta Clínico / Stop)",
+      descricao: "O aluno relatou dor durante a execução do teste ou nos testes de exclusão (Clearing Tests). Nota 0 aplicada. Encaminhamento para avaliação médica/fisioterapêutica recomendado.",
+      cor: "#dc2626",
+      bgCor: "rgba(220, 38, 38, 0.12)",
+      badge: "⛔ Presença de Dor (Nota 0)",
+      temDor: true,
+      assimetrias,
+    };
+  }
+
+  if (total >= 18) {
+    return {
+      total,
+      max: 21,
+      nivel: "excelente",
+      titulo: "Excelente / Funcionalidade Ótima",
+      descricao: "Padrões de movimento simétricos e de alta qualidade (18 a 21 pontos). Liberado para progressões de força máxima, potência e alto desempenho.",
+      cor: "#10b981",
+      bgCor: "rgba(16, 185, 129, 0.12)",
+      badge: "🟢 Excelente (18 a 21 pts) - Baixo Risco",
+      temDor: false,
+      assimetrias,
+    };
+  }
+
+  if (total >= 15) {
+    return {
+      total,
+      max: 21,
+      nivel: "adequado",
+      titulo: "Adequado / Risco Moderado",
+      descricao: "Movimento funcional aceitável para o treinamento diário (15 a 17 pontos). Recomendado incluir exercícios corretivos para pequenos desequilíbrios.",
+      cor: "#f59e0b",
+      bgCor: "rgba(245, 158, 11, 0.12)",
+      badge: "🟡 Adequado (15 a 17 pts) - Risco Moderado",
+      temDor: false,
+      assimetrias,
+    };
+  }
+
+  return {
+    total,
+    max: 21,
+    nivel: "alto_risco",
+    titulo: "Disfuncional / Alto Risco de Lesão (Ponto de Corte FMS)",
+    descricao: "Pontuação igual ou inferior a 14 pontos (Ponto de Corte Científico do FMS). Prioridade total em exercícios corretivos, mobilidade e estabilidade antes de sobrecargas elevadas.",
+    cor: "#ef4444",
+    bgCor: "rgba(239, 68, 68, 0.12)",
+    badge: "🔴 Alto Risco de Lesão (≤ 14 pts)",
+    temDor: false,
+    assimetrias,
+  };
+};
+
 export default function PrimeiraAulaPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"Menu" | "Adulto" | "Atleta" | "Historico">("Menu");
@@ -466,7 +569,14 @@ export default function PrimeiraAulaPage() {
   };
 
   const calcSoma = (items: ExercicioAvaliativo[]) => {
-    return items.reduce((acc, curr) => acc + (curr.score || 0), 0);
+    return items.reduce((acc, curr) => {
+      if (curr.scoreEsq !== undefined && curr.scoreDir !== undefined) {
+        return acc + Math.min(curr.scoreEsq, curr.scoreDir);
+      }
+      if (curr.scoreEsq !== undefined) return acc + curr.scoreEsq;
+      if (curr.scoreDir !== undefined) return acc + curr.scoreDir;
+      return acc + (curr.score || 0);
+    }, 0);
   };
 
   const handleSelectAluno = (alunoId: string) => {
@@ -703,11 +813,11 @@ export default function PrimeiraAulaPage() {
       if (item.progressao && item.progressaoTexto) extra += ` [Progressão: ${item.progressaoTexto}]`;
       if (item.obs) extra += ` - Obs: ${item.obs}`;
 
-      let notaText = `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`;
+      let notaText = `0(${item.score === 0 ? "X" : " "}) 1(${item.score === 1 ? "X" : " "}) 2(${item.score === 2 ? "X" : " "}) 3(${item.score === 3 ? "X" : " "})`;
       if (item.scoreEsq !== undefined || item.scoreDir !== undefined) {
-        const sE = item.scoreEsq || 0;
-        const sD = item.scoreDir || 0;
-        notaText = `E: 1(${sE === 1 ? "X" : " "}) 2(${sE === 2 ? "X" : " "}) 3(${sE === 3 ? "X" : " "})\nD: 1(${sD === 1 ? "X" : " "}) 2(${sD === 2 ? "X" : " "}) 3(${sD === 3 ? "X" : " "})`;
+        const sE = item.scoreEsq !== undefined ? item.scoreEsq : -1;
+        const sD = item.scoreDir !== undefined ? item.scoreDir : -1;
+        notaText = `E: 0(${sE === 0 ? "X" : " "}) 1(${sE === 1 ? "X" : " "}) 2(${sE === 2 ? "X" : " "}) 3(${sE === 3 ? "X" : " "})\nD: 0(${sD === 0 ? "X" : " "}) 1(${sD === 1 ? "X" : " "}) 2(${sD === 2 ? "X" : " "}) 3(${sD === 3 ? "X" : " "})`;
       }
 
       return [
@@ -719,18 +829,37 @@ export default function PrimeiraAulaPage() {
 
     autoTable(doc, {
       startY: currentY,
-      head: [["Exercício / Observações", "Nota", "Tentativas / Medição"]],
+      head: [["Exercício / Observações", "Nota FMS", "Tentativas / Medição"]],
       body: bodyMobilidade,
       theme: "grid",
       headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255], fontStyle: "bold" },
-      styles: { fontSize: 9, cellPadding: 2 },
-      columnStyles: { 0: { cellWidth: 120 }, 1: { cellWidth: 35 }, 2: { cellWidth: 27 } },
+      styles: { fontSize: 8.5, cellPadding: 2 },
+      columnStyles: { 0: { cellWidth: 112 }, 1: { cellWidth: 43 }, 2: { cellWidth: 27 } },
     });
 
-    currentY = (doc as any).lastAutoTable.finalY + 4;
+    currentY = (doc as any).lastAutoTable.finalY + 3;
+
+    const diagFMS = calcularClassificacaoFMS(ficha.mobilidade || []);
+    
     doc.setFont("helvetica", "bold");
-    doc.text(`Soma Mobilidade FMS: ( ${ficha.somaMobilidade} / 21 )`, 140, currentY);
-    currentY += 8;
+    doc.setFontSize(9);
+    doc.text(`Soma Mobilidade FMS: ${ficha.somaMobilidade} / 21   |   Classificação: ${diagFMS.badge}`, 14, currentY);
+    currentY += 4;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.text(`Diagnóstico: ${diagFMS.titulo} - ${diagFMS.descricao.slice(0, 115)}...`, 14, currentY);
+    currentY += 3.5;
+
+    if (diagFMS.assimetrias.length > 0) {
+      const assimetriasStr = diagFMS.assimetrias.map(a => `${a.exercicio} (E:${a.esq} vs D:${a.dir})`).join(" | ");
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(217, 119, 6);
+      doc.text(`Assimetrias Detectadas: ${assimetriasStr}`, 14, currentY);
+      doc.setTextColor(0, 0, 0);
+      currentY += 3.5;
+    }
+    currentY += 3;
 
     // Seção para Atleta: AQUECIMENTO & POTÊNCIA
     if (ficha.tipo === "Atleta" && ficha.aquecimento) {
@@ -879,55 +1008,70 @@ export default function PrimeiraAulaPage() {
     const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined;
 
     if (isUnilateral) {
-      const scoreEsq = item.scoreEsq || 0;
-      const scoreDir = item.scoreDir || 0;
+      const scoreEsq = item.scoreEsq;
+      const scoreDir = item.scoreDir;
 
       const handleScoreChange = (side: "esq" | "dir", val: number) => {
         const next = [...list];
         const target = next[index];
         if (side === "esq") {
-          target.scoreEsq = target.scoreEsq === val ? 0 : val;
+          target.scoreEsq = target.scoreEsq === val ? undefined : val;
         } else {
-          target.scoreDir = target.scoreDir === val ? 0 : val;
+          target.scoreDir = target.scoreDir === val ? undefined : val;
         }
 
-        const sE = target.scoreEsq || 0;
-        const sD = target.scoreDir || 0;
-        if (sE > 0 && sD > 0) {
+        const sE = target.scoreEsq;
+        const sD = target.scoreDir;
+        if (sE !== undefined && sD !== undefined) {
           target.score = Math.min(sE, sD);
+        } else if (sE !== undefined) {
+          target.score = sE;
+        } else if (sD !== undefined) {
+          target.score = sD;
         } else {
-          target.score = sE || sD || 0;
+          target.score = 0;
         }
         setList(next);
       };
 
-      const renderSideRow = (label: string, side: "esq" | "dir", currentVal: number) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      const renderSideRow = (label: string, side: "esq" | "dir", currentVal: number | undefined) => (
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <span style={{ fontSize: "0.75rem", fontWeight: 700, width: "32px", color: "var(--text-secondary)" }}>
             {label}:
           </span>
-          {[1, 2, 3].map((val) => {
+          {[0, 1, 2, 3].map((val) => {
             const isSelected = currentVal === val;
             let bg = "var(--bg-hover)";
             let color = "var(--text-primary)";
-            if (isSelected) {
-              if (val === 1) { bg = "#ef4444"; color = "#fff"; }
-              else if (val === 2) { bg = "#f59e0b"; color = "#fff"; }
-              else if (val === 3) { bg = "#10b981"; color = "#fff"; }
+            let border = "1px solid var(--border-medium)";
+            let title = "";
+            if (val === 0) {
+              title = "0: Presença de Dor / Alerta Clínico";
+              if (isSelected) { bg = "#dc2626"; color = "#fff"; border = "1px solid #b91c1c"; }
+            } else if (val === 1) {
+              title = "1: Padrão Incompleto / Incapaz";
+              if (isSelected) { bg = "#ef4444"; color = "#fff"; border = "none"; }
+            } else if (val === 2) {
+              title = "2: Padrão com Compensação / Variação";
+              if (isSelected) { bg = "#f59e0b"; color = "#fff"; border = "none"; }
+            } else if (val === 3) {
+              title = "3: Padrão Ideal FMS";
+              if (isSelected) { bg = "#10b981"; color = "#fff"; border = "none"; }
             }
             return (
               <button
                 key={`${side}-${val}`}
                 type="button"
+                title={title}
                 onClick={() => handleScoreChange(side, val)}
                 style={{
                   width: "28px",
                   height: "28px",
                   borderRadius: "6px",
-                  border: isSelected ? "none" : "1px solid var(--border-medium)",
+                  border,
                   background: bg,
-                  color: color,
-                  fontWeight: 700,
+                  color,
+                  fontWeight: 800,
                   fontSize: "0.85rem",
                   cursor: "pointer",
                   transition: "all 0.15s ease",
@@ -940,13 +1084,23 @@ export default function PrimeiraAulaPage() {
         </div>
       );
 
+      const hasBoth = scoreEsq !== undefined && scoreDir !== undefined;
+      const isAsymmetric = hasBoth && scoreEsq !== scoreDir;
+
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {renderSideRow("ESQ", "esq", scoreEsq)}
           {renderSideRow("DIR", "dir", scoreDir)}
-          {item.score > 0 && (
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-              Nota final: <strong style={{ color: "var(--accent-primary)" }}>{item.score}</strong>
+          {(scoreEsq !== undefined || scoreDir !== undefined) && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", marginTop: "2px" }}>
+              <span style={{ color: "var(--text-secondary)" }}>
+                Nota FMS: <strong style={{ color: item.score === 0 ? "#dc2626" : item.score === 3 ? "#10b981" : item.score === 2 ? "#f59e0b" : "#ef4444" }}>{item.score}</strong>
+              </span>
+              {isAsymmetric && (
+                <span style={{ background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", padding: "1px 5px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 700 }}>
+                  Assimetria!
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -955,33 +1109,45 @@ export default function PrimeiraAulaPage() {
 
     const currentScore = list[index].score;
     return (
-      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-        {[1, 2, 3].map((val) => {
+      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+        {[0, 1, 2, 3].map((val) => {
           const isSelected = currentScore === val;
           let bg = "var(--bg-hover)";
           let color = "var(--text-primary)";
-          if (isSelected) {
-            if (val === 1) { bg = "#ef4444"; color = "#fff"; }
-            else if (val === 2) { bg = "#f59e0b"; color = "#fff"; }
-            else if (val === 3) { bg = "#10b981"; color = "#fff"; }
+          let border = "1px solid var(--border-medium)";
+          let title = "";
+          if (val === 0) {
+            title = "0: Presença de Dor / Alerta Clínico";
+            if (isSelected) { bg = "#dc2626"; color = "#fff"; border = "1px solid #b91c1c"; }
+          } else if (val === 1) {
+            title = "1: Padrão Incompleto";
+            if (isSelected) { bg = "#ef4444"; color = "#fff"; border = "none"; }
+          } else if (val === 2) {
+            title = "2: Padrão com Modificação / Prancha";
+            if (isSelected) { bg = "#f59e0b"; color = "#fff"; border = "none"; }
+          } else if (val === 3) {
+            title = "3: Padrão Ideal";
+            if (isSelected) { bg = "#10b981"; color = "#fff"; border = "none"; }
           }
           return (
             <button
               key={val}
               type="button"
+              title={title}
               onClick={() => {
                 const next = [...list];
                 next[index].score = isSelected ? 0 : val;
                 setList(next);
               }}
               style={{
-                width: "32px",
-                height: "32px",
+                width: "30px",
+                height: "30px",
                 borderRadius: "6px",
-                border: isSelected ? "none" : "1px solid var(--border-medium)",
+                border,
                 background: bg,
-                color: color,
-                fontWeight: 700,
+                color,
+                fontWeight: 800,
+                fontSize: "0.85rem",
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
@@ -1885,9 +2051,99 @@ export default function PrimeiraAulaPage() {
               })}
             </div>
 
-            <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
-              Soma Mobilidade FMS: <span style={{ color: "var(--accent-primary)" }}>{calcSoma(mobilidade)} / 21</span>
-            </div>
+            {/* CARD DE DIAGNÓSTICO E CLASSIFICAÇÃO OFICIAL FMS */}
+            {(() => {
+              const diag = calcularClassificacaoFMS(mobilidade);
+              return (
+                <div
+                  style={{
+                    marginTop: "20px",
+                    padding: "18px 20px",
+                    background: diag.bgCor,
+                    borderRadius: "12px",
+                    border: `1.5px solid ${diag.cor}`,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                    <div>
+                      <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 800, color: "var(--text-secondary)" }}>
+                        Diagnóstico Oficial FMS (Functional Movement Screen)
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+                        <span style={{ fontSize: "1.5rem", fontWeight: 900, color: diag.cor }}>
+                          {diag.total} / 21
+                        </span>
+                        <span
+                          style={{
+                            background: diag.cor,
+                            color: "#fff",
+                            padding: "4px 12px",
+                            borderRadius: "20px",
+                            fontSize: "0.82rem",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {diag.badge}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                        {diag.titulo}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-primary)", lineHeight: "1.5" }}>
+                    {diag.descricao}
+                  </p>
+
+                  {/* Assimetrias Bilaterais */}
+                  {diag.assimetrias.length > 0 ? (
+                    <div style={{ background: "var(--bg-card)", padding: "10px 14px", borderRadius: "8px", border: "1px solid rgba(245, 158, 11, 0.4)" }}>
+                      <strong style={{ color: "#f59e0b", fontSize: "0.82rem", display: "block", marginBottom: "4px" }}>
+                        ⚠️ Assimetrias Bilaterais Detectadas ({diag.assimetrias.length}):
+                      </strong>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        {diag.assimetrias.map((a, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              background: "rgba(245, 158, 11, 0.12)",
+                              border: "1px solid #f59e0b",
+                              color: "var(--text-primary)",
+                              padding: "2px 8px",
+                              borderRadius: "6px",
+                              fontSize: "0.78rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {a.exercicio}: ESQ ({a.esq}) vs DIR ({a.dir})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 600 }}>
+                      ✓ Nenhuma assimetria bilateral detectada nos testes unilaterais.
+                    </div>
+                  )}
+
+                  {/* Legenda de Pontuação FMS */}
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "0.75rem", color: "var(--text-secondary)", borderTop: "1px solid var(--border-light)", paddingTop: "10px" }}>
+                    <span><strong>0:</strong> Dor / Stop</span>
+                    <span><strong>1:</strong> Disfunção</span>
+                    <span><strong>2:</strong> Compensação / Prancha</span>
+                    <span><strong>3:</strong> Padrão Ideal</span>
+                    <span style={{ marginLeft: "auto" }}><strong>Ponto de Corte:</strong> ≤ 14 pontos (Alto Risco)</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* SEÇÕES ADICIONAIS DO ATLETA (AQUECIMENTO & POTÊNCIA) */}
