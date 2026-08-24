@@ -9,15 +9,354 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { RUMPEL_LOGO_BASE64 } from "@/lib/logoBase64";
 
+// Interface para Guia do FMS
+export interface FMSGuideData {
+  nome: string;
+  nomeOficial: string;
+  padraoNome: string;
+  imagemUrl?: string;
+  imagemLegenda?: string;
+  criterios: {
+    nota0: string;
+    nota1: string[];
+    nota2: string[];
+    nota3: string[];
+  };
+  instrucoes: {
+    fala: string[];
+    dicas: string[];
+  };
+  implicacoes: {
+    objetivo: string;
+    fatores: { titulo: string; desc: string; cor: string }[];
+  };
+  clearingTest?: {
+    nome: string;
+    instrucao: string;
+    criterioDor: string;
+  };
+}
+
+export const FMS_GUIDES: Record<string, FMSGuideData> = {
+  "Agachamento Overhead": {
+    nome: "Agachamento Overhead",
+    nomeOficial: "Deep Squat (Agachamento Profundo)",
+    padraoNome: "Deep Squat Movement Pattern",
+    imagemUrl: "/fms-deep-squat-official.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Vista Frontal e Lateral para as Notas 1 (Compensações), 2 (Prancha) e 3 (Solo)",
+    criterios: {
+      nota0: "Presença de qualquer dor associada a qualquer parte do teste (Stop imediato).",
+      nota1: [
+        "Tíbia e tronco NÃO estão paralelos (tronco cai à frente).",
+        "Fêmur NÃO fica abaixo da horizontal.",
+        "Joelhos NÃO estão alinhados sobre os pés (colapso em valgo).",
+        "O bastão NÃO está alinhado verticalmente sobre os pés.",
+        "Incapacidade de atingir os critérios mesmo com a prancha sob os calcanhares."
+      ],
+      nota2: [
+        "Tronco paralelo à tíbia ou em direção vertical.",
+        "Fêmur abaixo da horizontal (agachamento profundo completo).",
+        "Joelhos alinhados sobre os pés.",
+        "Bastão alinhado sobre os pés.",
+        "Executado com os calcanhares sobre a prancha/tábua FMS."
+      ],
+      nota3: [
+        "Tronco paralelo à tíbia ou em direção vertical.",
+        "Fêmur abaixo da horizontal (agachamento profundo completo).",
+        "Joelhos alinhados sobre os pés (sem colapso em valgo).",
+        "Bastão alinhado verticalmente sobre os pés.",
+        "Calcanhares apoiados totalmente no solo plano."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Por favor, informe se há dor enquanto executa o movimento.\"",
+        "\"Fique em pé com os pés separados aproximadamente na largura dos ombros e com os dedos do pé apontados para frente.\"",
+        "\"Segure o bastão com ambas as mãos horizontalmente sobre a cabeça, mantendo os ombros e cotovelos em um ângulo de 90 graus.\"",
+        "\"Levante o bastão de forma que ele fique diretamente acima da sua cabeça.\"",
+        "\"Inicie o agachamento e desça o mais baixo possível, mas mantenha a coluna ereta, calcanhares no chão e bastão sobre a cabeça.\"",
+        "\"Mantenha a posição descendente por um segundo, e então retorne à posição inicial.\""
+      ],
+      dicas: [
+        "O aluno pode executar o movimento até 3 vezes se necessário.",
+        "Se uma pontuação de 3 não for alcançada no solo, repita o teste com a plataforma sob os calcanhares.",
+        "Observe o aluno de frente e de perfil (lado).",
+        "O alinhamento dos pés deve permanecer inalterado quando os calcanhares estiverem elevados."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Demonstra mobilidade e estabilidade extrema completamente coordenadas com quadris e ombros em posições simétricas. Avalia mobilidade funcional bilateral dos quadris, joelhos, tornozelos, ombros e coluna torácica.",
+      fatores: [
+        { titulo: "🦴 Membros Superiores & Coluna", desc: "Limitação nos membros superiores decorre de mobilidade glenoumeral reduzida ou falta de extensão torácica.", cor: "#3b82f6" },
+        { titulo: "🦵 Membros Inferiores & Tornozelo", desc: "Limitação inclui dorsiflexão deficiente de cadeia fechada no tornozelo ou flexão limitada de joelhos e quadris.", cor: "#8b5cf6" }
+      ]
+    }
+  },
+  "Passo sobre a Barreira": {
+    nome: "Passo sobre a Barreira",
+    nomeOficial: "Hurdle Step (Passo sobre a Barreira)",
+    padraoNome: "Hurdle Step Movement Pattern",
+    criterios: {
+      nota0: "Presença de qualquer dor associada a qualquer parte do teste.",
+      nota1: [
+        "Ocorre contato entre o pé/canela e a barreira ou corda elástica.",
+        "Perda considerável de equilíbrio ou incapacidade de completar a passada."
+      ],
+      nota2: [
+        "Perda de alinhamento entre quadril, joelho e tornozelo no plano sagital.",
+        "Movimento compensatório ou inclinação na coluna lombar.",
+        "O bastão não permanece paralelo à barreira/solo."
+      ],
+      nota3: [
+        "Quadris, joelhos e tornozelos mantêm alinhamento contínuo no plano sagital.",
+        "Mínimo ou nenhum movimento compensatório na coluna lombar.",
+        "O bastão permanece perfeitamente paralelo ao solo durante todo o movimento."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Coloque o bastão sobre os ombros, atrás do pescoço, segurando com ambas as mãos.\"",
+        "\"Fique em pé ereto com os pés juntos e os dedos tocando a base da barreira (ajustada na altura da tuberosidade da tíbia).\"",
+        "\"Mantendo o tronco ereto e o bastão alinhado, passe uma perna sobre a barreira tocando levemente o calcanhar no solo do outro lado sem descarregar peso.\"",
+        "\"Retorne a perna à posição inicial sem tocar na barreira ou na fita.\"",
+        "\"Repita o teste para o outro lado.\""
+      ],
+      dicas: [
+        "Pontue cada perna separadamente (ESQ e DIR). A nota final do teste é a MENOR entre os dois lados.",
+        "A perna que passa por cima da barreira é o membro sendo avaliado.",
+        "Permita até 3 tentativas por perna se necessário."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Avalia a mecânica de passada, coordenação, estabilidade do quadril/joelho/tornozelo em apoio unipedal e mobilidade de flexão do quadril oposto.",
+      fatores: [
+        { titulo: "⚖️ Estabilidade Unipodal", desc: "Exige estabilidade dinâmica do glúteo médio e propriocepção de tornozelo/pé no membro de apoio.", cor: "#3b82f6" },
+        { titulo: "🏃 Mobilidade & Coordenação", desc: "Exige amplitude de flexão e abdução do quadril em movimento sem compensações pélvicas.", cor: "#8b5cf6" }
+      ]
+    }
+  },
+  "Avanço em Linha": {
+    nome: "Avanço em Linha",
+    nomeOficial: "Inline Lunge (Avanço em Linha)",
+    padraoNome: "Inline Lunge Movement Pattern",
+    criterios: {
+      nota0: "Presença de dor durante o teste.",
+      nota1: [
+        "Perda de equilíbrio ou incapacidade de manter a postura na linha.",
+        "Incapacidade de descer até o joelho tocar a prancha/solo."
+      ],
+      nota2: [
+        "O bastão perde contato com a cabeça, coluna torácica ou sacro.",
+        "Tronco inclina para frente ou roda para compensar.",
+        "O joelho de trás não toca a linha central diretamente atrás do calcanhar."
+      ],
+      nota3: [
+        "O bastão permanece em contato contínuo com a cabeça, coluna torácica e sacro.",
+        "Tronco permanece vertical e estável.",
+        "O joelho de trás toca a tábua/linha diretamente atrás do calcanhar dianteiro."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Posicione o pé dianteiro na marca zero da tábua e o calcanhar de trás na distância correspondente ao comprimento da sua tíbia.\"",
+        "\"Segure o bastão verticalmente nas costas: a mão oposta à perna dianteira segura na curva cervical e a outra mão na curva lombar.\"",
+        "\"Desça o corpo em linha reta até o joelho de trás tocar a tábua logo atrás do calcanhar dianteiro.\"",
+        "\"Retorne à posição ereta inicial mantendo os 3 pontos de contato do bastão.\"",
+        "\"Repita para o outro lado invertendo as mãos e pernas.\""
+      ],
+      dicas: [
+        "A perna da frente define o lado testado (ESQ ou DIR).",
+        "Ambos os pés devem apontar rigorosamente para frente sobre a mesma linha.",
+        "A nota final é a MENOR entre esquerda e direita."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Avalia a estabilidade do tronco e pelve em base estreita, desaceleração, mobilidade do tornozelo dianteiro e flexibilidade dos flexores do quadril traseiro.",
+      fatores: [
+        { titulo: "🛡️ Estabilidade Antirotacional", desc: "Desafia os estabilizadores do core e abdômen oblíquo a resistirem ao torque rotacional.", cor: "#3b82f6" },
+        { titulo: "🦵 Cadeia Cruzada", desc: "Depende da flexibilidade do reto femoral e psoas da perna de trás e dorsiflexão do tornozelo da frente.", cor: "#8b5cf6" }
+      ]
+    }
+  },
+  "Mobilidade de Ombro": {
+    nome: "Mobilidade de Ombro",
+    nomeOficial: "Shoulder Mobility (Mobilidade de Ombro)",
+    padraoNome: "Shoulder Mobility Movement Pattern",
+    criterios: {
+      nota0: "Presença de dor no teste ou no teste de exclusão (Shoulder Clearing Test).",
+      nota1: [
+        "A distância entre os punhos fechados é MAIOR que 1,5 comprimento da mão do aluno."
+      ],
+      nota2: [
+        "A distância entre os punhos fechados fica ENTRE 1 e 1,5 comprimento da mão."
+      ],
+      nota3: [
+        "A distância entre os punhos fechados é MENOR OU IGUAL a 1 comprimento da mão."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Primeiro meça o comprimento da sua mão dominante (da prega do punho até a ponta do dedo médio).\"",
+        "\"Feche as mãos fazendo punhos com os polegares guardados dentro dos dedos.\"",
+        "\"Em um movimento contínuo e suave, leve um braço por cima da cabeça e o outro por baixo das costas, aproximando os punhos ao máximo.\"",
+        "\"Mantenha a posição para medir a distância entre os pontos mais próximos dos punhos.\"",
+        "\"Repita invertendo os braços.\""
+      ],
+      dicas: [
+        "O braço superior determina o lado testado (ESQ ou DIR).",
+        "Não permita que o aluno 'caminhe' ou ajuste as mãos após o contato inicial.",
+        "Realize obrigatoriamente o Teste de Exclusão de Ombro."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Avalia a mobilidade combinada bilateral da cintura escapular: flexão/abdução/rotação externa do braço superior e extensão/adução/rotação interna do braço inferior.",
+      fatores: [
+        { titulo: "🔄 Ritmo Escapulotorácico", desc: "Depende da mobilidade da escápula sobre a caixa torácica e comprimento do peitoral menor e grande dorsal.", cor: "#3b82f6" },
+        { titulo: "🦴 Extensão Torácica", desc: "Rigidez na coluna torácica ou postura hipercifótica limita diretamente o alcance dos membros superiores.", cor: "#8b5cf6" }
+      ]
+    },
+    clearingTest: {
+      nome: "Teste de Exclusão do Ombro (Shoulder Clearing Test)",
+      instrucao: "Coloque a mão sobre o ombro oposto e aponte o cotovelo para cima em direção ao teto. Repita para o outro ombro.",
+      criterioDor: "Se o aluno relatar qualquer dor durante a manobra de impacto, a pontuação do teste é automaticamente 0 (ZERO)."
+    }
+  },
+  "Elevação da Perna Estendida Ativa": {
+    nome: "Elevação da Perna Estendida Ativa",
+    nomeOficial: "Active Straight-Leg Raise (ASLR)",
+    padraoNome: "Active Straight-Leg Raise Movement Pattern",
+    criterios: {
+      nota0: "Presença de dor durante qualquer parte do teste.",
+      nota1: [
+        "O maléolo da perna elevada fica ABAIXO da linha da patela (não atinge a linha do joelho da perna de apoio)."
+      ],
+      nota2: [
+        "O maléolo da perna elevada fica ENTRE o ponto médio da coxa e a linha da patela."
+      ],
+      nota3: [
+        "O maléolo da perna elevada ULTRAPASSA verticalmente o ponto médio entre a EIAS (espinha ilíaca) e o centro da patela."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Deite-se de costas no solo com a prancha sob os joelhos e os braços ao lado do corpo com as palmas para cima.\"",
+        "\"Mantenha ambas as pernas estendidas e os tornozelos a 90 graus (dedos apontados para o teto).\"",
+        "\"Mantendo a perna de apoio totalmente estável no chão, eleve lentamente uma perna o mais alto possível sem dobrar nenhum dos dois joelhos.\"",
+        "\"Retorne lentamente à posição inicial e repita para o outro lado.\""
+      ],
+      dicas: [
+        "A perna elevada define o lado testado (ESQ e DIR).",
+        "A perna de apoio NÃO pode rodar externamente ou levantar o joelho do chão.",
+        "A nota final é a MENOR entre os dois lados."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Avalia a flexibilidade ativa dos isquiotibiais e panturrilha, a dissociação do quadril e a estabilidade pélvica e do core anterior.",
+      fatores: [
+        { titulo: "🦵 Flexibilidade Isquiotibiais", desc: "Capacidade de alongamento dinâmico da cadeia posterior do membro elevado.", cor: "#3b82f6" },
+        { titulo: "🔗 Dissociação e Extensão", desc: "Manter a extensão ativa e estabilidade da perna contralateral através de glúteos e iliopsoas.", cor: "#8b5cf6" }
+      ]
+    }
+  },
+  "Flexão com Estabilidade de Tronco": {
+    nome: "Flexão com Estabilidade de Tronco",
+    nomeOficial: "Trunk Stability Push-Up (Flexão com Estabilidade de Tronco)",
+    padraoNome: "Trunk Stability Push-Up Movement Pattern",
+    criterios: {
+      nota0: "Presença de dor no teste ou no teste de exclusão (Extensão Lombar).",
+      nota1: [
+        "Incapaz de realizar a flexão com as mãos na posição da nota 2, ou ocorre arqueamento/colapso lombar evidente."
+      ],
+      nota2: [
+        "Homens: 1 repetição com polegares alinhados ao queixo.",
+        "Mulheres: 1 repetição com polegares alinhados às clavículas.",
+        "O tronco sobe como uma unidade estável sem extensão compensatória lombar."
+      ],
+      nota3: [
+        "Homens: 1 repetição com polegares alinhados ao topo da cabeça.",
+        "Mulheres: 1 repetição com polegares alinhados ao queixo.",
+        "Corpo sobe em bloco único perfeitamente rígido e unificado."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Deite-se de bruços com os pés apoiados nos dedos e as pernas estendidas.\"",
+        "\"Posicione as mãos na largura dos ombros com os polegares na altura de referência (topo da cabeça ou queixo).\"",
+        "\"Levante os joelhos e cotovelos do solo mantendo o corpo rígido.\"",
+        "\"Em um único esforço, empurre o chão subindo todo o corpo em bloco sólido até estender os braços, sem deixar a coluna arquear.\""
+      ],
+      dicas: [
+        "O teste é bilateral (nota única de 0 a 3).",
+        "Não permita atraso na subida do quadril em relação aos ombros.",
+        "Realize obrigatoriamente o Teste de Exclusão de Extensão de Coluna."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Avalia a estabilidade reflexa do tronco e pelve no plano sagital sob esforço em cadeia cinética fechada de empurrar simétrico.",
+      fatores: [
+        { titulo: "🛡️ Core Anterior Reflexo", desc: "Ativação simultânea do reto abdominal, transverso e oblíquos para evitar hiperextensão lombar.", cor: "#3b82f6" },
+        { titulo: "💪 Estabilidade Escapular", desc: "Transmissão eficiente de força da cintura escapular para o tronco e membros inferiores.", cor: "#8b5cf6" }
+      ]
+    },
+    clearingTest: {
+      nome: "Teste de Exclusão de Extensão de Coluna (Spinal Extension Test)",
+      instrucao: "Deitado de bruços, empurre o chão estendendo os braços e arqueando as costas para trás mantendo a pelve no chão (Posição da Cobra).",
+      criterioDor: "Se o aluno relatar qualquer dor na coluna lombar durante a extensão, a pontuação é automaticamente 0 (ZERO)."
+    }
+  },
+  "Estabilidade Rotatória": {
+    nome: "Estabilidade Rotatória",
+    nomeOficial: "Rotary Stability (Estabilidade Rotatória)",
+    padraoNome: "Rotary Stability Movement Pattern",
+    criterios: {
+      nota0: "Presença de dor no teste ou no teste de exclusão (Flexão Lombar).",
+      nota1: [
+        "Incapaz de realizar a repetição contralateral ou perda de equilíbrio / rotação excessiva do tronco."
+      ],
+      nota2: [
+        "Executa 1 repetição diagonal/cruzada (braço direito e perna esquerda) mantendo o tronco paralelo ao solo e tocando o cotovelo no joelho sobre a tábua."
+      ],
+      nota3: [
+        "Executa 1 repetição unilateral ipsilateral (mesmo lado: braço direito e perna direita) mantendo tronco perfeitamente paralelo e tocando cotovelo no joelho."
+      ]
+    },
+    instrucoes: {
+      fala: [
+        "\"Fique em quatro apoios sobre a prancha FMS com mãos sob os ombros e joelhos sob os quadris.\"",
+        "\"Estenda o braço e a perna do mesmo lado paralelamente ao solo, depois dobre-os até o cotovelo tocar o joelho do mesmo lado e retorne sem encostar no chão.\"",
+        "\"Se não conseguir no mesmo lado, execute o movimento cruzado em diagonal (braço direito e perna esquerda).\"",
+        "\"Repita para o outro lado.\""
+      ],
+      dicas: [
+        "Avalie ambos os lados (ESQ e DIR). A nota final é a MENOR entre os dois lados.",
+        "O tronco deve permanecer paralelo à prancha sem balançar ou girar.",
+        "Realize obrigatoriamente o Teste de Exclusão de Flexão de Coluna."
+      ]
+    },
+    implicacoes: {
+      objetivo: "Avalia a estabilidade neuromuscular multiplanar do core e a transferência de força pelo complexo pélvico e escapular durante movimentos assimétricos.",
+      fatores: [
+        { titulo: "🌪️ Controle Antirotacional", desc: "Capacidade dos oblíquos, multífidos e transverso de resistir ao torque rotacional de membros opostos.", cor: "#3b82f6" },
+        { titulo: "⚡ Padrão Cruzado", desc: "Coordenação cruzada fundamental para marcha, corrida, chutes e arremessos.", cor: "#8b5cf6" }
+      ]
+    },
+    clearingTest: {
+      nome: "Teste de Exclusão de Flexão de Coluna (Spinal Flexion Test)",
+      instrucao: "Em quatro apoios, balance os quadris para trás sentando sobre os calcanhares e estenda os braços à frente no chão (Posição da Criança).",
+      criterioDor: "Se o aluno relatar qualquer dor na coluna lombar durante a flexão, a pontuação é automaticamente 0 (ZERO)."
+    }
+  }
+};
+
 // Templates padrão para formulários
 const INITIAL_MOBILIDADE: ExercicioAvaliativo[] = [
-  { nome: "Agachamento Overhead", score: 0, reps: "6-8", obs: "" },
-  { nome: "Terra Unilateral", score: 0, scoreEsq: 0, scoreDir: 0, reps: "6-8", esq: "", dir: "", regressao: false, regressaoTexto: "Terra Unilateral Assistido (TRX/HACK/PAREDE)", obs: "" },
-  { nome: "Split Squat", score: 0, scoreEsq: 0, scoreDir: 0, reps: "6-8", esq: "", dir: "", regressao: false, regressaoTexto: "Split Squat Assistido (TRX/HACK/PAREDE)", obs: "" },
-  { nome: "Toca os Pés", score: 0, reps: "3-5", obs: "" },
-  { nome: "Prancha Frontal (35seg.)", score: 0, reps: "35seg", obs: "" },
-  { nome: "Leg Lower", score: 0, scoreEsq: 0, scoreDir: 0, reps: "6-10", esq: "", dir: "", regressao: false, regressaoTexto: "Leg Lower Assistido (Super Band/ Hack/ Barede)", obs: "" },
-  { nome: "Ombro Desliza Solo", score: 0, reps: "5-8", progressao: false, progressaoTexto: "Ombro Desliza Parede", obs: "" },
+  { nome: "Agachamento Overhead", score: 0, reps: "3", obs: "" },
+  { nome: "Passo sobre a Barreira", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Avanço em Linha", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Mobilidade de Ombro", score: 0, scoreEsq: 0, scoreDir: 0, reps: "Medição", esq: "", dir: "", obs: "" },
+  { nome: "Elevação da Perna Estendida Ativa", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Flexão com Estabilidade de Tronco", score: 0, reps: "1", obs: "" },
+  { nome: "Estabilidade Rotatória", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
 ];
 
 const INITIAL_AQUECIMENTO: ExercicioAvaliativo[] = [
@@ -49,8 +388,8 @@ export default function PrimeiraAulaPage() {
   const [historicoFichas, setHistoricoFichas] = useState<FichaAvaliativa[]>([]);
   const [buscaHistorico, setBuscaHistorico] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showOverheadGuide, setShowOverheadGuide] = useState(false);
-  const [overheadGuideTab, setOverheadGuideTab] = useState<"criterios" | "instrucoes" | "implicacoes">("criterios");
+  const [expandedGuideIndex, setExpandedGuideIndex] = useState<number | null>(null);
+  const [guideTab, setGuideTab] = useState<"criterios" | "instrucoes" | "implicacoes">("criterios");
 
   // Form State
   const [fichaId, setFichaId] = useState<string>("");
@@ -136,12 +475,20 @@ export default function PrimeiraAulaPage() {
     setDataNascimento(ficha.dataNascimento || "");
     setDataAvaliacao(ficha.data);
     setSeriesMobilidade(ficha.seriesMobilidade || "1");
-    if (ficha.mobilidade) {
-      const mobCopy = JSON.parse(JSON.stringify(ficha.mobilidade));
-      mobCopy.forEach((item: ExercicioAvaliativo) => {
-        if (item.nome === "Terra Unilateral" || item.nome === "Split Squat" || item.nome === "Leg Lower" || item.esq !== undefined) {
-          if (item.scoreEsq === undefined) item.scoreEsq = item.score || 0;
-          if (item.scoreDir === undefined) item.scoreDir = item.score || 0;
+    if (ficha.mobilidade && ficha.mobilidade.length > 0) {
+      const mobCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(INITIAL_MOBILIDADE));
+      mobCopy.forEach((initItem) => {
+        const found = ficha.mobilidade.find((m) =>
+          m.nome.toLowerCase().includes(initItem.nome.toLowerCase().slice(0, 8)) ||
+          initItem.nome.toLowerCase().includes(m.nome.toLowerCase().slice(0, 8))
+        );
+        if (found) {
+          initItem.score = found.score || 0;
+          if (initItem.scoreEsq !== undefined) initItem.scoreEsq = found.scoreEsq ?? (found.score || 0);
+          if (initItem.scoreDir !== undefined) initItem.scoreDir = found.scoreDir ?? (found.score || 0);
+          initItem.esq = found.esq || "";
+          initItem.dir = found.dir || "";
+          initItem.obs = found.obs || "";
         }
       });
       setMobilidade(mobCopy);
@@ -333,17 +680,17 @@ export default function PrimeiraAulaPage() {
       currentY = 56;
     }
 
-    // Seção 1: MOBILIDADE AVALIATIVA
+    // Seção 1: MOBILIDADE AVALIATIVA (FMS)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text(`MOBILIDADE AVALIATIVA - Séries: 1 (${ficha.seriesMobilidade === "1" ? "X" : " "}) - 2 (${ficha.seriesMobilidade === "2" ? "X" : " "})`, 14, currentY);
+    doc.text(`MOBILIDADE AVALIATIVA (FMS) - Séries: 1 (${ficha.seriesMobilidade === "1" ? "X" : " "}) - 2 (${ficha.seriesMobilidade === "2" ? "X" : " "})`, 14, currentY);
     currentY += 4;
 
     const bodyMobilidade = ficha.mobilidade.map((item, idx) => {
       let extra = "";
       if (item.esq || item.dir) extra += ` (ESQ: ${item.esq || "-"} | DIR: ${item.dir || "-"})`;
-      if (item.regressao) extra += ` [Regressão: ${item.regressaoTexto}]`;
-      if (item.progressao) extra += ` [Progressão: ${item.progressaoTexto}]`;
+      if (item.regressao && item.regressaoTexto) extra += ` [Regressão: ${item.regressaoTexto}]`;
+      if (item.progressao && item.progressaoTexto) extra += ` [Progressão: ${item.progressaoTexto}]`;
       if (item.obs) extra += ` - Obs: ${item.obs}`;
 
       let notaText = `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`;
@@ -362,7 +709,7 @@ export default function PrimeiraAulaPage() {
 
     autoTable(doc, {
       startY: currentY,
-      head: [["Exercício / Observações", "Nota", "Repetições"]],
+      head: [["Exercício / Observações", "Nota", "Tentativas / Medição"]],
       body: bodyMobilidade,
       theme: "grid",
       headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255], fontStyle: "bold" },
@@ -372,7 +719,7 @@ export default function PrimeiraAulaPage() {
 
     currentY = (doc as any).lastAutoTable.finalY + 4;
     doc.setFont("helvetica", "bold");
-    doc.text(`Soma Mobilidade: ( ${ficha.somaMobilidade} )`, 140, currentY);
+    doc.text(`Soma Mobilidade FMS: ( ${ficha.somaMobilidade} / 21 )`, 140, currentY);
     currentY += 8;
 
     // Seção para Atleta: AQUECIMENTO & POTÊNCIA
@@ -1102,12 +1449,17 @@ export default function PrimeiraAulaPage() {
             )}
           </div>
 
-          {/* SEÇÃO 1: MOBILIDADE AVALIATIVA */}
+          {/* SEÇÃO 1: MOBILIDADE AVALIATIVA (FMS - 7 TESTES) */}
           <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--accent-primary)" }}>
-                MOBILIDADE AVALIATIVA
-              </h2>
+              <div>
+                <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--accent-primary)", margin: 0 }}>
+                  MOBILIDADE AVALIATIVA (FMS)
+                </h2>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                  Functional Movement Screen — Bateria Oficial de 7 Testes (Máx: 21 Pontos)
+                </span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.9rem" }}>
                 <span>Séries:</span>
                 {["1", "2"].map((s) => (
@@ -1132,404 +1484,399 @@ export default function PrimeiraAulaPage() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {mobilidade.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "2.2fr 1.3fr 1fr 2fr",
-                    gap: "12px",
-                    alignItems: "center",
-                    padding: "12px",
-                    background: "var(--bg-card)",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border-light)",
-                  }}
-                >
-                  <div>
-                    <strong style={{ fontSize: "0.95rem" }}>
-                      {idx + 1}. {item.nome}
-                    </strong>
-                    {item.regressaoTexto && (
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-                        <input
-                          type="checkbox"
-                          checked={item.regressao || false}
-                          onChange={(e) => {
-                            const next = [...mobilidade];
-                            next[idx].regressao = e.target.checked;
-                            setMobilidade(next);
-                          }}
-                        />{" "}
-                        Regressão: {item.regressaoTexto}
-                      </label>
-                    )}
-                    {item.progressaoTexto && (
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-                        <input
-                          type="checkbox"
-                          checked={item.progressao || false}
-                          onChange={(e) => {
-                            const next = [...mobilidade];
-                            next[idx].progressao = e.target.checked;
-                            setMobilidade(next);
-                          }}
-                        />{" "}
-                        Progressão: {item.progressaoTexto}
-                      </label>
-                    )}
+              {mobilidade.map((item, idx) => {
+                const guide = FMS_GUIDES[item.nome];
+                const isExpanded = expandedGuideIndex === idx;
 
-                    {item.nome === "Agachamento Overhead" && (
-                      <button
-                        type="button"
-                        onClick={() => setShowOverheadGuide(!showOverheadGuide)}
-                        style={{
-                          marginTop: "8px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          background: showOverheadGuide ? "var(--accent-primary)" : "var(--bg-panel)",
-                          color: showOverheadGuide ? "#fff" : "var(--text-secondary)",
-                          border: "1px solid var(--border-medium)",
-                          borderRadius: "6px",
-                          padding: "4px 8px",
-                          fontSize: "0.78rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        {showOverheadGuide ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        {showOverheadGuide ? "Ocultar Guia Visual" : "Guia de Pontuação (1, 2, 3)"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Rating 1 2 3 */}
-                  {renderScoreButtons(mobilidade, setMobilidade, idx)}
-
-                  {/* Reps ou Lados ESQ / DIR */}
-                  <div>
-                    {item.esq !== undefined ? (
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <input
-                          type="text"
-                          placeholder="ESQ"
-                          value={item.esq || ""}
-                          onChange={(e) => {
-                            const next = [...mobilidade];
-                            next[idx].esq = e.target.value;
-                            setMobilidade(next);
-                          }}
-                          style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="DIR"
-                          value={item.dir || ""}
-                          onChange={(e) => {
-                            const next = [...mobilidade];
-                            next[idx].dir = e.target.value;
-                            setMobilidade(next);
-                          }}
-                          style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
-                        />
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                        REP: {item.reps}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Anotações */}
-                  <input
-                    type="text"
-                    placeholder="Observações..."
-                    value={item.obs || ""}
-                    onChange={(e) => {
-                      const next = [...mobilidade];
-                      next[idx].obs = e.target.value;
-                      setMobilidade(next);
-                    }}
+                return (
+                  <div
+                    key={idx}
                     style={{
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border-medium)",
-                      fontSize: "0.85rem",
+                      display: "grid",
+                      gridTemplateColumns: "2.2fr 1.3fr 1fr 2fr",
+                      gap: "12px",
+                      alignItems: "center",
+                      padding: "12px",
+                      background: "var(--bg-card)",
+                      borderRadius: "8px",
+                      border: isExpanded ? "1px solid var(--accent-primary)" : "1px solid var(--border-light)",
+                      transition: "all 0.15s ease",
                     }}
-                  />
-
-                  {/* Guia Oficial FMS - Agachamento Overhead / Deep Squat (Collapsible) */}
-                  {item.nome === "Agachamento Overhead" && showOverheadGuide && (
-                    <div
-                      style={{
-                        gridColumn: "1 / -1",
-                        marginTop: "10px",
-                        padding: "20px",
-                        background: "var(--bg-panel)",
-                        borderRadius: "12px",
-                        border: "1px solid var(--border-medium)",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "16px",
-                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-                      }}
-                    >
-                      {/* Header do Guia */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-light)", paddingBottom: "12px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 800 }}>
-                            MANUAL OFICIAL FMS
+                  >
+                    <div>
+                      <strong style={{ fontSize: "0.95rem", display: "block" }}>
+                        {idx + 1}. {item.nome}
+                      </strong>
+                      {guide?.padraoNome && (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
+                          {guide.padraoNome}
+                        </span>
+                      )}
+                      {guide?.clearingTest && (
+                        <div style={{ marginTop: "4px" }}>
+                          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#f59e0b", background: "rgba(245, 158, 11, 0.12)", padding: "2px 6px", borderRadius: "4px" }}>
+                            ⚠️ Possui Teste de Exclusão de Dor
                           </span>
-                          <strong style={{ fontSize: "1.05rem", color: "var(--text-primary)" }}>
-                            Deep Squat Movement Pattern (Agachamento Profundo)
-                          </strong>
                         </div>
+                      )}
+
+                      {guide && (
                         <button
                           type="button"
-                          onClick={() => setShowOverheadGuide(false)}
+                          onClick={() => {
+                            if (isExpanded) {
+                              setExpandedGuideIndex(null);
+                            } else {
+                              setExpandedGuideIndex(idx);
+                            }
+                          }}
                           style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "var(--text-secondary)",
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                            display: "flex",
+                            marginTop: "8px",
+                            display: "inline-flex",
                             alignItems: "center",
-                            gap: "4px",
+                            gap: "6px",
+                            background: isExpanded ? "var(--accent-primary)" : "var(--bg-panel)",
+                            color: isExpanded ? "#fff" : "var(--text-secondary)",
+                            border: "1px solid var(--border-medium)",
+                            borderRadius: "6px",
+                            padding: "4px 8px",
+                            fontSize: "0.78rem",
                             fontWeight: 600,
-                          }}
-                        >
-                          <ChevronUp size={16} /> Fechar Guia
-                        </button>
-                      </div>
-
-                      {/* Sub-abas de Navegação do Guia */}
-                      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-light)", paddingBottom: "8px" }}>
-                        <button
-                          type="button"
-                          onClick={() => setOverheadGuideTab("criterios")}
-                          style={{
-                            padding: "6px 14px",
-                            borderRadius: "6px",
-                            border: overheadGuideTab === "criterios" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
-                            background: overheadGuideTab === "criterios" ? "var(--accent-primary)" : "var(--bg-card)",
-                            color: overheadGuideTab === "criterios" ? "#fff" : "var(--text-secondary)",
-                            fontSize: "0.82rem",
-                            fontWeight: 700,
                             cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
+                            transition: "all 0.15s ease",
                           }}
                         >
-                          <BookOpen size={14} /> Critérios de Pontuação (3, 2, 1, 0)
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {isExpanded ? "Ocultar Guia FMS" : "Guia de Pontuação FMS"}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setOverheadGuideTab("instrucoes")}
-                          style={{
-                            padding: "6px 14px",
-                            borderRadius: "6px",
-                            border: overheadGuideTab === "instrucoes" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
-                            background: overheadGuideTab === "instrucoes" ? "var(--accent-primary)" : "var(--bg-card)",
-                            color: overheadGuideTab === "instrucoes" ? "#fff" : "var(--text-secondary)",
-                            fontSize: "0.82rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <HelpCircle size={14} /> Instruções Verbais & Roteiro
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setOverheadGuideTab("implicacoes")}
-                          style={{
-                            padding: "6px 14px",
-                            borderRadius: "6px",
-                            border: overheadGuideTab === "implicacoes" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
-                            background: overheadGuideTab === "implicacoes" ? "var(--accent-primary)" : "var(--bg-card)",
-                            color: overheadGuideTab === "implicacoes" ? "#fff" : "var(--text-secondary)",
-                            fontSize: "0.82rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <AlertTriangle size={14} /> Implicações Biomecânicas
-                        </button>
-                      </div>
-
-                      {/* ABA 1: CRITÉRIOS DE PONTUAÇÃO & DIAGRAMA */}
-                      {overheadGuideTab === "criterios" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                          {/* Imagem Oficial Extraída do Manual FMS */}
-                          <div style={{ textAlign: "center", background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid var(--border-medium)", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                            <img
-                              src="/fms-deep-squat-official.png"
-                              alt="Pontuação do Deep Squat (Manual Oficial FMS)"
-                              style={{
-                                maxWidth: "100%",
-                                maxHeight: "480px",
-                                borderRadius: "6px",
-                                objectFit: "contain",
-                              }}
-                            />
-                            <div style={{ fontSize: "0.75rem", color: "#52525b", marginTop: "8px", fontWeight: 600 }}>
-                              Fotografias Oficiais FMS: Vista Frontal e Lateral para as Notas 1 (Compensações), 2 (Prancha) e 3 (Solo)
-                            </div>
-                          </div>
-
-                          {/* Grid dos Critérios Oficiais FMS (0, 1, 2, 3 da esquerda para a direita) */}
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
-                            {/* NOTA 0 */}
-                            <div style={{ background: "rgba(107, 114, 128, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #6b7280" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#6b7280", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  0
-                                </span>
-                                <strong style={{ color: "#6b7280", fontSize: "0.95rem" }}>Presença de Dor (Stop)</strong>
-                              </div>
-                              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                Um indivíduo recebe <strong>pontuação zero (0)</strong> se <strong>qualquer dor</strong> estiver associada a qualquer parte desse teste. Um profissional médico/clínico deve realizar uma avaliação aprofundada da área dolorosa.
-                              </p>
-                            </div>
-
-                            {/* NOTA 1 */}
-                            <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #ef4444" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#ef4444", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  1
-                                </span>
-                                <strong style={{ color: "#ef4444", fontSize: "0.95rem" }}>Disfunção / Compensações</strong>
-                              </div>
-                              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                <li>Tíbia e tronco <strong>NÃO estão paralelos</strong> (tronco cai à frente).</li>
-                                <li>Fêmur <strong>NÃO fica abaixo da horizontal</strong>.</li>
-                                <li>Joelhos <strong>NÃO estão alinhados</strong> sobre os pés (valgo).</li>
-                                <li>O bastão <strong>NÃO está alinhado</strong> sobre os pés.</li>
-                                <li>Incapacidade de atingir os critérios mesmo com a prancha.</li>
-                              </ul>
-                            </div>
-
-                            {/* NOTA 2 */}
-                            <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #f59e0b" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#f59e0b", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  2
-                                </span>
-                                <strong style={{ color: "#f59e0b", fontSize: "0.95rem" }}>Com Calcanhares Elevados</strong>
-                              </div>
-                              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                <li><strong>Tronco paralelo à tíbia</strong> ou em direção vertical.</li>
-                                <li><strong>Fêmur abaixo da horizontal</strong>.</li>
-                                <li><strong>Joelhos alinhados</strong> sobre os pés.</li>
-                                <li><strong>Bastão alinhado</strong> sobre os pés.</li>
-                                <li><strong>Executado com os calcanhares sobre a prancha/tábua FMS</strong>.</li>
-                              </ul>
-                            </div>
-
-                            {/* NOTA 3 */}
-                            <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #10b981" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                                <span style={{ background: "#10b981", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
-                                  3
-                                </span>
-                                <strong style={{ color: "#10b981", fontSize: "0.95rem" }}>Padrão Ideal (No Solo)</strong>
-                              </div>
-                              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                <li><strong>Tronco paralelo à tíbia</strong> ou em direção vertical.</li>
-                                <li><strong>Fêmur abaixo da horizontal</strong> (agachamento profundo completo).</li>
-                                <li><strong>Joelhos alinhados</strong> sobre os pés (sem colapso em valgo).</li>
-                                <li><strong>Bastão alinhado</strong> verticalmente sobre os pés.</li>
-                                <li>Calcanhares apoiados totalmente no solo.</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ABA 2: INSTRUÇÕES VERBAIS & DICAS */}
-                      {overheadGuideTab === "instrucoes" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "0.85rem" }}>
-                          <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid var(--accent-primary)" }}>
-                            <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
-                              🗣️ Roteiro de Instruções Verbais (O que falar para o aluno):
-                            </strong>
-                            <p style={{ fontStyle: "italic", color: "var(--text-secondary)", margin: "0 0 8px 0" }}>
-                              "Por favor, informe se há dor enquanto executa o movimento."
-                            </p>
-                            <ol style={{ margin: 0, paddingLeft: "20px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
-                              <li><strong>"Fique em pé com os pés separados aproximadamente na largura dos ombros e com os dedos do pé apontados para frente."</strong></li>
-                              <li><strong>"Segure o bastão com ambas as mãos horizontalmente sobre a cabeça, mantendo os ombros e cotovelos em um ângulo de 90 graus."</strong></li>
-                              <li><strong>"Levante o bastão de forma que ele fique diretamente acima da sua cabeça."</strong></li>
-                              <li><strong>"Inicie o agachamento e desça o mais baixo possível, mas mantenha a coluna vertebral ereta e mantenha o bastão sobre a cabeça e os calcanhares no chão."</strong></li>
-                              <li><strong>"Mantenha a posição descendente e conte até um, e então retorne à posição inicial."</strong></li>
-                              <li><strong>"Você compreendeu as instruções?"</strong></li>
-                            </ol>
-                          </div>
-
-                          <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
-                            <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
-                              💡 Dicas Oficiais para o Avaliador:
-                            </strong>
-                            <ul style={{ margin: 0, paddingLeft: "20px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
-                              <li>O cliente pode executar o movimento <strong>até 3 vezes</strong> se necessário.</li>
-                              <li>Se uma pontuação de 3 não for alcançada no solo, repita as instruções usando a <strong>plataforma sob os calcanhares</strong> do cliente.</li>
-                              <li>Observe o cliente de <strong>frente</strong> e de <strong>perfil (lado)</strong>.</li>
-                              <li>Todas as posições, incluindo o alinhamento dos pés, deverão permanecer inalteradas quando os calcanhares estiverem elevados.</li>
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ABA 3: IMPLICAÇÕES BIOMECÂNICAS */}
-                      {overheadGuideTab === "implicacoes" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.85rem" }}>
-                          <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
-                            <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
-                              🎯 Objetivo do Teste:
-                            </strong>
-                            <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                              O agachamento profundo demonstra mobilidade e estabilidade extrema completamente coordenadas com quadris e ombros em posições simétricas. Avalia mobilidade e estabilidade funcional bilateral dos quadris, joelhos, tornozelos, ombros, região escapular e coluna torácica.
-                            </p>
-                          </div>
-
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid #3b82f6" }}>
-                              <strong style={{ color: "#3b82f6", display: "block", marginBottom: "6px" }}>
-                                🦴 Membros Superiores & Coluna:
-                              </strong>
-                              <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                Limitação nos membros superiores pode ser atribuída à mobilidade deficiente pela articulação glenoumeral, pela coluna torácica (falta de extensão torácica) ou ambas.
-                              </p>
-                            </div>
-
-                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid #8b5cf6" }}>
-                              <strong style={{ color: "#8b5cf6", display: "block", marginBottom: "6px" }}>
-                                🦵 Membros Inferiores & Tornozelo:
-                              </strong>
-                              <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                                Limitação nas extremidades inferiores inclui dorsiflexão de cadeia cinética fechada deficiente pelo tornozelo, ou flexão limitada pelos joelhos e quadris.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Rating 1 2 3 ou ESQ / DIR */}
+                    {renderScoreButtons(mobilidade, setMobilidade, idx)}
+
+                    {/* Reps ou Lados ESQ / DIR */}
+                    <div>
+                      {item.esq !== undefined ? (
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <input
+                            type="text"
+                            placeholder="ESQ"
+                            value={item.esq || ""}
+                            onChange={(e) => {
+                              const next = [...mobilidade];
+                              next[idx].esq = e.target.value;
+                              setMobilidade(next);
+                            }}
+                            style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="DIR"
+                            value={item.dir || ""}
+                            onChange={(e) => {
+                              const next = [...mobilidade];
+                              next[idx].dir = e.target.value;
+                              setMobilidade(next);
+                            }}
+                            style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
+                          />
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                          REP: {item.reps}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Anotações */}
+                    <input
+                      type="text"
+                      placeholder="Observações / Clearing Test..."
+                      value={item.obs || ""}
+                      onChange={(e) => {
+                        const next = [...mobilidade];
+                        next[idx].obs = e.target.value;
+                        setMobilidade(next);
+                      }}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--border-medium)",
+                        fontSize: "0.85rem",
+                      }}
+                    />
+
+                    {/* Guia Oficial FMS Específico do Exercício (Collapsible) */}
+                    {guide && isExpanded && (
+                      <div
+                        style={{
+                          gridColumn: "1 / -1",
+                          marginTop: "10px",
+                          padding: "20px",
+                          background: "var(--bg-panel)",
+                          borderRadius: "12px",
+                          border: "1px solid var(--border-medium)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "16px",
+                          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+                        }}
+                      >
+                        {/* Header do Guia */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-light)", paddingBottom: "12px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 800 }}>
+                              MANUAL OFICIAL FMS
+                            </span>
+                            <strong style={{ fontSize: "1.05rem", color: "var(--text-primary)" }}>
+                              {guide.nomeOficial}
+                            </strong>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedGuideIndex(null)}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "var(--text-secondary)",
+                              cursor: "pointer",
+                              fontSize: "0.85rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            <ChevronUp size={16} /> Fechar Guia
+                          </button>
+                        </div>
+
+                        {/* Sub-abas de Navegação do Guia */}
+                        <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-light)", paddingBottom: "8px", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => setGuideTab("criterios")}
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: "6px",
+                              border: guideTab === "criterios" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                              background: guideTab === "criterios" ? "var(--accent-primary)" : "var(--bg-card)",
+                              color: guideTab === "criterios" ? "#fff" : "var(--text-secondary)",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <BookOpen size={14} /> Critérios de Pontuação (3, 2, 1, 0)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGuideTab("instrucoes")}
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: "6px",
+                              border: guideTab === "instrucoes" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                              background: guideTab === "instrucoes" ? "var(--accent-primary)" : "var(--bg-card)",
+                              color: guideTab === "instrucoes" ? "#fff" : "var(--text-secondary)",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <HelpCircle size={14} /> Instruções Verbais & Roteiro
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGuideTab("implicacoes")}
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: "6px",
+                              border: guideTab === "implicacoes" ? "1px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                              background: guideTab === "implicacoes" ? "var(--accent-primary)" : "var(--bg-card)",
+                              color: guideTab === "implicacoes" ? "#fff" : "var(--text-secondary)",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <AlertTriangle size={14} /> Implicações Biomecânicas {guide.clearingTest ? "& Exclusão" : ""}
+                          </button>
+                        </div>
+
+                        {/* ABA 1: CRITÉRIOS DE PONTUAÇÃO */}
+                        {guideTab === "criterios" && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                            {guide.imagemUrl && (
+                              <div style={{ textAlign: "center", background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid var(--border-medium)", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                                <img
+                                  src={guide.imagemUrl}
+                                  alt={guide.nomeOficial}
+                                  style={{
+                                    maxWidth: "100%",
+                                    maxHeight: "450px",
+                                    borderRadius: "6px",
+                                    objectFit: "contain",
+                                  }}
+                                />
+                                {guide.imagemLegenda && (
+                                  <div style={{ fontSize: "0.75rem", color: "#52525b", marginTop: "8px", fontWeight: 600 }}>
+                                    {guide.imagemLegenda}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Grid dos Critérios Oficiais FMS (0, 1, 2, 3) */}
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
+                              {/* NOTA 0 */}
+                              <div style={{ background: "rgba(107, 114, 128, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #6b7280" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                  <span style={{ background: "#6b7280", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                    0
+                                  </span>
+                                  <strong style={{ color: "#6b7280", fontSize: "0.95rem" }}>Presença de Dor (Stop)</strong>
+                                </div>
+                                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                  {guide.criterios.nota0}
+                                </p>
+                              </div>
+
+                              {/* NOTA 1 */}
+                              <div style={{ background: "rgba(239, 68, 68, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #ef4444" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                  <span style={{ background: "#ef4444", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                    1
+                                  </span>
+                                  <strong style={{ color: "#ef4444", fontSize: "0.95rem" }}>Disfunção / Compensações</strong>
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                  {guide.criterios.nota1.map((c, i) => (
+                                    <li key={i}>{c}</li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              {/* NOTA 2 */}
+                              <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #f59e0b" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                  <span style={{ background: "#f59e0b", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                    2
+                                  </span>
+                                  <strong style={{ color: "#f59e0b", fontSize: "0.95rem" }}>Padrão com Variação/Compensação</strong>
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                  {guide.criterios.nota2.map((c, i) => (
+                                    <li key={i}>{c}</li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              {/* NOTA 3 */}
+                              <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "14px", borderRadius: "8px", borderTop: "4px solid #10b981" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                                  <span style={{ background: "#10b981", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.9rem" }}>
+                                    3
+                                  </span>
+                                  <strong style={{ color: "#10b981", fontSize: "0.95rem" }}>Padrão Ideal FMS</strong>
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                  {guide.criterios.nota3.map((c, i) => (
+                                    <li key={i}>{c}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ABA 2: INSTRUÇÕES VERBAIS & DICAS */}
+                        {guideTab === "instrucoes" && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "0.85rem" }}>
+                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: "4px solid var(--accent-primary)" }}>
+                              <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
+                                🗣️ Roteiro de Instruções Verbais (O que falar para o aluno):
+                              </strong>
+                              <ol style={{ margin: 0, paddingLeft: "20px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                                {guide.instrucoes.fala.map((f, i) => (
+                                  <li key={i} style={{ marginBottom: "4px" }}>
+                                    <strong>{f}</strong>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+
+                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+                              <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
+                                💡 Dicas Oficiais para o Avaliador:
+                              </strong>
+                              <ul style={{ margin: 0, paddingLeft: "20px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                                {guide.instrucoes.dicas.map((d, i) => (
+                                  <li key={i}>{d}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ABA 3: IMPLICAÇÕES BIOMECÂNICAS & CLEARING TEST */}
+                        {guideTab === "implicacoes" && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.85rem" }}>
+                            <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-light)" }}>
+                              <strong style={{ display: "block", color: "var(--text-primary)", marginBottom: "6px" }}>
+                                🎯 Objetivo do Teste:
+                              </strong>
+                              <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                {guide.implicacoes.objetivo}
+                              </p>
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "12px" }}>
+                              {guide.implicacoes.fatores.map((fat, i) => (
+                                <div key={i} style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", borderLeft: `4px solid ${fat.cor}` }}>
+                                  <strong style={{ color: fat.cor, display: "block", marginBottom: "6px" }}>
+                                    {fat.titulo}
+                                  </strong>
+                                  <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                                    {fat.desc}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+
+                            {guide.clearingTest && (
+                              <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "14px", borderRadius: "8px", border: "1px solid rgba(245, 158, 11, 0.3)", marginTop: "4px" }}>
+                                <strong style={{ color: "#f59e0b", display: "block", marginBottom: "6px" }}>
+                                  ⚠️ {guide.clearingTest.nome}
+                                </strong>
+                                <p style={{ margin: "0 0 6px 0", color: "var(--text-primary)", lineHeight: "1.5" }}>
+                                  <strong>Instrução:</strong> {guide.clearingTest.instrucao}
+                                </p>
+                                <p style={{ margin: 0, color: "#ef4444", fontWeight: 700, lineHeight: "1.5" }}>
+                                  Regra de Dor: {guide.clearingTest.criterioDor}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
-              Soma Mobilidade: <span style={{ color: "var(--accent-primary)" }}>{calcSoma(mobilidade)}</span>
+              Soma Mobilidade FMS: <span style={{ color: "var(--accent-primary)" }}>{calcSoma(mobilidade)} / 21</span>
             </div>
           </div>
 
