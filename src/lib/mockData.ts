@@ -500,6 +500,7 @@ export const mockDb = {
     const { data, error } = await supabase
       .from('bases_treino')
       .select('*')
+      .not('id', 'like', 'ficha_%')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar bases:', error);
@@ -641,37 +642,114 @@ export const mockDb = {
     return true;
   },
 
-  // ─── FICHAS AVALIATIVAS ────────────────────────────────────
+  // ─── FICHAS AVALIATIVAS (Supabase Cloud + Local Cache) ─────
 
-  getFichasAvaliativas: (): FichaAvaliativa[] => {
-    if (typeof window === 'undefined') return [];
+  getFichasAvaliativas: async (): Promise<FichaAvaliativa[]> => {
+    let fichasCloud: FichaAvaliativa[] = [];
     try {
-      const data = localStorage.getItem('fichas_avaliativas_v1');
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
+      const { data, error } = await supabase
+        .from('bases_treino')
+        .select('*')
+        .like('id', 'ficha_%')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        fichasCloud = data
+          .map((row: Record<string, unknown>) => row.exercicios as FichaAvaliativa)
+          .filter(Boolean);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar fichas no Supabase:', err);
+    }
+
+    let fichasLocal: FichaAvaliativa[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const localData = localStorage.getItem('fichas_avaliativas_v1');
+        if (localData) fichasLocal = JSON.parse(localData);
+      } catch {}
+    }
+
+    const map = new Map<string, FichaAvaliativa>();
+    fichasCloud.forEach(f => {
+      if (f && f.id) map.set(f.id, f);
+    });
+    fichasLocal.forEach(f => {
+      if (f && f.id && !map.has(f.id)) map.set(f.id, f);
+    });
+
+    const listaFinal = Array.from(map.values()).sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('fichas_avaliativas_v1', JSON.stringify(listaFinal));
+      } catch {}
+    }
+
+    return listaFinal;
+  },
+
+  salvarFichaAvaliativa: async (ficha: FichaAvaliativa): Promise<void> => {
+    const fichaId = ficha.id.startsWith('ficha_') ? ficha.id : `ficha_${ficha.id}`;
+    ficha.id = fichaId;
+
+    // 1. Salva no localStorage local
+    if (typeof window !== 'undefined') {
+      try {
+        const localData = localStorage.getItem('fichas_avaliativas_v1');
+        const fichas: FichaAvaliativa[] = localData ? JSON.parse(localData) : [];
+        const idx = fichas.findIndex(f => f.id === ficha.id);
+        if (idx >= 0) {
+          fichas[idx] = ficha;
+        } else {
+          fichas.unshift(ficha);
+        }
+        localStorage.setItem('fichas_avaliativas_v1', JSON.stringify(fichas));
+      } catch (err) {
+        console.error('Erro ao salvar ficha no localStorage:', err);
+      }
+    }
+
+    // 2. Salva no Supabase (Nuvem em tempo real)
+    try {
+      await supabase.from('bases_treino').upsert({
+        id: fichaId,
+        nome: `[FICHA] ${ficha.nomeAluno} - ${ficha.data}`,
+        exercicios: ficha,
+      }, { onConflict: 'id' });
+    } catch (err) {
+      console.error('Erro ao salvar ficha no Supabase:', err);
     }
   },
 
-  salvarFichaAvaliativa: (ficha: FichaAvaliativa): void => {
-    if (typeof window === 'undefined') return;
+  deletarFichaAvaliativa: async (id: string): Promise<void> => {
+    const fichaId = id.startsWith('ficha_') ? id : `ficha_${id}`;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const localData = localStorage.getItem('fichas_avaliativas_v1');
+        if (localData) {
+          const fichas: FichaAvaliativa[] = JSON.parse(localData);
+          const filtrado = fichas.filter(f => f.id !== id && f.id !== fichaId);
+          localStorage.setItem('fichas_avaliativas_v1', JSON.stringify(filtrado));
+        }
+      } catch {}
+    }
+
     try {
-      const fichas = mockDb.getFichasAvaliativas();
-      const idx = fichas.findIndex(f => f.id === ficha.id);
-      if (idx >= 0) {
-        fichas[idx] = ficha;
-      } else {
-        fichas.unshift(ficha);
-      }
-      localStorage.setItem('fichas_avaliativas_v1', JSON.stringify(fichas));
+      await supabase.from('bases_treino').delete().eq('id', fichaId);
     } catch (err) {
-      console.error('Erro ao salvar ficha avaliativa:', err);
+      console.error('Erro ao deletar ficha no Supabase:', err);
     }
   },
 
   salvarEGerarTreinoA: async (ficha: FichaAvaliativa): Promise<Aluno> => {
     // 1. Salva a ficha avaliativa no histórico
-    mockDb.salvarFichaAvaliativa(ficha);
+    await mockDb.salvarFichaAvaliativa(ficha);
 
     // 2. Busca ou cria o aluno
     const alunos = await mockDb.getAlunos();

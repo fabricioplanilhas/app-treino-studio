@@ -438,8 +438,8 @@ export default function PrimeiraAulaPage() {
     })();
   }, []);
 
-  const carregarHistorico = () => {
-    const list = mockDb.getFichasAvaliativas();
+  const carregarHistorico = async () => {
+    const list = await mockDb.getFichasAvaliativas();
     setHistoricoFichas(list);
   };
 
@@ -562,16 +562,16 @@ export default function PrimeiraAulaPage() {
     };
   };
 
-  const handleSalvarFicha = () => {
+  const handleSalvarFicha = async () => {
     if (!nomeAluno.trim()) {
       alert("Por favor, preencha o Nome e Sobrenome do aluno.");
       return;
     }
     const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
     const ficha = construirObjetoFicha(tipo);
-    mockDb.salvarFichaAvaliativa(ficha);
+    await mockDb.salvarFichaAvaliativa(ficha);
     setFichaId(ficha.id);
-    carregarHistorico();
+    await carregarHistorico();
     alert("Ficha Avaliativa salva no histórico com sucesso!");
   };
 
@@ -588,7 +588,7 @@ export default function PrimeiraAulaPage() {
     try {
       const alunoAtualizado = await mockDb.salvarEGerarTreinoA(ficha);
       setFichaId(ficha.id);
-      carregarHistorico();
+      await carregarHistorico();
       const dataAlunos = await mockDb.getAlunos();
       setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
       alert(`Ficha avaliativa salva e Treino A criado com sucesso para o aluno ${alunoAtualizado.nome}!`);
@@ -600,12 +600,10 @@ export default function PrimeiraAulaPage() {
     }
   };
 
-  const handleDeletarFicha = (id: string) => {
+  const handleDeletarFicha = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir esta ficha avaliativa do histórico?")) return;
-    const atual = mockDb.getFichasAvaliativas();
-    const filtrado = atual.filter(f => f.id !== id);
-    localStorage.setItem("fichas_avaliativas_v1", JSON.stringify(filtrado));
-    carregarHistorico();
+    await mockDb.deletarFichaAvaliativa(id);
+    await carregarHistorico();
   };
 
   const handleGerarPDF = (fichaParaPdf?: FichaAvaliativa) => {
