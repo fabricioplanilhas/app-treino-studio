@@ -218,9 +218,11 @@ export default function PrimeiraAulaPage() {
     setSaving(true);
     try {
       const alunoAtualizado = await mockDb.salvarEGerarTreinoA(ficha);
+      setFichaId(ficha.id);
       carregarHistorico();
+      const dataAlunos = await mockDb.getAlunos();
+      setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
       alert(`Ficha avaliativa salva e Treino A criado com sucesso para o aluno ${alunoAtualizado.nome}!`);
-      router.push(`/treinos?alunoId=${alunoAtualizado.id}`);
     } catch (err) {
       console.error(err);
       alert("Ocorreu um erro ao criar o Treino A.");
