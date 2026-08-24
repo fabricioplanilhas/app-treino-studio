@@ -702,25 +702,25 @@ export const mockDb = {
       exForcaMap.set(item.nome.trim().toUpperCase(), (item.carga || '').trim());
     });
 
-    const cargaAgachaGB = exForcaMap.get('AGACHAMENTO GB') || exForcaMap.get('AGACHA GB') || '-';
+    const cargaAgachaGB = exForcaMap.get('AGACHAMENTO GB') || exForcaMap.get('AGACHA GB') || exForcaMap.get('AGACHAMENTO') || '-';
     const cargaApoio = exForcaMap.get('APOIO SOLO') || exForcaMap.get('APOIO') || '-';
     const cargaPonte = exForcaMap.get('PONTE 1P SOLO') || exForcaMap.get('PONTE') || '-';
-    const cargaPuxada = exForcaMap.get('PUXADA NEUTRA TRX') || exForcaMap.get('PUXADA TRX') || '-';
+    const cargaPuxada = exForcaMap.get('PUXADA NEUTRA TRX') || exForcaMap.get('PUXADA TRX') || exForcaMap.get('PUXADA NO TRX') || '-';
+    const cargaPressao = exForcaMap.get('PRESSÃO VERTICAL') || exForcaMap.get('PRESSAO VERTICAL') || exForcaMap.get('1DB PRESSÃO VERTICAL') || '-';
 
     // 4. Monta os exercícios para o Treino A
-    const exerciciosTreinoA: Exercicio[] = [
-      {
-        id: 'ex_ta_' + Date.now() + '_1',
-        nome: 'PRANCHA FRONTAL',
-        categoria: 'Core',
-        series: '2',
-        reps: '35"',
-        carga: '-'
-      }
-    ];
+    const exerciciosTreinoA: Exercicio[] = [];
 
     if (ficha.tipo === 'Atleta') {
       exerciciosTreinoA.push(
+        {
+          id: 'ex_ta_' + Date.now() + '_1',
+          nome: 'PRANCHA FRONTAL',
+          categoria: 'Core',
+          series: '2',
+          reps: '35"',
+          carga: '-'
+        },
         {
           id: 'ex_ta_' + Date.now() + '_2',
           nome: 'AGACHA SALTA STOP',
@@ -740,12 +740,13 @@ export const mockDb = {
       );
     }
 
+    // Bloco 1 de Força (Agachamento, Apoio, Ponte)
     exerciciosTreinoA.push(
       {
         id: 'ex_ta_' + Date.now() + '_4',
         nome: 'AGACHA G.B',
         categoria: 'Forca',
-        series: '2-3',
+        series: ficha.seriesForca || '2',
         reps: '8-10',
         carga: cargaAgachaGB !== '' ? cargaAgachaGB : '-'
       },
@@ -753,7 +754,7 @@ export const mockDb = {
         id: 'ex_ta_' + Date.now() + '_5',
         nome: 'APOIO',
         categoria: 'Forca',
-        series: '2-3',
+        series: ficha.seriesForca || '2',
         reps: '8-10',
         carga: cargaApoio !== '' ? cargaApoio : '-'
       },
@@ -761,17 +762,29 @@ export const mockDb = {
         id: 'ex_ta_' + Date.now() + '_6',
         nome: 'PONTE UNI SOLO',
         categoria: 'Forca',
-        series: '2-3',
+        series: ficha.seriesForca || '2',
         reps: '8-10',
         carga: cargaPonte !== '' ? cargaPonte : '-'
-      },
+      }
+    );
+
+    // Bloco 2 de Força (Puxada no TRX, Pressão Vertical)
+    exerciciosTreinoA.push(
       {
         id: 'ex_ta_' + Date.now() + '_7',
         nome: 'PUXADA N. TRX',
         categoria: 'Forca',
-        series: '2-3',
+        series: ficha.seriesForca || '2',
         reps: '8-10',
         carga: cargaPuxada !== '' ? cargaPuxada : '-'
+      },
+      {
+        id: 'ex_ta_' + Date.now() + '_8',
+        nome: '1DB PRESSÃO VERTICAL',
+        categoria: 'Forca',
+        series: ficha.seriesForca || '2',
+        reps: '8-10',
+        carga: cargaPressao !== '' ? cargaPressao : '-'
       }
     );
 
@@ -783,10 +796,13 @@ export const mockDb = {
     });
 
     // 5. Atualiza o Treino A do aluno
+    const limitesBlocos = ficha.tipo === 'Atleta' ? [3, 6] : [3];
+
     const novoTreinoA: Treino = {
       id: 'treino_A_' + Date.now(),
       nomeTreino: 'Treino A',
-      exercicios: exerciciosTreinoA
+      exercicios: exerciciosTreinoA,
+      limitesBlocos: limitesBlocos
     };
 
     const indexA = aluno.treinos.findIndex(t => t.nomeTreino === 'Treino A');

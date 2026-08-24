@@ -33,10 +33,13 @@ const INITIAL_POTENCIA: ExercicioAvaliativo[] = [
 ];
 
 const INITIAL_FORCA: ExercicioAvaliativo[] = [
+  // Bloco 1: Agachamento, Apoio e Ponte
   { nome: "Agachamento GB", score: 0, carga: "", reps: "8-10", obs: "" },
   { nome: "Apoio Solo", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Apoio na barra", progressao: false, progressaoTexto: "Apoio pés elevados (step/caixa/banco)", obs: "" },
   { nome: "Ponte 1P Solo", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Ponte 2 pés Solo", progressao: false, progressaoTexto: "Ponte 1P Banco", obs: "" },
-  { nome: "Puxada Neutra TRX", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Ponte 2 pés Solo", progressao: false, progressaoTexto: "Ponte 1P Banco", obs: "" },
+  // Bloco 2: Puxada no TRX e Pressão Vertical
+  { nome: "Puxada Neutra TRX", score: 0, carga: "", reps: "8-10", obs: "" },
+  { nome: "Pressão Vertical", score: 0, carga: "", reps: "8-10", obs: "" },
 ];
 
 export default function PrimeiraAulaPage() {
@@ -152,8 +155,15 @@ export default function PrimeiraAulaPage() {
       setPotencia(ficha.potencia ? JSON.parse(JSON.stringify(ficha.potencia)) : JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
     }
     
-    setSeriesForca(ficha.seriesForca || "2");
-    setForcaFuncional(ficha.forcaFuncional ? JSON.parse(JSON.stringify(ficha.forcaFuncional)) : JSON.parse(JSON.stringify(INITIAL_FORCA)));
+    if (ficha.forcaFuncional) {
+      const forcaCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(ficha.forcaFuncional));
+      if (!forcaCopy.some((e) => e.nome.toLowerCase().includes("pressão") || e.nome.toLowerCase().includes("pressao"))) {
+        forcaCopy.push({ nome: "Pressão Vertical", score: 0, carga: "", reps: "8-10", obs: "" });
+      }
+      setForcaFuncional(forcaCopy);
+    } else {
+      setForcaFuncional(JSON.parse(JSON.stringify(INITIAL_FORCA)));
+    }
     
     setRecomendacaoSemana(ficha.recomendacaoSemana || "2x");
     setRecomendacaoMinimo(ficha.recomendacaoMinimo || "3 meses");
@@ -402,7 +412,7 @@ export default function PrimeiraAulaPage() {
     if (ficha.tipo === "Atleta" && ficha.potencia) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text("POTÊNCIA AVALIATIVA", 14, yPage2);
+      doc.text("POTÊNCIA COORDENATIVA AVALIATIVA", 14, yPage2);
       yPage2 += 4;
 
       const bodyPotencia = ficha.potencia.map((item, idx) => [
@@ -421,27 +431,63 @@ export default function PrimeiraAulaPage() {
       });
 
       yPage2 = (doc as any).lastAutoTable.finalY + 4;
-      doc.text(`Soma Potência: ( ${ficha.somaPotencia || 0} )`, 140, yPage2);
+      doc.text(`Soma Potência Coordenativa: ( ${ficha.somaPotencia || 0} )`, 140, yPage2);
       yPage2 += 8;
     }
 
-    // Seção FORÇA FUNCIONAL AVALIATIVA
+    // Seção FORÇA FUNCIONAL AVALIATIVA (2 Blocos)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.text(`FORÇA FUNCIONAL AVALIATIVA - Séries: 2 (${ficha.seriesForca === "2" ? "X" : " "}) - 3 (${ficha.seriesForca === "3" ? "X" : " "})`, 14, yPage2);
     yPage2 += 4;
 
-    const bodyForca = ficha.forcaFuncional.map((item, idx) => {
+    const bodyForca: any[] = [];
+
+    // Header Bloco 1
+    bodyForca.push([
+      {
+        content: "BLOCO 1: Agachamento, Apoio e Ponte",
+        colSpan: 3,
+        styles: { fillColor: [240, 248, 240], fontStyle: "bold", textColor: [34, 139, 34] },
+      },
+    ]);
+
+    const bloco1Items = (ficha.forcaFuncional || []).slice(0, 3);
+    bloco1Items.forEach((item, idx) => {
       let extra = "";
       if (item.regressao) extra += ` [Reg: ${item.regressaoTexto}]`;
       if (item.progressao) extra += ` [Prog: ${item.progressaoTexto}]`;
       if (item.obs) extra += ` - ${item.obs}`;
-      return [
+      bodyForca.push([
         `${idx + 1}. ${item.nome}${extra}`,
         `1(${item.score === 1 ? "X" : " "}) 2(${item.score === 2 ? "X" : " "}) 3(${item.score === 3 ? "X" : " "})`,
         `Carga: ${item.carga || "-"} | REP: ${item.reps || "8-10"}`,
-      ];
+      ]);
     });
+
+    if ((ficha.forcaFuncional || []).length > 3) {
+      // Header Bloco 2
+      bodyForca.push([
+        {
+          content: "BLOCO 2: Puxada no TRX e Pressão Vertical",
+          colSpan: 3,
+          styles: { fillColor: [240, 248, 240], fontStyle: "bold", textColor: [34, 139, 34] },
+        },
+      ]);
+
+      const bloco2Items = (ficha.forcaFuncional || []).slice(3);
+      bloco2Items.forEach((item, idx) => {
+        let extra = "";
+        if (item.regressao) extra += ` [Reg: ${item.regressaoTexto}]`;
+        if (item.progressao) extra += ` [Prog: ${item.progressaoTexto}]`;
+        if (item.obs) extra += ` - ${item.obs}`;
+        bodyForca.push([
+          `${idx + 4}. ${item.nome}${extra}`,
+          `1(${item.score === 1 ? "X" : " "}) 2(${item.score === 2 ? "X" : " "}) 3(${item.score === 3 ? "X" : " "})`,
+          `Carga: ${item.carga || "-"} | REP: ${item.reps || "8-10"}`,
+        ]);
+      });
+    }
 
     autoTable(doc, {
       startY: yPage2,
@@ -1581,10 +1627,10 @@ export default function PrimeiraAulaPage() {
                 </div>
               </div>
 
-              {/* Potência Avaliativa */}
+              {/* Potência Coordenativa Avaliativa */}
               <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
                 <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#8b5cf6", marginBottom: "16px" }}>
-                  POTÊNCIA AVALIATIVA
+                  POTÊNCIA COORDENATIVA AVALIATIVA
                 </h2>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1633,13 +1679,13 @@ export default function PrimeiraAulaPage() {
                 </div>
 
                 <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
-                  Soma Potência: <span style={{ color: "#8b5cf6" }}>{calcSoma(potencia)}</span>
+                  Soma Potência Coordenativa: <span style={{ color: "#8b5cf6" }}>{calcSoma(potencia)}</span>
                 </div>
               </div>
             </>
           )}
 
-          {/* SEÇÃO FORÇA FUNCIONAL AVALIATIVA */}
+          {/* SEÇÃO FORÇA FUNCIONAL AVALIATIVA (2 BLOCOS) */}
           <div style={{ background: "var(--bg-panel)", borderRadius: "12px", padding: "24px", border: "1px solid var(--border-light)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--cat-forca)" }}>
@@ -1668,104 +1714,251 @@ export default function PrimeiraAulaPage() {
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {forcaFuncional.map((item, idx) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* BLOCO 1 */}
+              <div
+                style={{
+                  background: "var(--bg-card)",
+                  padding: "16px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--border-light)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingBottom: "8px", borderBottom: "1px solid var(--border-light)" }}>
+                  <span style={{ background: "var(--cat-forca)", color: "#fff", padding: "3px 10px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.5px" }}>
+                    BLOCO 1
+                  </span>
+                  <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                    Agachamento, Apoio e Ponte
+                  </strong>
+                </div>
+
+                {forcaFuncional.slice(0, 3).map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
+                      gap: "12px",
+                      alignItems: "center",
+                      padding: "10px 12px",
+                      background: "var(--bg-panel)",
+                      borderRadius: "8px",
+                      border: "1px solid var(--border-light)",
+                    }}
+                  >
+                    <div>
+                      <strong style={{ fontSize: "0.95rem" }}>
+                        {idx + 1}. {item.nome}
+                      </strong>
+                      {item.regressaoTexto && (
+                        <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                          <input
+                            type="checkbox"
+                            checked={item.regressao || false}
+                            onChange={(e) => {
+                              const next = [...forcaFuncional];
+                              next[idx].regressao = e.target.checked;
+                              setForcaFuncional(next);
+                            }}
+                          />{" "}
+                          Reg: {item.regressaoTexto}
+                        </label>
+                      )}
+                      {item.progressaoTexto && (
+                        <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                          <input
+                            type="checkbox"
+                            checked={item.progressao || false}
+                            onChange={(e) => {
+                              const next = [...forcaFuncional];
+                              next[idx].progressao = e.target.checked;
+                              setForcaFuncional(next);
+                            }}
+                          />{" "}
+                          Prog: {item.progressaoTexto}
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Score 1 2 3 */}
+                    {renderScoreButtons(forcaFuncional, setForcaFuncional, idx)}
+
+                    {/* Carga & Reps */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Carga:</span>
+                        <input
+                          type="text"
+                          placeholder="ex: 12kg"
+                          value={item.carga || ""}
+                          onChange={(e) => {
+                            const next = [...forcaFuncional];
+                            next[idx].carga = e.target.value;
+                            setForcaFuncional(next);
+                          }}
+                          style={{
+                            width: "75px",
+                            padding: "4px",
+                            fontSize: "0.85rem",
+                            borderRadius: "4px",
+                            border: "1px solid var(--border-medium)",
+                          }}
+                        />
+                      </div>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                        REP: {item.reps}
+                      </span>
+                    </div>
+
+                    {/* Observações */}
+                    <input
+                      type="text"
+                      placeholder="Observações..."
+                      value={item.obs || ""}
+                      onChange={(e) => {
+                        const next = [...forcaFuncional];
+                        next[idx].obs = e.target.value;
+                        setForcaFuncional(next);
+                      }}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--border-medium)",
+                        fontSize: "0.85rem",
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* BLOCO 2 */}
+              {forcaFuncional.length > 3 && (
                 <div
-                  key={idx}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
-                    gap: "12px",
-                    alignItems: "center",
-                    padding: "12px",
                     background: "var(--bg-card)",
-                    borderRadius: "8px",
+                    padding: "16px",
+                    borderRadius: "10px",
                     border: "1px solid var(--border-light)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
                   }}
                 >
-                  <div>
-                    <strong style={{ fontSize: "0.95rem" }}>
-                      {idx + 1}. {item.nome}
-                    </strong>
-                    {item.regressaoTexto && (
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-                        <input
-                          type="checkbox"
-                          checked={item.regressao || false}
-                          onChange={(e) => {
-                            const next = [...forcaFuncional];
-                            next[idx].regressao = e.target.checked;
-                            setForcaFuncional(next);
-                          }}
-                        />{" "}
-                        Reg: {item.regressaoTexto}
-                      </label>
-                    )}
-                    {item.progressaoTexto && (
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
-                        <input
-                          type="checkbox"
-                          checked={item.progressao || false}
-                          onChange={(e) => {
-                            const next = [...forcaFuncional];
-                            next[idx].progressao = e.target.checked;
-                            setForcaFuncional(next);
-                          }}
-                        />{" "}
-                        Prog: {item.progressaoTexto}
-                      </label>
-                    )}
-                  </div>
-
-                  {/* Score 1 2 3 */}
-                  {renderScoreButtons(forcaFuncional, setForcaFuncional, idx)}
-
-                  {/* Carga & Reps */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Carga:</span>
-                      <input
-                        type="text"
-                        placeholder="ex: 12kg"
-                        value={item.carga || ""}
-                        onChange={(e) => {
-                          const next = [...forcaFuncional];
-                          next[idx].carga = e.target.value;
-                          setForcaFuncional(next);
-                        }}
-                        style={{
-                          width: "75px",
-                          padding: "4px",
-                          fontSize: "0.85rem",
-                          borderRadius: "4px",
-                          border: "1px solid var(--border-medium)",
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      REP: {item.reps}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingBottom: "8px", borderBottom: "1px solid var(--border-light)" }}>
+                    <span style={{ background: "var(--cat-forca)", color: "#fff", padding: "3px 10px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.5px" }}>
+                      BLOCO 2
                     </span>
+                    <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                      Puxada no TRX e Pressão Vertical
+                    </strong>
                   </div>
 
-                  {/* Observações */}
-                  <input
-                    type="text"
-                    placeholder="Observações..."
-                    value={item.obs || ""}
-                    onChange={(e) => {
-                      const next = [...forcaFuncional];
-                      next[idx].obs = e.target.value;
-                      setForcaFuncional(next);
-                    }}
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border-medium)",
-                      fontSize: "0.85rem",
-                    }}
-                  />
+                  {forcaFuncional.slice(3).map((item, localIdx) => {
+                    const idx = localIdx + 3;
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "2.5fr 1fr 1fr 2fr",
+                          gap: "12px",
+                          alignItems: "center",
+                          padding: "10px 12px",
+                          background: "var(--bg-panel)",
+                          borderRadius: "8px",
+                          border: "1px solid var(--border-light)",
+                        }}
+                      >
+                        <div>
+                          <strong style={{ fontSize: "0.95rem" }}>
+                            {idx + 1}. {item.nome}
+                          </strong>
+                          {item.regressaoTexto && (
+                            <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                              <input
+                                type="checkbox"
+                                checked={item.regressao || false}
+                                onChange={(e) => {
+                                  const next = [...forcaFuncional];
+                                  next[idx].regressao = e.target.checked;
+                                  setForcaFuncional(next);
+                                }}
+                              />{" "}
+                              Reg: {item.regressaoTexto}
+                            </label>
+                          )}
+                          {item.progressaoTexto && (
+                            <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+                              <input
+                                type="checkbox"
+                                checked={item.progressao || false}
+                                onChange={(e) => {
+                                  const next = [...forcaFuncional];
+                                  next[idx].progressao = e.target.checked;
+                                  setForcaFuncional(next);
+                                }}
+                              />{" "}
+                              Prog: {item.progressaoTexto}
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Score 1 2 3 */}
+                        {renderScoreButtons(forcaFuncional, setForcaFuncional, idx)}
+
+                        {/* Carga & Reps */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Carga:</span>
+                            <input
+                              type="text"
+                              placeholder="ex: 12kg"
+                              value={item.carga || ""}
+                              onChange={(e) => {
+                                const next = [...forcaFuncional];
+                                next[idx].carga = e.target.value;
+                                setForcaFuncional(next);
+                              }}
+                              style={{
+                                width: "75px",
+                                padding: "4px",
+                                fontSize: "0.85rem",
+                                borderRadius: "4px",
+                                border: "1px solid var(--border-medium)",
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                            REP: {item.reps}
+                          </span>
+                        </div>
+
+                        {/* Observações */}
+                        <input
+                          type="text"
+                          placeholder="Observações..."
+                          value={item.obs || ""}
+                          onChange={(e) => {
+                            const next = [...forcaFuncional];
+                            next[idx].obs = e.target.value;
+                            setForcaFuncional(next);
+                          }}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid var(--border-medium)",
+                            fontSize: "0.85rem",
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </div>
 
             <div style={{ textAlign: "right", marginTop: "14px", fontSize: "1.05rem", fontWeight: 700 }}>
