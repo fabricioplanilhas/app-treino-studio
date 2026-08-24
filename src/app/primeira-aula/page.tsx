@@ -1503,18 +1503,18 @@ export default function PrimeiraAulaPage() {
                       transition: "all 0.15s ease",
                     }}
                   >
-                    <div>
-                      <strong style={{ fontSize: "0.95rem", display: "block" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+                      <strong style={{ fontSize: "0.95rem" }}>
                         {idx + 1}. {item.nome}
                       </strong>
                       {guide?.padraoNome && (
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontStyle: "italic", lineHeight: "1.2" }}>
                           {guide.padraoNome}
                         </span>
                       )}
                       {guide?.clearingTest && (
-                        <div style={{ marginTop: "4px" }}>
-                          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#f59e0b", background: "rgba(245, 158, 11, 0.12)", padding: "2px 6px", borderRadius: "4px" }}>
+                        <div style={{ marginTop: "2px" }}>
+                          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#f59e0b", background: "rgba(245, 158, 11, 0.12)", padding: "2px 6px", borderRadius: "4px", display: "inline-block" }}>
                             ⚠️ Possui Teste de Exclusão de Dor
                           </span>
                         </div>
@@ -1531,7 +1531,7 @@ export default function PrimeiraAulaPage() {
                             }
                           }}
                           style={{
-                            marginTop: "8px",
+                            marginTop: "6px",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "6px",
