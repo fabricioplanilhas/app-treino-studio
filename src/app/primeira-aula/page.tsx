@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { RUMPEL_LOGO_BASE64 } from "@/lib/logoBase64";
+import { RUMPEL_BG_BASE64 } from "@/lib/pdfTemplateBase64";
 
 // Interface para Guia do FMS
 export interface FMSGuideData {
@@ -726,92 +726,94 @@ export default function PrimeiraAulaPage() {
       format: "a4",
     });
 
-    const greenBg = [76, 175, 80];
-
-    // Página 1: Cabeçalho com Logo
-    doc.setFillColor(greenBg[0], greenBg[1], greenBg[2]);
-    doc.rect(0, 0, 210, 30, "F");
-
+    // ──────────────── PAGE 1 ────────────────
     try {
-      doc.addImage(RUMPEL_LOGO_BASE64, "JPEG", 80, 2, 50, 24);
+      doc.addImage(RUMPEL_BG_BASE64, "JPEG", 0, 0, 210, 297);
     } catch (e) {
       console.error("Logo PDF error", e);
     }
 
     // Título Principal
-    doc.setFillColor(0, 166, 80);
-    doc.rect(14, 34, 182, 8, "F");
+    doc.setFillColor(34, 139, 34);
+    doc.roundedRect(14, 40, 182, 8, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`1º AULA ${ficha.tipo.toUpperCase()} - TREINAMENTO`, 105, 39.5, { align: "center" });
+    doc.setFontSize(11.5);
+    const tipoStr = `1ª AULA ${ficha.tipo.toUpperCase()} - TREINAMENTO`;
+    doc.text(tipoStr, 105, 45.5, { align: "center" });
 
-    let currentY = 56;
+    let currentY = 52;
 
     if (ficha.tipo === "Atleta") {
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(8.5);
+
+      // Box de identificação do Atleta
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, 50, 182, 16, 2, 2, "FD");
+
+      doc.setFont("helvetica", "bold");
+      doc.text("ATLETA:", 18, 55);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 34, 55);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("DATA AVALIAÇÃO:", 130, 55);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.data}`, 162, 55);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("CLUBE:", 18, 60);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${(ficha.clube || "-").toUpperCase()}`, 32, 60);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("POSIÇÃO:", 90, 60);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${(ficha.posicao || "-").toUpperCase()}`, 107, 60);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("NASCIMENTO:", 140, 60);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.dataNascimento || "-"}`, 165, 60);
+
+      currentY = 70;
+    } else {
+      doc.setTextColor(30, 41, 59);
       doc.setFontSize(9);
 
-      // Linha 1: Nome do Atleta e Data da Avaliação
-      doc.setFont("helvetica", "bold");
-      doc.text(`ATLETA:`, 14, 46);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 31, 46);
+      // Box de identificação Adulto
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, 50, 182, 10, 2, 2, "FD");
 
       doc.setFont("helvetica", "bold");
-      doc.text(`DATA AVALIAÇÃO:`, 140, 46);
+      doc.text("NOME E SOBRENOME:", 18, 56.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.data}`, 174, 46);
-
-      // Linha 2: Clube e Posição
-      doc.setFont("helvetica", "bold");
-      doc.text(`CLUBE:`, 14, 51.5);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${(ficha.clube || "-").toUpperCase()}`, 29, 51.5);
+      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 58, 56.5);
 
       doc.setFont("helvetica", "bold");
-      doc.text(`POSIÇÃO:`, 110, 51.5);
+      doc.text("DATA:", 145, 56.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`${(ficha.posicao || "-").toUpperCase()}`, 129, 51.5);
+      doc.text(`${ficha.data}`, 157, 56.5);
 
-      // Linha 3: Responsável e Data de Nascimento
-      doc.setFont("helvetica", "bold");
-      doc.text(`RESPONSÁVEL:`, 14, 57);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${(ficha.responsavel || "-").toUpperCase()}`, 41, 57);
-
-      doc.setFont("helvetica", "bold");
-      doc.text(`DATA DE NASCIMENTO:`, 110, 57);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.dataNascimento || "-"}`, 154, 57);
-
-      doc.setDrawColor(200, 200, 200);
-      doc.line(14, 60, 196, 60);
-
-      currentY = 66;
-    } else {
-      // Nome e Data Adulto
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
-      doc.text(`NOME E SOBRENOME: ${ficha.nomeAluno.toUpperCase()}`, 14, 48);
-      doc.text(`Data: ${ficha.data}`, 150, 48);
-      doc.line(14, 50, 196, 50);
-
-      currentY = 56;
+      currentY = 64;
     }
 
     // Seção 1: MOBILIDADE AVALIATIVA (FMS)
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(10.5);
+    doc.setTextColor(20, 83, 45);
     doc.text(`MOBILIDADE AVALIATIVA (FMS) - Séries: 1 (${ficha.seriesMobilidade === "1" ? "X" : " "}) - 2 (${ficha.seriesMobilidade === "2" ? "X" : " "})`, 14, currentY);
-    currentY += 4;
+    currentY += 3;
 
     const bodyMobilidade = ficha.mobilidade.map((item, idx) => {
       let extra = "";
       if (item.esq || item.dir) extra += ` (ESQ: ${item.esq || "-"} | DIR: ${item.dir || "-"})`;
-      if (item.regressao && item.regressaoTexto) extra += ` [Regressão: ${item.regressaoTexto}]`;
-      if (item.progressao && item.progressaoTexto) extra += ` [Progressão: ${item.progressaoTexto}]`;
-      if (item.obs) extra += ` - Obs: ${item.obs}`;
+      if (item.regressao && item.regressaoTexto) extra += ` [Reg: ${item.regressaoTexto}]`;
+      if (item.progressao && item.progressaoTexto) extra += ` [Prog: ${item.progressaoTexto}]`;
+      if (item.obs) extra += ` - ${item.obs}`;
 
       let notaText = `0(${item.score === 0 ? "X" : " "}) 1(${item.score === 1 ? "X" : " "}) 2(${item.score === 2 ? "X" : " "}) 3(${item.score === 3 ? "X" : " "})`;
       if (item.scoreEsq !== undefined || item.scoreDir !== undefined) {
@@ -829,48 +831,56 @@ export default function PrimeiraAulaPage() {
 
     autoTable(doc, {
       startY: currentY,
-      head: [["Exercício / Observações", "Nota FMS", "Tentativas / Medição"]],
+      head: [["Teste FMS / Observações", "Nota FMS", "Tentativas / Medição"]],
       body: bodyMobilidade,
       theme: "grid",
-      headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255], fontStyle: "bold" },
-      styles: { fontSize: 8.5, cellPadding: 2 },
+      headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+      styles: { fontSize: 8, cellPadding: 2, textColor: [30, 41, 59] },
       columnStyles: { 0: { cellWidth: 112 }, 1: { cellWidth: 43 }, 2: { cellWidth: 27 } },
+      margin: { left: 14, right: 14 },
     });
 
     currentY = (doc as any).lastAutoTable.finalY + 3;
 
     const diagFMS = calcularClassificacaoFMS(ficha.mobilidade || []);
     
+    // Box de Diagnóstico FMS
+    doc.setFillColor(240, 253, 244);
+    doc.setDrawColor(74, 222, 128);
+    const boxHeight = diagFMS.assimetrias.length > 0 ? 15 : 12;
+    doc.roundedRect(14, currentY, 182, boxHeight, 2, 2, "FD");
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text(`Soma Mobilidade FMS: ${ficha.somaMobilidade} / 21   |   Classificação: ${diagFMS.badge}`, 14, currentY);
-    currentY += 4;
-    
+    doc.setTextColor(22, 101, 52);
+    const cleanBadge = diagFMS.badge.replace(/≤/g, "<=");
+    doc.text(`Soma Mobilidade FMS: ${ficha.somaMobilidade} / 21   |   Classificação: ${cleanBadge}`, 18, currentY + 4.5);
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
-    doc.text(`Diagnóstico: ${diagFMS.titulo} - ${diagFMS.descricao.slice(0, 115)}...`, 14, currentY);
-    currentY += 3.5;
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Diagnóstico: ${diagFMS.titulo} - ${diagFMS.descricao.slice(0, 110)}...`, 18, currentY + 8.5);
 
     if (diagFMS.assimetrias.length > 0) {
       const assimetriasStr = diagFMS.assimetrias.map(a => `${a.exercicio} (E:${a.esq} vs D:${a.dir})`).join(" | ");
       doc.setFont("helvetica", "bold");
       doc.setTextColor(217, 119, 6);
-      doc.text(`Assimetrias Detectadas: ${assimetriasStr}`, 14, currentY);
+      doc.text(`Assimetrias Detectadas: ${assimetriasStr}`, 18, currentY + 12);
       doc.setTextColor(0, 0, 0);
-      currentY += 3.5;
     }
-    currentY += 3;
+    currentY += boxHeight + 4;
 
-    // Seção para Atleta: AQUECIMENTO & POTÊNCIA
+    // Seção para Atleta: AQUECIMENTO
     if (ficha.tipo === "Atleta" && ficha.aquecimento) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
+      doc.setFontSize(10.5);
+      doc.setTextColor(20, 83, 45);
       doc.text(`AQUECIMENTO AVALIATIVO - Séries: 1 (${ficha.seriesAquecimento === "1" ? "X" : " "}) - 2 (${ficha.seriesAquecimento === "2" ? "X" : " "})`, 14, currentY);
-      currentY += 4;
+      currentY += 3;
 
       const bodyAquecimento = ficha.aquecimento.map((item, idx) => {
-        let extra = item.regressao ? ` [Regressão: ${item.regressaoTexto}]` : "";
-        if (item.obs) extra += ` - Obs: ${item.obs}`;
+        let extra = item.regressao ? ` [Reg: ${item.regressaoTexto}]` : "";
+        if (item.obs) extra += ` - ${item.obs}`;
         return [
           `${idx + 1}. ${item.nome}${extra}`,
           `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`,
@@ -882,27 +892,37 @@ export default function PrimeiraAulaPage() {
         head: [["Exercício / Regressão", "Nota"]],
         body: bodyAquecimento,
         theme: "grid",
-        headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255] },
-        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+        styles: { fontSize: 8, cellPadding: 2, textColor: [30, 41, 59] },
+        margin: { left: 14, right: 14 },
       });
 
-      currentY = (doc as any).lastAutoTable.finalY + 4;
-      doc.text(`Soma Aquecimento: ( ${ficha.somaAquecimento || 0} )`, 140, currentY);
-      currentY += 8;
+      currentY = (doc as any).lastAutoTable.finalY + 3;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(20, 83, 45);
+      doc.text(`Soma Aquecimento: ( ${ficha.somaAquecimento || 0} )`, 150, currentY + 2);
     }
 
-    // Segunda Página para Força Funcional / Potência
+    // ──────────────── PAGE 2 ────────────────
     doc.addPage();
-    let yPage2 = 20;
+    try {
+      doc.addImage(RUMPEL_BG_BASE64, "JPEG", 0, 0, 210, 297);
+    } catch (e) {
+      console.error("Logo PDF error", e);
+    }
+
+    let yPage2 = 42;
 
     if (ficha.tipo === "Atleta" && ficha.potencia) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
+      doc.setFontSize(10.5);
+      doc.setTextColor(20, 83, 45);
       doc.text("POTÊNCIA COORDENATIVA AVALIATIVA", 14, yPage2);
-      yPage2 += 4;
+      yPage2 += 3;
 
       const bodyPotencia = ficha.potencia.map((item, idx) => [
-        `${idx + 1}. ${item.nome}${item.obs ? ` - Obs: ${item.obs}` : ""}`,
+        `${idx + 1}. ${item.nome}${item.obs ? ` - ${item.obs}` : ""}`,
         `1(${item.score === 1 ? "X" : " "})  2(${item.score === 2 ? "X" : " "})  3(${item.score === 3 ? "X" : " "})`,
         `REP: ${item.reps || ""}`,
       ]);
@@ -912,20 +932,25 @@ export default function PrimeiraAulaPage() {
         head: [["Exercício", "Nota", "Repetições"]],
         body: bodyPotencia,
         theme: "grid",
-        headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255] },
-        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+        styles: { fontSize: 8, cellPadding: 2, textColor: [30, 41, 59] },
+        margin: { left: 14, right: 14 },
       });
 
-      yPage2 = (doc as any).lastAutoTable.finalY + 4;
-      doc.text(`Soma Potência Coordenativa: ( ${ficha.somaPotencia || 0} )`, 140, yPage2);
-      yPage2 += 8;
+      yPage2 = (doc as any).lastAutoTable.finalY + 3;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(20, 83, 45);
+      doc.text(`Soma Potência Coordenativa: ( ${ficha.somaPotencia || 0} )`, 140, yPage2 + 2);
+      yPage2 += 7;
     }
 
     // Seção FORÇA FUNCIONAL AVALIATIVA (2 Blocos)
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(10.5);
+    doc.setTextColor(20, 83, 45);
     doc.text(`FORÇA FUNCIONAL AVALIATIVA - Séries: 2 (${ficha.seriesForca === "2" ? "X" : " "}) - 3 (${ficha.seriesForca === "3" ? "X" : " "})`, 14, yPage2);
-    yPage2 += 4;
+    yPage2 += 3;
 
     const bodyForca: any[] = [];
 
@@ -934,7 +959,7 @@ export default function PrimeiraAulaPage() {
       {
         content: "BLOCO 1: Agachamento, Apoio e Ponte",
         colSpan: 3,
-        styles: { fillColor: [240, 248, 240], fontStyle: "bold", textColor: [34, 139, 34] },
+        styles: { fillColor: [240, 253, 244], fontStyle: "bold", textColor: [22, 101, 52] },
       },
     ]);
 
@@ -957,7 +982,7 @@ export default function PrimeiraAulaPage() {
         {
           content: "BLOCO 2: Puxada no TRX e Pressão Vertical",
           colSpan: 3,
-          styles: { fillColor: [240, 248, 240], fontStyle: "bold", textColor: [34, 139, 34] },
+          styles: { fillColor: [240, 253, 244], fontStyle: "bold", textColor: [22, 101, 52] },
         },
       ]);
 
@@ -980,21 +1005,43 @@ export default function PrimeiraAulaPage() {
       head: [["Exercício", "Nota", "Carga & Repetições"]],
       body: bodyForca,
       theme: "grid",
-      headStyles: { fillColor: [76, 175, 80], textColor: [255, 255, 255] },
-      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+      styles: { fontSize: 8, cellPadding: 2, textColor: [30, 41, 59] },
+      margin: { left: 14, right: 14 },
     });
 
-    yPage2 = (doc as any).lastAutoTable.finalY + 6;
-    doc.text(`Soma Força Funcional: ( ${ficha.somaForca} )`, 140, yPage2);
-    yPage2 += 12;
+    yPage2 = (doc as any).lastAutoTable.finalY + 3;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(20, 83, 45);
+    doc.text(`Soma Força Funcional: ( ${ficha.somaForca} )`, 145, yPage2 + 2);
+    yPage2 += 8;
 
-    // Recomendações Finais
-    doc.setFontSize(10);
-    doc.text(`Recomendação Inicial de Treinamento: ${ficha.recomendacaoSemana || "___"} na semana por no mínimo ${ficha.recomendacaoMinimo || "___"}`, 14, yPage2);
-    yPage2 += 6;
-    doc.text(`Recomendações fora do Treinamento: ${ficha.recomendacaoForaTreino || "Nenhuma"}`, 14, yPage2);
-    yPage2 += 6;
-    doc.text(`Requer aporte nutricional conforme objetivo?: ${ficha.aporteNutricional || "Não informado"}`, 14, yPage2);
+    // Box de Recomendações & Diretrizes
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(14, yPage2, 182, 28, 2, 2, "FD");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(20, 83, 45);
+    doc.text("RECOMENDAÇÕES & DIRETRIZES DO TREINAMENTO", 18, yPage2 + 5.5);
+
+    doc.setFontSize(8);
+    doc.setTextColor(51, 65, 85);
+    doc.text("• Frequência Semanal:", 18, yPage2 + 11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${ficha.recomendacaoSemana || "___"} na semana por no mínimo ${ficha.recomendacaoMinimo || "___"}`, 55, yPage2 + 11);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("• Recomendações fora do Treino:", 18, yPage2 + 16.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${ficha.recomendacaoForaTreino || "Nenhuma"}`, 68, yPage2 + 16.5);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("• Aporte Nutricional:", 18, yPage2 + 22);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${ficha.aporteNutricional || "Não informado"}`, 48, yPage2 + 22);
 
     doc.save(`Ficha_Avaliativa_${ficha.tipo}_${ficha.nomeAluno.replace(/\s+/g, "_")}.pdf`);
   };
