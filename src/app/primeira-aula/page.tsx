@@ -361,42 +361,43 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
 };
 
 // Templates padrão para formulários
+// Templates padrão para formulários (sem seleção por default)
 const INITIAL_MOBILIDADE: ExercicioAvaliativo[] = [
-  { nome: "Agachamento Overhead", score: 0, reps: "3", obs: "" },
-  { nome: "Passo sobre a Barreira", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
-  { nome: "Avanço em Linha", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
-  { nome: "Mobilidade de Ombro", score: 0, scoreEsq: 0, scoreDir: 0, reps: "Medição", esq: "", dir: "", obs: "" },
-  { nome: "Elevação da Perna Estendida Ativa", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
-  { nome: "Flexão com Estabilidade de Tronco", score: 0, reps: "1", obs: "" },
-  { nome: "Estabilidade Rotatória", score: 0, scoreEsq: 0, scoreDir: 0, reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Agachamento Overhead", reps: "3", obs: "" },
+  { nome: "Passo sobre a Barreira", reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Avanço em Linha", reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Mobilidade de Ombro", reps: "Medição", esq: "", dir: "", obs: "" },
+  { nome: "Elevação da Perna Estendida Ativa", reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Flexão com Estabilidade de Tronco", reps: "1", obs: "" },
+  { nome: "Estabilidade Rotatória", reps: "3/3", esq: "", dir: "", obs: "" },
 ];
 
 const INITIAL_AQUECIMENTO: ExercicioAvaliativo[] = [
-  { nome: "Skipp Frontal (Pista)", score: 0, regressao: false, regressaoTexto: "Marcha na Pista", obs: "" },
-  { nome: "Skipp Lateral (Pista)", score: 0, regressao: false, regressaoTexto: "Marcha Lateral", obs: "" },
-  { nome: "Joelho Alto (Pista)", score: 0, regressao: false, regressaoTexto: "Corrida no lugar", obs: "" },
+  { nome: "Skipp Frontal (Pista)", regressao: false, regressaoTexto: "Marcha na Pista", obs: "" },
+  { nome: "Skipp Lateral (Pista)", regressao: false, regressaoTexto: "Marcha Lateral", obs: "" },
+  { nome: "Joelho Alto (Pista)", regressao: false, regressaoTexto: "Corrida no lugar", obs: "" },
 ];
 
 const INITIAL_POTENCIA: ExercicioAvaliativo[] = [
-  { nome: "Agachamento com salto Stop", score: 0, reps: "6-8", obs: "" },
-  { nome: "Bola Lateral Semi Ajoelhado", score: 0, reps: "5/5", obs: "" },
-  { nome: "Impulso Lateral Stop", score: 0, reps: "5/5", obs: "" },
+  { nome: "Agachamento com salto Stop", reps: "6-8", obs: "" },
+  { nome: "Bola Lateral Semi Ajoelhado", reps: "5/5", obs: "" },
+  { nome: "Impulso Lateral Stop", reps: "5/5", obs: "" },
 ];
 
 const INITIAL_FORCA: ExercicioAvaliativo[] = [
   // Bloco 1: Agachamento, Apoio e Ponte
-  { nome: "Agachamento GB", score: 0, carga: "", reps: "8-10", obs: "" },
-  { nome: "Apoio Solo", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Apoio na barra", progressao: false, progressaoTexto: "Apoio pés elevados (step/caixa/banco)", obs: "" },
-  { nome: "Ponte 1P Solo", score: 0, carga: "", reps: "8-10", regressao: false, regressaoTexto: "Ponte 2 pés Solo", progressao: false, progressaoTexto: "Ponte 1P Banco", obs: "" },
+  { nome: "Agachamento GB", carga: "", reps: "8-10", obs: "" },
+  { nome: "Apoio Solo", carga: "", reps: "8-10", regressao: false, regressaoTexto: "Apoio na barra", progressao: false, progressaoTexto: "Apoio pés elevados (step/caixa/banco)", obs: "" },
+  { nome: "Ponte 1P Solo", carga: "", reps: "8-10", regressao: false, regressaoTexto: "Ponte 2 pés Solo", progressao: false, progressaoTexto: "Ponte 1P Banco", obs: "" },
   // Bloco 2: Puxada no TRX e Pressão Vertical
-  { nome: "Puxada Neutra TRX", score: 0, carga: "", reps: "8-10", obs: "" },
-  { nome: "Pressão Vertical", score: 0, carga: "", reps: "8-10", obs: "" },
+  { nome: "Puxada Neutra TRX", carga: "", reps: "8-10", obs: "" },
+  { nome: "Pressão Vertical", carga: "", reps: "8-10", obs: "" },
 ];
 
 export interface ClassificacaoFMS {
   total: number;
   max: number;
-  nivel: "excelente" | "adequado" | "alto_risco" | "dor";
+  nivel: "excelente" | "adequado" | "alto_risco" | "dor" | "aberto";
   titulo: string;
   descricao: string;
   cor: string;
@@ -410,9 +411,10 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
   let temDor = false;
   const assimetrias: { exercicio: string; esq: number; dir: number }[] = [];
   let total = 0;
+  let itensAvaliados = 0;
 
   itens.forEach((item) => {
-    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined;
+    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined || item.esq !== undefined;
     if (isUnilateral) {
       const sE = item.scoreEsq;
       const sD = item.scoreDir;
@@ -424,16 +426,22 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
       }
       if (sE !== undefined && sD !== undefined) {
         total += Math.min(sE, sD);
+        itensAvaliados++;
       } else if (sE !== undefined) {
         total += sE;
+        itensAvaliados++;
       } else if (sD !== undefined) {
         total += sD;
+        itensAvaliados++;
       }
     } else {
-      if (item.score === 0 && item.obs?.toLowerCase().includes("dor")) {
+      if (item.score === 0) {
         temDor = true;
       }
-      total += item.score || 0;
+      if (item.score !== undefined) {
+        total += item.score;
+        itensAvaliados++;
+      }
     }
   });
 
@@ -449,6 +457,21 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
       badge: "⛔ Presença de Dor (Nota 0)",
       temDor: true,
       assimetrias,
+    };
+  }
+
+  if (itensAvaliados === 0) {
+    return {
+      total: 0,
+      max: 21,
+      nivel: "aberto",
+      titulo: "Aguardando Avaliação dos Testes",
+      descricao: "Selecione as pontuações de cada padrão de movimento para gerar o diagnóstico e classificação funcional oficial do FMS.",
+      cor: "#64748b",
+      bgCor: "rgba(100, 116, 139, 0.08)",
+      badge: "⚪ Não Avaliado",
+      temDor: false,
+      assimetrias: [],
     };
   }
 
@@ -490,7 +513,7 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
     descricao: "Pontuação igual ou inferior a 14 pontos (Ponto de Corte Científico do FMS). Prioridade total em exercícios corretivos, mobilidade e estabilidade antes de sobrecargas elevadas.",
     cor: "#ef4444",
     bgCor: "rgba(239, 68, 68, 0.12)",
-    badge: "🔴 Alto Risco de Lesão (≤ 14 pts)",
+    badge: "🔴 Alto Risco de Lesão (<= 14 pts)",
     temDor: false,
     assimetrias,
   };
@@ -605,9 +628,9 @@ export default function PrimeiraAulaPage() {
           initItem.nome.toLowerCase().includes(m.nome.toLowerCase().slice(0, 8))
         );
         if (found) {
-          initItem.score = found.score || 0;
-          if (initItem.scoreEsq !== undefined) initItem.scoreEsq = found.scoreEsq ?? (found.score || 0);
-          if (initItem.scoreDir !== undefined) initItem.scoreDir = found.scoreDir ?? (found.score || 0);
+          initItem.score = found.score;
+          if (initItem.scoreEsq !== undefined || found.scoreEsq !== undefined) initItem.scoreEsq = found.scoreEsq;
+          if (initItem.scoreDir !== undefined || found.scoreDir !== undefined) initItem.scoreDir = found.scoreDir;
           initItem.esq = found.esq || "";
           initItem.dir = found.dir || "";
           initItem.obs = found.obs || "";
@@ -627,7 +650,7 @@ export default function PrimeiraAulaPage() {
     if (ficha.forcaFuncional) {
       const forcaCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(ficha.forcaFuncional));
       if (!forcaCopy.some((e) => e.nome.toLowerCase().includes("pressão") || e.nome.toLowerCase().includes("pressao"))) {
-        forcaCopy.push({ nome: "Pressão Vertical", score: 0, carga: "", reps: "8-10", obs: "" });
+        forcaCopy.push({ nome: "Pressão Vertical", carga: "", reps: "8-10", obs: "" });
       }
       setForcaFuncional(forcaCopy);
     } else {
@@ -815,11 +838,15 @@ export default function PrimeiraAulaPage() {
       if (item.progressao && item.progressaoTexto) extra += ` [Prog: ${item.progressaoTexto}]`;
       if (item.obs) extra += ` - ${item.obs}`;
 
-      let notaText = `0(${item.score === 0 ? "X" : " "}) 1(${item.score === 1 ? "X" : " "}) 2(${item.score === 2 ? "X" : " "}) 3(${item.score === 3 ? "X" : " "})`;
-      if (item.scoreEsq !== undefined || item.scoreDir !== undefined) {
+      const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined || item.esq !== undefined || [1, 2, 3, 4, 6].includes(idx);
+      let notaText = "";
+      if (isUnilateral) {
         const sE = item.scoreEsq !== undefined ? item.scoreEsq : -1;
         const sD = item.scoreDir !== undefined ? item.scoreDir : -1;
         notaText = `E: 0(${sE === 0 ? "X" : " "}) 1(${sE === 1 ? "X" : " "}) 2(${sE === 2 ? "X" : " "}) 3(${sE === 3 ? "X" : " "})\nD: 0(${sD === 0 ? "X" : " "}) 1(${sD === 1 ? "X" : " "}) 2(${sD === 2 ? "X" : " "}) 3(${sD === 3 ? "X" : " "})`;
+      } else {
+        const s = item.score !== undefined ? item.score : -1;
+        notaText = `0(${s === 0 ? "X" : " "}) 1(${s === 1 ? "X" : " "}) 2(${s === 2 ? "X" : " "}) 3(${s === 3 ? "X" : " "})`;
       }
 
       return [
@@ -1052,7 +1079,7 @@ export default function PrimeiraAulaPage() {
     index: number
   ) => {
     const item = list[index];
-    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined;
+    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined || item.esq !== undefined || ["Passo sobre a Barreira", "Avanço em Linha", "Mobilidade de Ombro", "Elevação da Perna Estendida Ativa", "Estabilidade Rotatória"].includes(item.nome);
 
     if (isUnilateral) {
       const scoreEsq = item.scoreEsq;
@@ -1076,7 +1103,7 @@ export default function PrimeiraAulaPage() {
         } else if (sD !== undefined) {
           target.score = sD;
         } else {
-          target.score = 0;
+          target.score = undefined;
         }
         setList(next);
       };
@@ -1155,9 +1182,12 @@ export default function PrimeiraAulaPage() {
     }
 
     const currentScore = list[index].score;
+    const isFMS = ["Agachamento Overhead", "Flexão com Estabilidade de Tronco"].includes(item.nome);
+    const scoreOptions = isFMS ? [0, 1, 2, 3] : [1, 2, 3];
+
     return (
       <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-        {[0, 1, 2, 3].map((val) => {
+        {scoreOptions.map((val) => {
           const isSelected = currentScore === val;
           let bg = "var(--bg-hover)";
           let color = "var(--text-primary)";
@@ -1183,7 +1213,7 @@ export default function PrimeiraAulaPage() {
               title={title}
               onClick={() => {
                 const next = [...list];
-                next[index].score = isSelected ? 0 : val;
+                next[index].score = isSelected ? undefined : val;
                 setList(next);
               }}
               style={{

@@ -901,9 +901,9 @@ export const mockDb = {
 
 export type ExercicioAvaliativo = {
   nome: string;
-  score: number; // 1, 2, 3 or 0 (unselected)
-  scoreEsq?: number; // 1, 2, 3 or 0
-  scoreDir?: number; // 1, 2, 3 or 0
+  score?: number; // 0 (Dor), 1, 2, 3 or undefined (unselected)
+  scoreEsq?: number; // 0, 1, 2, 3 or undefined
+  scoreDir?: number; // 0, 1, 2, 3 or undefined
   esq?: string;
   dir?: string;
   regressao?: boolean;
