@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { mockDb, Aluno, FichaAvaliativa, ExercicioAvaliativo } from "@/lib/mockData";
-import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle } from "lucide-react";
+import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle, X, Download, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
@@ -519,6 +519,10 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
   };
 };
 
+const DRAFT_KEY_ADULTO = "ficha_rascunho_adulto_v2";
+const DRAFT_KEY_ATLETA = "ficha_rascunho_atleta_v2";
+const LAST_TAB_KEY = "ficha_last_tab_v2";
+
 export default function PrimeiraAulaPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"Menu" | "Adulto" | "Atleta" | "Historico">("Menu");
@@ -528,6 +532,15 @@ export default function PrimeiraAulaPage() {
   const [saving, setSaving] = useState(false);
   const [expandedGuideIndex, setExpandedGuideIndex] = useState<number | null>(null);
   const [guideTab, setGuideTab] = useState<"criterios" | "instrucoes" | "implicacoes">("criterios");
+
+  // Modal de Limpar e Exportar
+  const [showModalLimpar, setShowModalLimpar] = useState(false);
+  const [limpandoSaving, setLimpandoSaving] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [draftInfo, setDraftInfo] = useState<{
+    adulto?: { nome: string };
+    atleta?: { nome: string };
+  }>({});
 
   // Form State
   const [fichaId, setFichaId] = useState<string>("");
@@ -556,17 +569,29 @@ export default function PrimeiraAulaPage() {
   const [recomendacaoForaTreino, setRecomendacaoForaTreino] = useState("");
   const [aporteNutricional, setAporteNutricional] = useState("Sim, conforme objetivo");
 
-  useEffect(() => {
-    (async () => {
-      const dataAlunos = await mockDb.getAlunos();
-      setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
-      carregarHistorico();
-    })();
-  }, []);
+  const getDraftKey = (tipo: "Adulto" | "Atleta") =>
+    tipo === "Atleta" ? DRAFT_KEY_ATLETA : DRAFT_KEY_ADULTO;
 
-  const carregarHistorico = async () => {
-    const list = await mockDb.getFichasAvaliativas();
-    setHistoricoFichas(list);
+  const atualizarDraftInfo = () => {
+    if (typeof window === "undefined") return;
+    const info: { adulto?: { nome: string }; atleta?: { nome: string } } = {};
+    try {
+      const rawAdulto = localStorage.getItem(DRAFT_KEY_ADULTO);
+      if (rawAdulto) {
+        const parsed = JSON.parse(rawAdulto);
+        if (parsed && (parsed.nomeAluno?.trim() || parsed.fichaId)) {
+          info.adulto = { nome: parsed.nomeAluno?.trim() || "Em andamento" };
+        }
+      }
+      const rawAtleta = localStorage.getItem(DRAFT_KEY_ATLETA);
+      if (rawAtleta) {
+        const parsed = JSON.parse(rawAtleta);
+        if (parsed && (parsed.nomeAluno?.trim() || parsed.fichaId)) {
+          info.atleta = { nome: parsed.nomeAluno?.trim() || "Em andamento" };
+        }
+      }
+    } catch {}
+    setDraftInfo(info);
   };
 
   const resetForm = (tipo: "Adulto" | "Atleta" = "Adulto") => {
@@ -589,6 +614,141 @@ export default function PrimeiraAulaPage() {
     setRecomendacaoMinimo("3 meses");
     setRecomendacaoForaTreino("");
     setAporteNutricional("Sim, conforme objetivo");
+  };
+
+  const aplicarRascunhoOuDefault = (tipo: "Adulto" | "Atleta") => {
+    if (typeof window === "undefined") return false;
+    try {
+      const key = getDraftKey(tipo);
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const data = JSON.parse(raw);
+        setFichaId(data.fichaId || "");
+        setNomeAluno(data.nomeAluno || "");
+        setClube(data.clube || "");
+        setPosicao(data.posicao || "");
+        setResponsavel(data.responsavel || "");
+        setDataNascimento(data.dataNascimento || "");
+        setDataAvaliacao(data.dataAvaliacao || new Date().toLocaleDateString("pt-BR"));
+        setAlunoSelecionadoId(data.alunoSelecionadoId || "");
+        setSeriesMobilidade(data.seriesMobilidade || "1");
+        setMobilidade(data.mobilidade && data.mobilidade.length > 0 ? data.mobilidade : JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
+        setSeriesAquecimento(data.seriesAquecimento || "1");
+        setAquecimento(data.aquecimento && data.aquecimento.length > 0 ? data.aquecimento : JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
+        setPotencia(data.potencia && data.potencia.length > 0 ? data.potencia : JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
+        setSeriesForca(data.seriesForca || "2");
+        setForcaFuncional(data.forcaFuncional && data.forcaFuncional.length > 0 ? data.forcaFuncional : JSON.parse(JSON.stringify(INITIAL_FORCA)));
+        setRecomendacaoSemana(data.recomendacaoSemana || "2x");
+        setRecomendacaoMinimo(data.recomendacaoMinimo || "3 meses");
+        setRecomendacaoForaTreino(data.recomendacaoForaTreino || "");
+        setAporteNutricional(data.aporteNutricional || "Sim, conforme objetivo");
+        return true;
+      }
+    } catch (e) {
+      console.error("Erro ao carregar rascunho:", e);
+    }
+    resetForm(tipo);
+    return false;
+  };
+
+  const salvarRascunhoAtual = (tipo: "Adulto" | "Atleta") => {
+    if (typeof window === "undefined") return;
+    try {
+      const draftData = {
+        fichaId,
+        nomeAluno,
+        clube,
+        posicao,
+        responsavel,
+        dataNascimento,
+        dataAvaliacao,
+        alunoSelecionadoId,
+        seriesMobilidade,
+        mobilidade,
+        seriesAquecimento,
+        aquecimento,
+        potencia,
+        seriesForca,
+        forcaFuncional,
+        recomendacaoSemana,
+        recomendacaoMinimo,
+        recomendacaoForaTreino,
+        aporteNutricional,
+      };
+      localStorage.setItem(getDraftKey(tipo), JSON.stringify(draftData));
+      atualizarDraftInfo();
+    } catch (err) {
+      console.error("Erro ao salvar rascunho:", err);
+    }
+  };
+
+  const handleMudarAba = (novaAba: "Menu" | "Adulto" | "Atleta" | "Historico") => {
+    if (activeTab === "Adulto" || activeTab === "Atleta") {
+      salvarRascunhoAtual(activeTab);
+    }
+    if (novaAba === "Adulto" || novaAba === "Atleta") {
+      aplicarRascunhoOuDefault(novaAba);
+    }
+    setActiveTab(novaAba);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LAST_TAB_KEY, novaAba);
+    }
+    atualizarDraftInfo();
+  };
+
+  useEffect(() => {
+    (async () => {
+      const dataAlunos = await mockDb.getAlunos();
+      setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
+      await carregarHistorico();
+
+      if (typeof window !== "undefined") {
+        atualizarDraftInfo();
+        const savedTab = localStorage.getItem(LAST_TAB_KEY) as "Menu" | "Adulto" | "Atleta" | "Historico" | null;
+        if (savedTab && ["Adulto", "Atleta"].includes(savedTab)) {
+          aplicarRascunhoOuDefault(savedTab as "Adulto" | "Atleta");
+          setActiveTab(savedTab);
+        } else if (savedTab === "Historico") {
+          setActiveTab("Historico");
+        }
+      }
+      setIsHydrated(true);
+    })();
+  }, []);
+
+  // Auto-salva rascunho continuamente durante a digitação
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (activeTab !== "Adulto" && activeTab !== "Atleta") return;
+
+    salvarRascunhoAtual(activeTab);
+  }, [
+    isHydrated,
+    activeTab,
+    fichaId,
+    nomeAluno,
+    clube,
+    posicao,
+    responsavel,
+    dataNascimento,
+    dataAvaliacao,
+    alunoSelecionadoId,
+    seriesMobilidade,
+    mobilidade,
+    seriesAquecimento,
+    aquecimento,
+    potencia,
+    seriesForca,
+    forcaFuncional,
+    recomendacaoSemana,
+    recomendacaoMinimo,
+    recomendacaoForaTreino,
+    aporteNutricional,
+  ]);
+
+  const carregarHistorico = async () => {
+    const list = await mockDb.getFichasAvaliativas();
+    setHistoricoFichas(list);
   };
 
   const calcSoma = (items: ExercicioAvaliativo[]) => {
@@ -663,6 +823,9 @@ export default function PrimeiraAulaPage() {
     setAporteNutricional(ficha.aporteNutricional || "Sim, conforme objetivo");
     
     setActiveTab(ficha.tipo);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LAST_TAB_KEY, ficha.tipo);
+    }
   };
 
   const construirObjetoFicha = (tipo: "Adulto" | "Atleta"): FichaAvaliativa => {
@@ -706,6 +869,49 @@ export default function PrimeiraAulaPage() {
     setFichaId(ficha.id);
     await carregarHistorico();
     alert("Ficha Avaliativa salva no histórico com sucesso!");
+  };
+
+  const handleSalvarExportarELimpar = async () => {
+    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
+    if (!nomeAluno.trim()) {
+      alert("Por favor, preencha o Nome do aluno antes de salvar e exportar a ficha.");
+      return;
+    }
+    setLimpandoSaving(true);
+    try {
+      const ficha = construirObjetoFicha(tipo);
+      await mockDb.salvarFichaAvaliativa(ficha);
+      await carregarHistorico();
+      handleGerarPDF(ficha);
+      
+      // Limpa os campos e o rascunho
+      resetForm(tipo);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem(getDraftKey(tipo));
+        } catch {}
+        atualizarDraftInfo();
+      }
+      setShowModalLimpar(false);
+      alert(`Ficha de ${ficha.nomeAluno} salva no histórico, PDF exportado e formulário reiniciado com sucesso!`);
+    } catch (err) {
+      console.error("Erro ao salvar e exportar ficha:", err);
+      alert("Ocorreu um erro ao salvar a ficha ou exportar o PDF.");
+    } finally {
+      setLimpandoSaving(false);
+    }
+  };
+
+  const handleApenasLimpar = () => {
+    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
+    resetForm(tipo);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(getDraftKey(tipo));
+      } catch {}
+      atualizarDraftInfo();
+    }
+    setShowModalLimpar(false);
   };
 
   const handleSalvarECriarTreinoA = async (fichaParaUsar?: FichaAvaliativa) => {
@@ -1306,7 +1512,7 @@ export default function PrimeiraAulaPage() {
             {activeTab !== "Menu" ? (
               <button
                 className="premium-btn-outline"
-                onClick={() => setActiveTab("Menu")}
+                onClick={() => handleMudarAba("Menu")}
                 style={{ marginBottom: "12px", fontSize: "0.9rem" }}
               >
                 <ArrowLeft size={16} /> Voltar ao Menu de Escolha
@@ -1344,10 +1550,7 @@ export default function PrimeiraAulaPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", marginTop: "20px" }}>
           {/* Card 1: Adulto */}
           <div
-            onClick={() => {
-              resetForm("Adulto");
-              setActiveTab("Adulto");
-            }}
+            onClick={() => handleMudarAba("Adulto")}
             style={{
               background: "var(--bg-panel)",
               padding: "40px 30px",
@@ -1379,17 +1582,19 @@ export default function PrimeiraAulaPage() {
             <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
               Ficha avaliativa com testes de mobilidade física e força funcional para alunos adultos.
             </p>
-            <button className="premium-btn" style={{ marginTop: "24px", width: "100%", justifyContent: "center" }}>
-              Abrir Ficha Adulto
+            {draftInfo.adulto && (
+              <div style={{ marginTop: "14px", display: "inline-block", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
+                ● Rascunho salvo ({draftInfo.adulto.nome})
+              </div>
+            )}
+            <button className="premium-btn" style={{ marginTop: "20px", width: "100%", justifyContent: "center" }}>
+              {draftInfo.adulto ? "Continuar Ficha Adulto" : "Abrir Ficha Adulto"}
             </button>
           </div>
 
           {/* Card 2: Atleta */}
           <div
-            onClick={() => {
-              resetForm("Atleta");
-              setActiveTab("Atleta");
-            }}
+            onClick={() => handleMudarAba("Atleta")}
             style={{
               background: "var(--bg-panel)",
               padding: "40px 30px",
@@ -1421,14 +1626,19 @@ export default function PrimeiraAulaPage() {
             <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
               Ficha completa com testes de mobilidade, aquecimento de pista, potência e força funcional.
             </p>
-            <button className="premium-btn" style={{ marginTop: "24px", width: "100%", justifyContent: "center", background: "#3b82f6" }}>
-              Abrir Ficha Atleta
+            {draftInfo.atleta && (
+              <div style={{ marginTop: "14px", display: "inline-block", background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
+                ● Rascunho salvo ({draftInfo.atleta.nome})
+              </div>
+            )}
+            <button className="premium-btn" style={{ marginTop: "20px", width: "100%", justifyContent: "center", background: "#3b82f6" }}>
+              {draftInfo.atleta ? "Continuar Ficha Atleta" : "Abrir Ficha Atleta"}
             </button>
           </div>
 
           {/* Card 3: Histórico */}
           <div
-            onClick={() => setActiveTab("Historico")}
+            onClick={() => handleMudarAba("Historico")}
             style={{
               background: "var(--bg-panel)",
               padding: "40px 30px",
@@ -1658,8 +1868,21 @@ export default function PrimeiraAulaPage() {
               </div>
 
               <div style={{ textAlign: "right" }}>
-                <button className="premium-btn-outline" onClick={() => resetForm(activeTab)} style={{ fontSize: "0.85rem" }}>
-                  Limpar Formulário
+                <button
+                  type="button"
+                  className="premium-btn-outline"
+                  onClick={() => setShowModalLimpar(true)}
+                  style={{
+                    fontSize: "0.85rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    color: "var(--text-secondary)",
+                    borderColor: "var(--border-medium)",
+                  }}
+                  title="Limpar formulário com opção de salvar e exportar PDF"
+                >
+                  <Trash2 size={15} /> Limpar Formulário
                 </button>
               </div>
             </div>
@@ -2880,6 +3103,165 @@ export default function PrimeiraAulaPage() {
               <Sparkles size={20} />
               {saving ? "Gerando..." : "Salvar e Criar Treino A"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO PARA LIMPAR FORMULÁRIO */}
+      {showModalLimpar && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 99999,
+            padding: "20px",
+          }}
+          onClick={() => setShowModalLimpar(false)}
+        >
+          <div
+            style={{
+              background: "var(--bg-panel, #1e293b)",
+              color: "var(--text-primary, #ffffff)",
+              borderRadius: "16px",
+              border: "1px solid var(--border-medium, #334155)",
+              maxWidth: "520px",
+              width: "100%",
+              padding: "28px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "12px",
+                    background: "rgba(245, 158, 11, 0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <AlertTriangle size={24} color="#f59e0b" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0 }}>
+                    Limpar Ficha Avaliativa
+                  </h3>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                    Ficha de {activeTab} {nomeAluno ? `• ${nomeAluno}` : ""}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModalLimpar(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  padding: "4px",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                background: "var(--bg-card, rgba(255,255,255,0.03))",
+                borderRadius: "10px",
+                padding: "14px 16px",
+                marginBottom: "20px",
+                border: "1px solid var(--border-light, rgba(255,255,255,0.08))",
+              }}
+            >
+              <p style={{ margin: "0 0 8px 0", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                Deseja salvar e exportar o PDF antes de limpar?
+              </p>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
+                Você pode salvar esta avaliação no histórico e baixar o relatório oficial em PDF antes de reiniciar os campos em branco, ou pode limpar diretamente sem salvar.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {/* Opção 1: Salvar, Exportar PDF e Limpar */}
+              <button
+                type="button"
+                onClick={handleSalvarExportarELimpar}
+                disabled={limpandoSaving}
+                className="premium-btn"
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  padding: "14px",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  background: "#10b981",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <Download size={18} />
+                {limpandoSaving ? "Salvando e Exportando..." : "Salvar, Exportar PDF e Limpar"}
+              </button>
+
+              {/* Opção 2: Apenas Limpar */}
+              <button
+                type="button"
+                onClick={handleApenasLimpar}
+                disabled={limpandoSaving}
+                className="premium-btn-outline"
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  padding: "12px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  color: "#ef4444",
+                  borderColor: "rgba(239, 68, 68, 0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <Trash2 size={16} />
+                Apenas Limpar (Sem Salvar)
+              </button>
+
+              {/* Opção 3: Cancelar */}
+              <button
+                type="button"
+                onClick={() => setShowModalLimpar(false)}
+                disabled={limpandoSaving}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  textAlign: "center",
+                  marginTop: "4px",
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
