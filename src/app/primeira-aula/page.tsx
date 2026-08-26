@@ -871,30 +871,82 @@ export default function PrimeiraAulaPage() {
 
     const diagFMS = calcularClassificacaoFMS(ficha.mobilidade || []);
     
-    // Box de Diagnóstico FMS
-    doc.setFillColor(240, 253, 244);
-    doc.setDrawColor(74, 222, 128);
-    const boxHeight = diagFMS.assimetrias.length > 0 ? 15 : 12;
-    doc.roundedRect(14, currentY, 182, boxHeight, 2, 2, "FD");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(22, 101, 52);
-    const cleanBadge = diagFMS.badge.replace(/≤/g, "<=");
-    doc.text(`Soma Mobilidade FMS: ${ficha.somaMobilidade} / 21   |   Classificação: ${cleanBadge}`, 18, currentY + 4.5);
+    // Clean badge and text from emojis and special symbols for PDF Helvetica compatibility
+    const cleanBadge = diagFMS.badge
+      .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|≤/gu, "")
+      .replace(/<=/g, "<=")
+      .trim();
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
-    doc.setTextColor(71, 85, 105);
-    doc.text(`Diagnóstico: ${diagFMS.titulo} - ${diagFMS.descricao.slice(0, 110)}...`, 18, currentY + 8.5);
+    const diagFullText = `Diagnóstico: ${diagFMS.titulo} - ${diagFMS.descricao}`;
+    const descLines: string[] = doc.splitTextToSize(diagFullText, 172);
 
+    let assimLines: string[] = [];
     if (diagFMS.assimetrias.length > 0) {
-      const assimetriasStr = diagFMS.assimetrias.map(a => `${a.exercicio} (E:${a.esq} vs D:${a.dir})`).join(" | ");
+      const assimetriasStr = `Assimetrias Detectadas: ` + diagFMS.assimetrias.map(a => `${a.exercicio} (E:${a.esq} vs D:${a.dir})`).join(" | ");
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(217, 119, 6);
-      doc.text(`Assimetrias Detectadas: ${assimetriasStr}`, 18, currentY + 12);
+      doc.setFontSize(7.5);
+      assimLines = doc.splitTextToSize(assimetriasStr, 172);
+    }
+
+    const boxHeight = 5 + (descLines.length * 3.4) + (assimLines.length > 0 ? (assimLines.length * 3.4 + 1.5) : 0) + 3;
+
+    // Cores de fundo e borda baseadas na classificação
+    if (diagFMS.temDor) {
+      doc.setFillColor(254, 242, 242);
+      doc.setDrawColor(248, 113, 113);
+    } else if (diagFMS.total >= 18) {
+      doc.setFillColor(240, 253, 244);
+      doc.setDrawColor(74, 222, 128);
+    } else if (diagFMS.total >= 15) {
+      doc.setFillColor(255, 251, 235);
+      doc.setDrawColor(252, 211, 77);
+    } else if (diagFMS.nivel === "aberto") {
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(203, 213, 225);
+    } else {
+      doc.setFillColor(254, 242, 242);
+      doc.setDrawColor(248, 113, 113);
+    }
+
+    doc.roundedRect(14, currentY, 182, boxHeight, 2, 2, "FD");
+
+    let textY = currentY + 4.5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    if (diagFMS.temDor || (diagFMS.total <= 14 && diagFMS.nivel !== "aberto")) {
+      doc.setTextColor(185, 28, 28);
+    } else if (diagFMS.total >= 18) {
+      doc.setTextColor(21, 128, 61);
+    } else if (diagFMS.total >= 15) {
+      doc.setTextColor(180, 83, 9);
+    } else {
+      doc.setTextColor(71, 85, 105);
+    }
+    doc.text(`Soma Mobilidade FMS: ${ficha.somaMobilidade} / 21   |   Classificação: ${cleanBadge}`, 18, textY);
+
+    textY += 4;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    descLines.forEach((line) => {
+      doc.text(line, 18, textY);
+      textY += 3.4;
+    });
+
+    if (assimLines.length > 0) {
+      textY += 0.5;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(180, 83, 9);
+      assimLines.forEach((line) => {
+        doc.text(line, 18, textY);
+        textY += 3.4;
+      });
       doc.setTextColor(0, 0, 0);
     }
+
     currentY += boxHeight + 4;
 
     // Seção para Atleta: AQUECIMENTO
