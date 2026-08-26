@@ -519,9 +519,53 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
   };
 };
 
+export interface FichaFormState {
+  fichaId: string;
+  nomeAluno: string;
+  clube: string;
+  posicao: string;
+  responsavel: string;
+  dataNascimento: string;
+  dataAvaliacao: string;
+  alunoSelecionadoId: string;
+  seriesMobilidade: string;
+  mobilidade: ExercicioAvaliativo[];
+  seriesAquecimento: string;
+  aquecimento: ExercicioAvaliativo[];
+  potencia: ExercicioAvaliativo[];
+  seriesForca: string;
+  forcaFuncional: ExercicioAvaliativo[];
+  recomendacaoSemana: string;
+  recomendacaoMinimo: string;
+  recomendacaoForaTreino: string;
+  aporteNutricional: string;
+}
+
 const DRAFT_KEY_ADULTO = "ficha_rascunho_adulto_v2";
 const DRAFT_KEY_ATLETA = "ficha_rascunho_atleta_v2";
 const LAST_TAB_KEY = "ficha_last_tab_v2";
+
+const createDefaultFichaState = (tipo: "Adulto" | "Atleta"): FichaFormState => ({
+  fichaId: "",
+  nomeAluno: "",
+  clube: "",
+  posicao: "",
+  responsavel: "",
+  dataNascimento: "",
+  dataAvaliacao: new Date().toLocaleDateString("pt-BR"),
+  alunoSelecionadoId: "",
+  seriesMobilidade: "1",
+  mobilidade: JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)),
+  seriesAquecimento: "1",
+  aquecimento: JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)),
+  potencia: JSON.parse(JSON.stringify(INITIAL_POTENCIA)),
+  seriesForca: "2",
+  forcaFuncional: JSON.parse(JSON.stringify(INITIAL_FORCA)),
+  recomendacaoSemana: "2x",
+  recomendacaoMinimo: "3 meses",
+  recomendacaoForaTreino: "",
+  aporteNutricional: "Sim, conforme objetivo",
+});
 
 export default function PrimeiraAulaPage() {
   const router = useRouter();
@@ -537,165 +581,12 @@ export default function PrimeiraAulaPage() {
   const [showModalLimpar, setShowModalLimpar] = useState(false);
   const [limpandoSaving, setLimpandoSaving] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [draftInfo, setDraftInfo] = useState<{
-    adulto?: { nome: string };
-    atleta?: { nome: string };
-  }>({});
 
-  // Form State
-  const [fichaId, setFichaId] = useState<string>("");
-  const [nomeAluno, setNomeAluno] = useState("");
-  const [clube, setClube] = useState("");
-  const [posicao, setPosicao] = useState("");
-  const [responsavel, setResponsavel] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
-  const [dataAvaliacao, setDataAvaliacao] = useState(new Date().toLocaleDateString("pt-BR"));
-  const [alunoSelecionadoId, setAlunoSelecionadoId] = useState<string>("");
+  // Estados independentes e persistentes para Adulto e Atleta
+  const [formAdulto, setFormAdulto] = useState<FichaFormState>(() => createDefaultFichaState("Adulto"));
+  const [formAtleta, setFormAtleta] = useState<FichaFormState>(() => createDefaultFichaState("Atleta"));
 
-  const [seriesMobilidade, setSeriesMobilidade] = useState("1");
-  const [mobilidade, setMobilidade] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
-
-  const [seriesAquecimento, setSeriesAquecimento] = useState("1");
-  const [aquecimento, setAquecimento] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
-
-  const [potencia, setPotencia] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
-
-  const [seriesForca, setSeriesForca] = useState("2");
-  const [forcaFuncional, setForcaFuncional] = useState<ExercicioAvaliativo[]>(JSON.parse(JSON.stringify(INITIAL_FORCA)));
-
-  // Recommendations
-  const [recomendacaoSemana, setRecomendacaoSemana] = useState("2x");
-  const [recomendacaoMinimo, setRecomendacaoMinimo] = useState("3 meses");
-  const [recomendacaoForaTreino, setRecomendacaoForaTreino] = useState("");
-  const [aporteNutricional, setAporteNutricional] = useState("Sim, conforme objetivo");
-
-  const getDraftKey = (tipo: "Adulto" | "Atleta") =>
-    tipo === "Atleta" ? DRAFT_KEY_ATLETA : DRAFT_KEY_ADULTO;
-
-  const atualizarDraftInfo = () => {
-    if (typeof window === "undefined") return;
-    const info: { adulto?: { nome: string }; atleta?: { nome: string } } = {};
-    try {
-      const rawAdulto = localStorage.getItem(DRAFT_KEY_ADULTO);
-      if (rawAdulto) {
-        const parsed = JSON.parse(rawAdulto);
-        if (parsed && (parsed.nomeAluno?.trim() || parsed.fichaId)) {
-          info.adulto = { nome: parsed.nomeAluno?.trim() || "Em andamento" };
-        }
-      }
-      const rawAtleta = localStorage.getItem(DRAFT_KEY_ATLETA);
-      if (rawAtleta) {
-        const parsed = JSON.parse(rawAtleta);
-        if (parsed && (parsed.nomeAluno?.trim() || parsed.fichaId)) {
-          info.atleta = { nome: parsed.nomeAluno?.trim() || "Em andamento" };
-        }
-      }
-    } catch {}
-    setDraftInfo(info);
-  };
-
-  const resetForm = (tipo: "Adulto" | "Atleta" = "Adulto") => {
-    setFichaId("");
-    setNomeAluno("");
-    setClube("");
-    setPosicao("");
-    setResponsavel("");
-    setDataNascimento("");
-    setAlunoSelecionadoId("");
-    setDataAvaliacao(new Date().toLocaleDateString("pt-BR"));
-    setSeriesMobilidade("1");
-    setMobilidade(JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
-    setSeriesAquecimento("1");
-    setAquecimento(JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
-    setPotencia(JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
-    setSeriesForca("2");
-    setForcaFuncional(JSON.parse(JSON.stringify(INITIAL_FORCA)));
-    setRecomendacaoSemana("2x");
-    setRecomendacaoMinimo("3 meses");
-    setRecomendacaoForaTreino("");
-    setAporteNutricional("Sim, conforme objetivo");
-  };
-
-  const aplicarRascunhoOuDefault = (tipo: "Adulto" | "Atleta") => {
-    if (typeof window === "undefined") return false;
-    try {
-      const key = getDraftKey(tipo);
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const data = JSON.parse(raw);
-        setFichaId(data.fichaId || "");
-        setNomeAluno(data.nomeAluno || "");
-        setClube(data.clube || "");
-        setPosicao(data.posicao || "");
-        setResponsavel(data.responsavel || "");
-        setDataNascimento(data.dataNascimento || "");
-        setDataAvaliacao(data.dataAvaliacao || new Date().toLocaleDateString("pt-BR"));
-        setAlunoSelecionadoId(data.alunoSelecionadoId || "");
-        setSeriesMobilidade(data.seriesMobilidade || "1");
-        setMobilidade(data.mobilidade && data.mobilidade.length > 0 ? data.mobilidade : JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
-        setSeriesAquecimento(data.seriesAquecimento || "1");
-        setAquecimento(data.aquecimento && data.aquecimento.length > 0 ? data.aquecimento : JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
-        setPotencia(data.potencia && data.potencia.length > 0 ? data.potencia : JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
-        setSeriesForca(data.seriesForca || "2");
-        setForcaFuncional(data.forcaFuncional && data.forcaFuncional.length > 0 ? data.forcaFuncional : JSON.parse(JSON.stringify(INITIAL_FORCA)));
-        setRecomendacaoSemana(data.recomendacaoSemana || "2x");
-        setRecomendacaoMinimo(data.recomendacaoMinimo || "3 meses");
-        setRecomendacaoForaTreino(data.recomendacaoForaTreino || "");
-        setAporteNutricional(data.aporteNutricional || "Sim, conforme objetivo");
-        return true;
-      }
-    } catch (e) {
-      console.error("Erro ao carregar rascunho:", e);
-    }
-    resetForm(tipo);
-    return false;
-  };
-
-  const salvarRascunhoAtual = (tipo: "Adulto" | "Atleta") => {
-    if (typeof window === "undefined") return;
-    try {
-      const draftData = {
-        fichaId,
-        nomeAluno,
-        clube,
-        posicao,
-        responsavel,
-        dataNascimento,
-        dataAvaliacao,
-        alunoSelecionadoId,
-        seriesMobilidade,
-        mobilidade,
-        seriesAquecimento,
-        aquecimento,
-        potencia,
-        seriesForca,
-        forcaFuncional,
-        recomendacaoSemana,
-        recomendacaoMinimo,
-        recomendacaoForaTreino,
-        aporteNutricional,
-      };
-      localStorage.setItem(getDraftKey(tipo), JSON.stringify(draftData));
-      atualizarDraftInfo();
-    } catch (err) {
-      console.error("Erro ao salvar rascunho:", err);
-    }
-  };
-
-  const handleMudarAba = (novaAba: "Menu" | "Adulto" | "Atleta" | "Historico") => {
-    if (activeTab === "Adulto" || activeTab === "Atleta") {
-      salvarRascunhoAtual(activeTab);
-    }
-    if (novaAba === "Adulto" || novaAba === "Atleta") {
-      aplicarRascunhoOuDefault(novaAba);
-    }
-    setActiveTab(novaAba);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(LAST_TAB_KEY, novaAba);
-    }
-    atualizarDraftInfo();
-  };
-
+  // Carregar rascunhos do localStorage no mount
   useEffect(() => {
     (async () => {
       const dataAlunos = await mockDb.getAlunos();
@@ -703,28 +594,76 @@ export default function PrimeiraAulaPage() {
       await carregarHistorico();
 
       if (typeof window !== "undefined") {
-        atualizarDraftInfo();
-        const savedTab = localStorage.getItem(LAST_TAB_KEY) as "Menu" | "Adulto" | "Atleta" | "Historico" | null;
-        if (savedTab && ["Adulto", "Atleta"].includes(savedTab)) {
-          aplicarRascunhoOuDefault(savedTab as "Adulto" | "Atleta");
-          setActiveTab(savedTab);
-        } else if (savedTab === "Historico") {
-          setActiveTab("Historico");
+        try {
+          const rawAdulto = localStorage.getItem(DRAFT_KEY_ADULTO);
+          if (rawAdulto) {
+            const parsed = JSON.parse(rawAdulto);
+            if (parsed && typeof parsed === "object") {
+              setFormAdulto(prev => ({ ...prev, ...parsed }));
+            }
+          }
+          const rawAtleta = localStorage.getItem(DRAFT_KEY_ATLETA);
+          if (rawAtleta) {
+            const parsed = JSON.parse(rawAtleta);
+            if (parsed && typeof parsed === "object") {
+              setFormAtleta(prev => ({ ...prev, ...parsed }));
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao carregar rascunhos do localStorage:", e);
         }
       }
       setIsHydrated(true);
     })();
   }, []);
 
-  // Auto-salva rascunho continuamente durante a digitação
+  // Salva no localStorage sempre que formAdulto mudar
   useEffect(() => {
     if (!isHydrated) return;
-    if (activeTab !== "Adulto" && activeTab !== "Atleta") return;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(DRAFT_KEY_ADULTO, JSON.stringify(formAdulto));
+      } catch (e) {
+        console.error("Erro ao salvar rascunho adulto:", e);
+      }
+    }
+  }, [formAdulto, isHydrated]);
 
-    salvarRascunhoAtual(activeTab);
-  }, [
-    isHydrated,
-    activeTab,
+  // Salva no localStorage sempre que formAtleta mudar
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(DRAFT_KEY_ATLETA, JSON.stringify(formAtleta));
+      } catch (e) {
+        console.error("Erro ao salvar rascunho atleta:", e);
+      }
+    }
+  }, [formAtleta, isHydrated]);
+
+  const carregarHistorico = async () => {
+    const list = await mockDb.getFichasAvaliativas();
+    setHistoricoFichas(list);
+  };
+
+  const handleMudarAba = (novaAba: "Menu" | "Adulto" | "Atleta" | "Historico") => {
+    setActiveTab(novaAba);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LAST_TAB_KEY, novaAba);
+    }
+  };
+
+  const formAtual = activeTab === "Atleta" ? formAtleta : formAdulto;
+
+  const updateField = <K extends keyof FichaFormState>(field: K, value: FichaFormState[K]) => {
+    if (activeTab === "Atleta") {
+      setFormAtleta(prev => ({ ...prev, [field]: value }));
+    } else {
+      setFormAdulto(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const {
     fichaId,
     nomeAluno,
     clube,
@@ -744,11 +683,79 @@ export default function PrimeiraAulaPage() {
     recomendacaoMinimo,
     recomendacaoForaTreino,
     aporteNutricional,
-  ]);
+  } = formAtual;
 
-  const carregarHistorico = async () => {
-    const list = await mockDb.getFichasAvaliativas();
-    setHistoricoFichas(list);
+  const setFichaId = (val: string) => updateField("fichaId", val);
+  const setNomeAluno = (val: string) => updateField("nomeAluno", val);
+  const setClube = (val: string) => updateField("clube", val);
+  const setPosicao = (val: string) => updateField("posicao", val);
+  const setResponsavel = (val: string) => updateField("responsavel", val);
+  const setDataNascimento = (val: string) => updateField("dataNascimento", val);
+  const setDataAvaliacao = (val: string) => updateField("dataAvaliacao", val);
+  const setAlunoSelecionadoId = (val: string) => updateField("alunoSelecionadoId", val);
+  const setSeriesMobilidade = (val: string) => updateField("seriesMobilidade", val);
+  const setMobilidade: React.Dispatch<React.SetStateAction<ExercicioAvaliativo[]>> = (updater) => {
+    if (activeTab === "Atleta") {
+      setFormAtleta(prev => ({
+        ...prev,
+        mobilidade: typeof updater === "function" ? updater(prev.mobilidade) : updater,
+      }));
+    } else {
+      setFormAdulto(prev => ({
+        ...prev,
+        mobilidade: typeof updater === "function" ? updater(prev.mobilidade) : updater,
+      }));
+    }
+  };
+  const setSeriesAquecimento = (val: string) => updateField("seriesAquecimento", val);
+  const setAquecimento: React.Dispatch<React.SetStateAction<ExercicioAvaliativo[]>> = (updater) => {
+    setFormAtleta(prev => ({
+      ...prev,
+      aquecimento: typeof updater === "function" ? updater(prev.aquecimento) : updater,
+    }));
+  };
+  const setPotencia: React.Dispatch<React.SetStateAction<ExercicioAvaliativo[]>> = (updater) => {
+    setFormAtleta(prev => ({
+      ...prev,
+      potencia: typeof updater === "function" ? updater(prev.potencia) : updater,
+    }));
+  };
+  const setSeriesForca = (val: string) => updateField("seriesForca", val);
+  const setForcaFuncional: React.Dispatch<React.SetStateAction<ExercicioAvaliativo[]>> = (updater) => {
+    if (activeTab === "Atleta") {
+      setFormAtleta(prev => ({
+        ...prev,
+        forcaFuncional: typeof updater === "function" ? updater(prev.forcaFuncional) : updater,
+      }));
+    } else {
+      setFormAdulto(prev => ({
+        ...prev,
+        forcaFuncional: typeof updater === "function" ? updater(prev.forcaFuncional) : updater,
+      }));
+    }
+  };
+  const setRecomendacaoSemana = (val: string) => updateField("recomendacaoSemana", val);
+  const setRecomendacaoMinimo = (val: string) => updateField("recomendacaoMinimo", val);
+  const setRecomendacaoForaTreino = (val: string) => updateField("recomendacaoForaTreino", val);
+  const setAporteNutricional = (val: string) => updateField("aporteNutricional", val);
+
+  const resetForm = (tipo: "Adulto" | "Atleta" = "Adulto") => {
+    const defaultState = createDefaultFichaState(tipo);
+    if (tipo === "Atleta") {
+      setFormAtleta(defaultState);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem(DRAFT_KEY_ATLETA);
+        } catch {}
+      }
+    } else {
+      setFormAdulto(defaultState);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem(DRAFT_KEY_ADULTO);
+        } catch {}
+      }
+    }
   };
 
   const calcSoma = (items: ExercicioAvaliativo[]) => {
@@ -772,16 +779,8 @@ export default function PrimeiraAulaPage() {
   };
 
   const carregarFichaParaEdicao = (ficha: FichaAvaliativa) => {
-    setFichaId(ficha.id);
-    setNomeAluno(ficha.nomeAluno);
-    setClube(ficha.clube || "");
-    setPosicao(ficha.posicao || "");
-    setResponsavel(ficha.responsavel || "");
-    setDataNascimento(ficha.dataNascimento || "");
-    setDataAvaliacao(ficha.data);
-    setSeriesMobilidade(ficha.seriesMobilidade || "1");
+    const mobCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(INITIAL_MOBILIDADE));
     if (ficha.mobilidade && ficha.mobilidade.length > 0) {
-      const mobCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(INITIAL_MOBILIDADE));
       mobCopy.forEach((initItem) => {
         const found = ficha.mobilidade.find((m) =>
           m.nome.toLowerCase().includes(initItem.nome.toLowerCase().slice(0, 8)) ||
@@ -796,32 +795,44 @@ export default function PrimeiraAulaPage() {
           initItem.obs = found.obs || "";
         }
       });
-      setMobilidade(mobCopy);
-    } else {
-      setMobilidade(JSON.parse(JSON.stringify(INITIAL_MOBILIDADE)));
     }
-    
-    if (ficha.tipo === "Atleta") {
-      setSeriesAquecimento(ficha.seriesAquecimento || "1");
-      setAquecimento(ficha.aquecimento ? JSON.parse(JSON.stringify(ficha.aquecimento)) : JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)));
-      setPotencia(ficha.potencia ? JSON.parse(JSON.stringify(ficha.potencia)) : JSON.parse(JSON.stringify(INITIAL_POTENCIA)));
-    }
-    
+
+    let forcaCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(INITIAL_FORCA));
     if (ficha.forcaFuncional) {
-      const forcaCopy: ExercicioAvaliativo[] = JSON.parse(JSON.stringify(ficha.forcaFuncional));
+      forcaCopy = JSON.parse(JSON.stringify(ficha.forcaFuncional));
       if (!forcaCopy.some((e) => e.nome.toLowerCase().includes("pressão") || e.nome.toLowerCase().includes("pressao"))) {
         forcaCopy.push({ nome: "Pressão Vertical", carga: "", reps: "8-10", obs: "" });
       }
-      setForcaFuncional(forcaCopy);
-    } else {
-      setForcaFuncional(JSON.parse(JSON.stringify(INITIAL_FORCA)));
     }
-    
-    setRecomendacaoSemana(ficha.recomendacaoSemana || "2x");
-    setRecomendacaoMinimo(ficha.recomendacaoMinimo || "3 meses");
-    setRecomendacaoForaTreino(ficha.recomendacaoForaTreino || "");
-    setAporteNutricional(ficha.aporteNutricional || "Sim, conforme objetivo");
-    
+
+    const stateObj: FichaFormState = {
+      fichaId: ficha.id,
+      nomeAluno: ficha.nomeAluno,
+      clube: ficha.clube || "",
+      posicao: ficha.posicao || "",
+      responsavel: ficha.responsavel || "",
+      dataNascimento: ficha.dataNascimento || "",
+      dataAvaliacao: ficha.data,
+      alunoSelecionadoId: ficha.alunoId || "",
+      seriesMobilidade: ficha.seriesMobilidade || "1",
+      mobilidade: mobCopy,
+      seriesAquecimento: ficha.seriesAquecimento || "1",
+      aquecimento: ficha.aquecimento ? JSON.parse(JSON.stringify(ficha.aquecimento)) : JSON.parse(JSON.stringify(INITIAL_AQUECIMENTO)),
+      potencia: ficha.potencia ? JSON.parse(JSON.stringify(ficha.potencia)) : JSON.parse(JSON.stringify(INITIAL_POTENCIA)),
+      seriesForca: ficha.seriesForca || "2",
+      forcaFuncional: forcaCopy,
+      recomendacaoSemana: ficha.recomendacaoSemana || "2x",
+      recomendacaoMinimo: ficha.recomendacaoMinimo || "3 meses",
+      recomendacaoForaTreino: ficha.recomendacaoForaTreino || "",
+      aporteNutricional: ficha.aporteNutricional || "Sim, conforme objetivo",
+    };
+
+    if (ficha.tipo === "Atleta") {
+      setFormAtleta(stateObj);
+    } else {
+      setFormAdulto(stateObj);
+    }
+
     setActiveTab(ficha.tipo);
     if (typeof window !== "undefined") {
       localStorage.setItem(LAST_TAB_KEY, ficha.tipo);
@@ -829,41 +840,43 @@ export default function PrimeiraAulaPage() {
   };
 
   const construirObjetoFicha = (tipo: "Adulto" | "Atleta"): FichaAvaliativa => {
+    const f = tipo === "Atleta" ? formAtleta : formAdulto;
     return {
-      id: fichaId || `ficha_${Date.now()}`,
-      alunoId: alunoSelecionadoId,
-      nomeAluno: nomeAluno.trim() || "Aluno sem nome",
-      data: dataAvaliacao || new Date().toLocaleDateString("pt-BR"),
+      id: f.fichaId || `ficha_${Date.now()}`,
+      alunoId: f.alunoSelecionadoId,
+      nomeAluno: f.nomeAluno.trim() || "Aluno sem nome",
+      data: f.dataAvaliacao || new Date().toLocaleDateString("pt-BR"),
       tipo,
-      clube: tipo === "Atleta" ? clube.trim() : undefined,
-      posicao: tipo === "Atleta" ? posicao.trim() : undefined,
-      responsavel: tipo === "Atleta" ? responsavel.trim() : undefined,
-      dataNascimento: tipo === "Atleta" ? dataNascimento.trim() : undefined,
-      seriesMobilidade,
-      mobilidade,
-      somaMobilidade: calcSoma(mobilidade),
-      seriesAquecimento: tipo === "Atleta" ? seriesAquecimento : undefined,
-      aquecimento: tipo === "Atleta" ? aquecimento : undefined,
-      somaAquecimento: tipo === "Atleta" ? calcSoma(aquecimento) : undefined,
-      potencia: tipo === "Atleta" ? potencia : undefined,
-      somaPotencia: tipo === "Atleta" ? calcSoma(potencia) : undefined,
-      seriesForca,
-      forcaFuncional,
-      somaForca: calcSoma(forcaFuncional),
-      recomendacaoSemana,
-      recomendacaoMinimo,
-      recomendacaoForaTreino,
-      aporteNutricional,
+      clube: tipo === "Atleta" ? f.clube.trim() : undefined,
+      posicao: tipo === "Atleta" ? f.posicao.trim() : undefined,
+      responsavel: tipo === "Atleta" ? f.responsavel.trim() : undefined,
+      dataNascimento: tipo === "Atleta" ? f.dataNascimento.trim() : undefined,
+      seriesMobilidade: f.seriesMobilidade,
+      mobilidade: f.mobilidade,
+      somaMobilidade: calcSoma(f.mobilidade),
+      seriesAquecimento: tipo === "Atleta" ? f.seriesAquecimento : undefined,
+      aquecimento: tipo === "Atleta" ? f.aquecimento : undefined,
+      somaAquecimento: tipo === "Atleta" ? calcSoma(f.aquecimento || []) : undefined,
+      potencia: tipo === "Atleta" ? f.potencia : undefined,
+      somaPotencia: tipo === "Atleta" ? calcSoma(f.potencia || []) : undefined,
+      seriesForca: f.seriesForca,
+      forcaFuncional: f.forcaFuncional,
+      somaForca: calcSoma(f.forcaFuncional),
+      recomendacaoSemana: f.recomendacaoSemana,
+      recomendacaoMinimo: f.recomendacaoMinimo,
+      recomendacaoForaTreino: f.recomendacaoForaTreino,
+      aporteNutricional: f.aporteNutricional,
       createdAt: new Date().toISOString(),
     };
   };
 
   const handleSalvarFicha = async () => {
-    if (!nomeAluno.trim()) {
+    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
+    const currentNome = (tipo === "Atleta" ? formAtleta : formAdulto).nomeAluno;
+    if (!currentNome.trim()) {
       alert("Por favor, preencha o Nome e Sobrenome do aluno.");
       return;
     }
-    const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
     const ficha = construirObjetoFicha(tipo);
     await mockDb.salvarFichaAvaliativa(ficha);
     setFichaId(ficha.id);
@@ -873,7 +886,8 @@ export default function PrimeiraAulaPage() {
 
   const handleSalvarExportarELimpar = async () => {
     const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
-    if (!nomeAluno.trim()) {
+    const currentNome = (tipo === "Atleta" ? formAtleta : formAdulto).nomeAluno;
+    if (!currentNome.trim()) {
       alert("Por favor, preencha o Nome do aluno antes de salvar e exportar a ficha.");
       return;
     }
@@ -886,12 +900,6 @@ export default function PrimeiraAulaPage() {
       
       // Limpa os campos e o rascunho
       resetForm(tipo);
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.removeItem(getDraftKey(tipo));
-        } catch {}
-        atualizarDraftInfo();
-      }
       setShowModalLimpar(false);
       alert(`Ficha de ${ficha.nomeAluno} salva no histórico, PDF exportado e formulário reiniciado com sucesso!`);
     } catch (err) {
@@ -905,12 +913,6 @@ export default function PrimeiraAulaPage() {
   const handleApenasLimpar = () => {
     const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
     resetForm(tipo);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem(getDraftKey(tipo));
-      } catch {}
-      atualizarDraftInfo();
-    }
     setShowModalLimpar(false);
   };
 
@@ -1582,13 +1584,13 @@ export default function PrimeiraAulaPage() {
             <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
               Ficha avaliativa com testes de mobilidade física e força funcional para alunos adultos.
             </p>
-            {draftInfo.adulto && (
+            {formAdulto.nomeAluno.trim() ? (
               <div style={{ marginTop: "14px", display: "inline-block", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
-                ● Rascunho salvo ({draftInfo.adulto.nome})
+                ● Rascunho salvo ({formAdulto.nomeAluno})
               </div>
-            )}
+            ) : null}
             <button className="premium-btn" style={{ marginTop: "20px", width: "100%", justifyContent: "center" }}>
-              {draftInfo.adulto ? "Continuar Ficha Adulto" : "Abrir Ficha Adulto"}
+              {formAdulto.nomeAluno.trim() ? "Continuar Ficha Adulto" : "Abrir Ficha Adulto"}
             </button>
           </div>
 
@@ -1626,13 +1628,13 @@ export default function PrimeiraAulaPage() {
             <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.4" }}>
               Ficha completa com testes de mobilidade, aquecimento de pista, potência e força funcional.
             </p>
-            {draftInfo.atleta && (
+            {formAtleta.nomeAluno.trim() ? (
               <div style={{ marginTop: "14px", display: "inline-block", background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
-                ● Rascunho salvo ({draftInfo.atleta.nome})
+                ● Rascunho salvo ({formAtleta.nomeAluno})
               </div>
-            )}
+            ) : null}
             <button className="premium-btn" style={{ marginTop: "20px", width: "100%", justifyContent: "center", background: "#3b82f6" }}>
-              {draftInfo.atleta ? "Continuar Ficha Atleta" : "Abrir Ficha Atleta"}
+              {formAtleta.nomeAluno.trim() ? "Continuar Ficha Atleta" : "Abrir Ficha Atleta"}
             </button>
           </div>
 
