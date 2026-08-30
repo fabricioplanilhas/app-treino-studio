@@ -96,8 +96,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Passo sobre a Barreira",
     nomeOficial: "Hurdle Step (Passo sobre a Barreira)",
     padraoNome: "Hurdle Step Movement Pattern",
-    imagemUrl: "/fms-hurdle-step.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Vistas Frontal e Lateral para as Notas 3 (Alinhamento Perfeito), 2 (Compensação de Tronco) e 1 (Contato com Barreira)",
+    imagemUrl: "/fms-hurdle-step.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Vistas Frontal e Lateral para as Notas 1 (Contato/Compensação Severa), 2 (Alinhamento Parcial) e 3 (Alinhamento Perfeito)",
     criterios: {
       nota0: "Presença de qualquer dor associada a qualquer parte do teste.",
       nota1: [
