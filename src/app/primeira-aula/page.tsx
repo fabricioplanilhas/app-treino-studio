@@ -34,6 +34,8 @@ export interface FMSGuideData {
     nome: string;
     instrucao: string;
     criterioDor: string;
+    imagemUrl?: string;
+    imagemLegenda?: string;
   };
 }
 
@@ -230,7 +232,9 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     clearingTest: {
       nome: "Teste de Exclusão do Ombro (Shoulder Clearing Test)",
       instrucao: "Coloque a mão sobre o ombro oposto e aponte o cotovelo para cima em direção ao teto. Repita para o outro ombro.",
-      criterioDor: "Se o aluno relatar qualquer dor durante a manobra de impacto, a pontuação do teste é automaticamente 0 (ZERO)."
+      criterioDor: "Se o aluno relatar qualquer dor durante a manobra de impacto, a pontuação do teste é automaticamente 0 (ZERO).",
+      imagemUrl: "/fms-shoulder-clearing.png",
+      imagemLegenda: "Guia Oficial FMS: Teste Eliminador Shoulder Clearing Test (Avaliação bilateral de impacto subacromial)"
     }
   },
   "Elevação da Perna Estendida Ativa": {
@@ -2392,11 +2396,32 @@ export default function PrimeiraAulaPage() {
                             </div>
 
                             {guide.clearingTest && (
-                              <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "14px", borderRadius: "8px", border: "1px solid rgba(245, 158, 11, 0.3)", marginTop: "4px" }}>
-                                <strong style={{ color: "#f59e0b", display: "block", marginBottom: "6px" }}>
+                              <div style={{ background: "rgba(245, 158, 11, 0.08)", padding: "16px", borderRadius: "8px", border: "1px solid rgba(245, 158, 11, 0.3)", marginTop: "4px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                                <strong style={{ color: "#f59e0b", display: "block", fontSize: "0.95rem" }}>
                                   ⚠️ {guide.clearingTest.nome}
                                 </strong>
-                                <p style={{ margin: "0 0 6px 0", color: "var(--text-primary)", lineHeight: "1.5" }}>
+
+                                {guide.clearingTest.imagemUrl && (
+                                  <div style={{ textAlign: "center", background: "#ffffff", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-medium)", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
+                                    <img
+                                      src={guide.clearingTest.imagemUrl}
+                                      alt={guide.clearingTest.nome}
+                                      style={{
+                                        maxWidth: "100%",
+                                        maxHeight: "360px",
+                                        borderRadius: "6px",
+                                        objectFit: "contain",
+                                      }}
+                                    />
+                                    {guide.clearingTest.imagemLegenda && (
+                                      <div style={{ fontSize: "0.75rem", color: "#52525b", marginTop: "6px", fontWeight: 600 }}>
+                                        {guide.clearingTest.imagemLegenda}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                <p style={{ margin: 0, color: "var(--text-primary)", lineHeight: "1.5" }}>
                                   <strong>Instrução:</strong> {guide.clearingTest.instrucao}
                                 </p>
                                 <p style={{ margin: 0, color: "#ef4444", fontWeight: 700, lineHeight: "1.5" }}>
