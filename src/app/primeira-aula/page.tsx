@@ -141,8 +141,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Avanço em Linha",
     nomeOficial: "Inline Lunge (Avanço em Linha)",
     padraoNome: "Inline Lunge Movement Pattern",
-    imagemUrl: "/fms-inline-lunge.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Postura Vertical e 3 Pontos de Contato no Bastão), 2 (Inclinação do Tronco), 1 (Perda de Equilíbrio) e Teste de Exclusão do Tornozelo (Ankle Clearing)",
+    imagemUrl: "/fms-inline-lunge.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Vistas Frontal e Lateral para as Notas 1 (Perda de Equilíbrio/Alinhamento), 2 (Compensação de Tronco) e 3 (Alinhamento Perfeito e Contato no Bastão)",
     criterios: {
       nota0: "Presença de dor durante o teste ou no teste de exclusão (Ankle Clearing Test).",
       nota1: [
