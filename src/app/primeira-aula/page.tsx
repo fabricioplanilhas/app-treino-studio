@@ -237,8 +237,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Elevação da Perna Estendida Ativa",
     nomeOficial: "Active Straight-Leg Raise (ASLR)",
     padraoNome: "Active Straight-Leg Raise Movement Pattern",
-    imagemUrl: "/fms-aslr.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Maléolo Ultrapassa Ponto Médio da Coxa), 2 (Entre Coxa e Joelho) e 1 (Abaixo do Joelho)",
+    imagemUrl: "/fms-aslr.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Vistas Laterais para as Notas 1 (Abaixo do Joelho), 2 (Entre Coxa e Joelho) e 3 (Ultrapassa Ponto Médio da Coxa)",
     criterios: {
       nota0: "Presença de dor durante qualquer parte do teste.",
       nota1: [
