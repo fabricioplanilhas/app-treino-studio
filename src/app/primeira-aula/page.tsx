@@ -142,9 +142,9 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nomeOficial: "Inline Lunge (Avanço em Linha)",
     padraoNome: "Inline Lunge Movement Pattern",
     imagemUrl: "/fms-inline-lunge.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Postura Vertical e 3 Pontos de Contato no Bastão), 2 (Inclinação do Tronco) e 1 (Perda de Equilíbrio)",
+    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Postura Vertical e 3 Pontos de Contato no Bastão), 2 (Inclinação do Tronco), 1 (Perda de Equilíbrio) e Teste de Exclusão do Tornozelo (Ankle Clearing)",
     criterios: {
-      nota0: "Presença de dor durante o teste.",
+      nota0: "Presença de dor durante o teste ou no teste de exclusão (Ankle Clearing Test).",
       nota1: [
         "Perda de equilíbrio ou incapacidade de manter a postura na linha.",
         "Incapacidade de descer até o joelho tocar a prancha/solo."
@@ -171,7 +171,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
       dicas: [
         "A perna da frente define o lado testado (ESQ ou DIR).",
         "Ambos os pés devem apontar rigorosamente para frente sobre a mesma linha.",
-        "A nota final é a MENOR entre esquerda e direita."
+        "A nota final é a MENOR entre esquerda e direita.",
+        "Realize obrigatoriamente o Teste de Exclusão do Tornozelo (Ankle Clearing Test) em ambos os lados."
       ]
     },
     implicacoes: {
@@ -180,6 +181,11 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
         { titulo: "🛡️ Estabilidade Antirotacional", desc: "Desafia os estabilizadores do core e abdômen oblíquo a resistirem ao torque rotacional.", cor: "#3b82f6" },
         { titulo: "🦵 Cadeia Cruzada", desc: "Depende da flexibilidade do reto femoral e psoas da perna de trás e dorsiflexão do tornozelo da frente.", cor: "#8b5cf6" }
       ]
+    },
+    clearingTest: {
+      nome: "Teste de Exclusão do Tornozelo (Ankle Clearing Test)",
+      instrucao: "Em posição meio-ajoelhada (half-kneeling), alinhe o joelho e o pé dianteiro. Projete o joelho para a frente sem descolar o calcanhar do solo (avaliando a dorsiflexão máxima em cadeia cinética fechada). Avalie bilateralmente (ESQ e DIR).",
+      criterioDor: "Se o aluno relatar qualquer dor no tornozelo ou no tendão calcâneo durante a dorsiflexão, a pontuação do membro avaliado é automaticamente 0 (ZERO)."
     }
   },
   "Mobilidade de Ombro": {
