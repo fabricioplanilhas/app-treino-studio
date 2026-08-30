@@ -276,8 +276,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Flexão com Estabilidade de Tronco",
     nomeOficial: "Trunk Stability Push-Up (Flexão com Estabilidade de Tronco)",
     padraoNome: "Trunk Stability Push-Up Movement Pattern",
-    imagemUrl: "/fms-push-up.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Posições das Mãos para Notas 3 (Testa/Cabeça), 2 (Queixo), 1 (Arqueamento Lombar) e Teste de Exclusão (Extensão de Coluna)",
+    imagemUrl: "/fms-push-up.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Vistas Laterais para as Notas 1 (Arqueamento/Incapacidade), 2 (Alinhamento Queixo/Clavículas) e 3 (Alinhamento Testa/Queixo em Bloco Único)",
     criterios: {
       nota0: "Presença de dor no teste ou no teste de exclusão (Extensão Lombar).",
       nota1: [
