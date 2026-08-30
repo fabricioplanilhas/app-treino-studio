@@ -324,8 +324,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Estabilidade Rotatória",
     nomeOficial: "Rotary Stability (Estabilidade Rotatória)",
     padraoNome: "Rotary Stability Movement Pattern",
-    imagemUrl: "/fms-rotary-stability.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Notas 3 (Ipsilateral - Mesmo Lado), 2 (Diagonal Cruzada), 1 (Instabilidade) e Teste de Exclusão (Flexão de Coluna)",
+    imagemUrl: "/fms-rotary-stability.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Vistas Frontais e Sagital para as Notas 1 (Instabilidade/Incapacidade), 2 (Diagonal Cruzada) e 3 (Unilateral Ipsilateral)",
     criterios: {
       nota0: "Presença de dor no teste ou no teste de exclusão (Flexão Lombar).",
       nota1: [
