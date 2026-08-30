@@ -192,8 +192,8 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
     nome: "Mobilidade de Ombro",
     nomeOficial: "Shoulder Mobility (Mobilidade de Ombro)",
     padraoNome: "Shoulder Mobility Movement Pattern",
-    imagemUrl: "/fms-shoulder-mobility.jpg",
-    imagemLegenda: "Guia Visual Oficial FMS: Vistas Posteriores para as Notas 3 (≤ 1 Mão), 2 (≤ 1,5 Mão), 1 (> 1,5 Mão) e Teste de Exclusão (Impacto de Ombro)",
+    imagemUrl: "/fms-shoulder-mobility.png",
+    imagemLegenda: "Fotografias Oficiais FMS: Medição Posterior para as Notas 1 (> 1,5 Mão), 2 (≤ 1,5 Mão) e 3 (≤ 1 Mão)",
     criterios: {
       nota0: "Presença de dor no teste ou no teste de exclusão (Shoulder Clearing Test).",
       nota1: [
