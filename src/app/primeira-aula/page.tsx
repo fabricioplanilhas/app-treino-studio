@@ -2097,25 +2097,27 @@ export default function PrimeiraAulaPage() {
                         <div style={{ display: "flex", gap: "6px" }}>
                           <input
                             type="text"
-                            placeholder="ESQ"
+                            placeholder={item.nome === "Mobilidade de Ombro" ? "ESQ (cm)" : "ESQ"}
+                            title={item.nome === "Mobilidade de Ombro" ? "Distância medida entre os punhos em centímetros" : undefined}
                             value={item.esq || ""}
                             onChange={(e) => {
                               const next = [...mobilidade];
                               next[idx].esq = e.target.value;
                               setMobilidade(next);
                             }}
-                            style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
+                            style={{ width: item.nome === "Mobilidade de Ombro" ? "70px" : "50px", padding: "4px 6px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
                           />
                           <input
                             type="text"
-                            placeholder="DIR"
+                            placeholder={item.nome === "Mobilidade de Ombro" ? "DIR (cm)" : "DIR"}
+                            title={item.nome === "Mobilidade de Ombro" ? "Distância medida entre os punhos em centímetros" : undefined}
                             value={item.dir || ""}
                             onChange={(e) => {
                               const next = [...mobilidade];
                               next[idx].dir = e.target.value;
                               setMobilidade(next);
                             }}
-                            style={{ width: "50px", padding: "4px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
+                            style={{ width: item.nome === "Mobilidade de Ombro" ? "70px" : "50px", padding: "4px 6px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
                           />
                         </div>
                       ) : (
@@ -2128,7 +2130,7 @@ export default function PrimeiraAulaPage() {
                     {/* Anotações */}
                     <input
                       type="text"
-                      placeholder="Observações / Clearing Test..."
+                      placeholder={item.nome === "Mobilidade de Ombro" ? "Tamanho da mão (cm) / Observações..." : "Observações / Clearing Test..."}
                       value={item.obs || ""}
                       onChange={(e) => {
                         const next = [...mobilidade];
