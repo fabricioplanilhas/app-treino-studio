@@ -48,6 +48,8 @@ export function registrarEvolucaoCargas(ex: Exercicio, novaCarga: string, dataSt
       data: hoje,
       carga: cargaClean
     });
+  } else if (ultimoRegistro.data === hoje) {
+    ultimoRegistro.carga = cargaClean;
   } else if (ultimoRegistro.carga.trim() !== cargaClean) {
     ex.historicoCargas.push({
       data: hoje,
