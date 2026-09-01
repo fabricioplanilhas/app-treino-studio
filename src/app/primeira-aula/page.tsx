@@ -373,13 +373,13 @@ export const FMS_GUIDES: Record<string, FMSGuideData> = {
 // Templates padrão para formulários
 // Templates padrão para formulários (sem seleção por default)
 const INITIAL_MOBILIDADE: ExercicioAvaliativo[] = [
-  { nome: "Agachamento Overhead", reps: "3", obs: "" },
-  { nome: "Passo sobre a Barreira", reps: "3/3", esq: "", dir: "", obs: "" },
-  { nome: "Avanço em Linha", reps: "3/3", esq: "", dir: "", obs: "" },
-  { nome: "Mobilidade de Ombro", reps: "Medição", esq: "", dir: "", obs: "" },
-  { nome: "Elevação da Perna Estendida Ativa", reps: "3/3", esq: "", dir: "", obs: "" },
-  { nome: "Flexão com Estabilidade de Tronco", reps: "1", obs: "" },
-  { nome: "Estabilidade Rotatória", reps: "3/3", esq: "", dir: "", obs: "" },
+  { nome: "Agachamento Overhead", reps: "8-10", obs: "" },
+  { nome: "Passo sobre a Barreira", reps: "8-10", esq: "", dir: "", obs: "" },
+  { nome: "Avanço em Linha", reps: "8-10", esq: "", dir: "", obs: "" },
+  { nome: "Mobilidade de Ombro", reps: "8-10", esq: "", dir: "", obs: "" },
+  { nome: "Elevação da Perna Estendida Ativa", reps: "8-10", esq: "", dir: "", obs: "" },
+  { nome: "Flexão com Estabilidade de Tronco", reps: "8-10", obs: "" },
+  { nome: "Estabilidade Rotatória", reps: "8-10", esq: "", dir: "", obs: "" },
 ];
 
 const INITIAL_AQUECIMENTO: ExercicioAvaliativo[] = [
@@ -2033,7 +2033,7 @@ export default function PrimeiraAulaPage() {
                     key={idx}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "2.2fr 1.3fr 1fr 2fr",
+                      gridTemplateColumns: "1.8fr 1.2fr 1.6fr 1.8fr",
                       gap: "12px",
                       alignItems: "center",
                       padding: "12px",
@@ -2095,39 +2095,113 @@ export default function PrimeiraAulaPage() {
                     {/* Rating 1 2 3 ou ESQ / DIR */}
                     {renderScoreButtons(mobilidade, setMobilidade, idx)}
 
-                    {/* Reps ou Lados ESQ / DIR */}
-                    <div>
-                      {item.esq !== undefined ? (
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <input
-                            type="text"
-                            placeholder={item.nome === "Mobilidade de Ombro" ? "ESQ (cm)" : "ESQ"}
-                            title={item.nome === "Mobilidade de Ombro" ? "Distância medida entre os punhos em centímetros" : undefined}
-                            value={item.esq || ""}
-                            onChange={(e) => {
-                              const next = [...mobilidade];
-                              next[idx].esq = e.target.value;
-                              setMobilidade(next);
-                            }}
-                            style={{ width: item.nome === "Mobilidade de Ombro" ? "70px" : "50px", padding: "4px 6px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
-                          />
-                          <input
-                            type="text"
-                            placeholder={item.nome === "Mobilidade de Ombro" ? "DIR (cm)" : "DIR"}
-                            title={item.nome === "Mobilidade de Ombro" ? "Distância medida entre os punhos em centímetros" : undefined}
-                            value={item.dir || ""}
-                            onChange={(e) => {
-                              const next = [...mobilidade];
-                              next[idx].dir = e.target.value;
-                              setMobilidade(next);
-                            }}
-                            style={{ width: item.nome === "Mobilidade de Ombro" ? "70px" : "50px", padding: "4px 6px", fontSize: "0.85rem", borderRadius: "4px", border: "1px solid var(--border-medium)" }}
-                          />
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                          REP: {item.reps}
+                    {/* Reps (8 ou 10 ou custom) + Quadrante ESQ / DIR */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {/* Repetições */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                          REP:
                         </span>
+                        {["8", "10"].map((r) => {
+                          const isSelected = item.reps === r;
+                          return (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => {
+                                const next = [...mobilidade];
+                                next[idx].reps = isSelected ? "" : r;
+                                setMobilidade(next);
+                              }}
+                              style={{
+                                padding: "2px 7px",
+                                borderRadius: "4px",
+                                border: isSelected ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                                background: isSelected ? "var(--accent-primary)" : "var(--bg-panel)",
+                                color: isSelected ? "#fff" : "var(--text-primary)",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {r}
+                            </button>
+                          );
+                        })}
+                        <input
+                          type="text"
+                          placeholder="ex: 8-10"
+                          value={item.reps || ""}
+                          onChange={(e) => {
+                            const next = [...mobilidade];
+                            next[idx].reps = e.target.value;
+                            setMobilidade(next);
+                          }}
+                          style={{
+                            width: "58px",
+                            padding: "2px 6px",
+                            fontSize: "0.78rem",
+                            borderRadius: "4px",
+                            border: "1px solid var(--border-medium)",
+                            background: "var(--bg-card)",
+                            color: "var(--text-primary)",
+                          }}
+                        />
+                      </div>
+
+                      {/* Quadrante Esquerdo e Direita para testes unilaterais (ex: Mobilidade de Ombro, Avanço, etc) */}
+                      {item.esq !== undefined && (
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                            <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                              {item.nome === "Mobilidade de Ombro" ? "ESQ (cm)" : "ESQ"}
+                            </span>
+                            <input
+                              type="text"
+                              placeholder={item.nome === "Mobilidade de Ombro" ? "cm" : "ESQ"}
+                              value={item.esq || ""}
+                              onChange={(e) => {
+                                const next = [...mobilidade];
+                                next[idx].esq = e.target.value;
+                                setMobilidade(next);
+                              }}
+                              style={{
+                                width: item.nome === "Mobilidade de Ombro" ? "65px" : "52px",
+                                padding: "3px 6px",
+                                fontSize: "0.8rem",
+                                borderRadius: "4px",
+                                border: "1px solid var(--border-medium)",
+                                background: "var(--bg-card)",
+                                color: "var(--text-primary)",
+                              }}
+                            />
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                            <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+                              {item.nome === "Mobilidade de Ombro" ? "DIR (cm)" : "DIR"}
+                            </span>
+                            <input
+                              type="text"
+                              placeholder={item.nome === "Mobilidade de Ombro" ? "cm" : "DIR"}
+                              value={item.dir || ""}
+                              onChange={(e) => {
+                                const next = [...mobilidade];
+                                next[idx].dir = e.target.value;
+                                setMobilidade(next);
+                              }}
+                              style={{
+                                width: item.nome === "Mobilidade de Ombro" ? "65px" : "52px",
+                                padding: "3px 6px",
+                                fontSize: "0.8rem",
+                                borderRadius: "4px",
+                                border: "1px solid var(--border-medium)",
+                                background: "var(--bg-card)",
+                                color: "var(--text-primary)",
+                              }}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
 
