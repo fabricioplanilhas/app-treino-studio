@@ -1380,7 +1380,7 @@ export default function PrimeiraAulaPage() {
 
       const renderSideRow = (label: string, side: "esq" | "dir", currentVal: number | undefined) => (
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, width: "32px", color: "var(--text-secondary)" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, width: "32px", minWidth: "32px", display: "inline-block", color: "var(--text-secondary)" }}>
             {label}:
           </span>
           {[0, 1, 2, 3].map((val) => {
@@ -1452,11 +1452,14 @@ export default function PrimeiraAulaPage() {
     }
 
     const currentScore = list[index].score;
-    const isFMS = ["Agachamento Overhead", "Flexão com Estabilidade de Tronco"].includes(item.nome);
+    const isFMS = ["Agachamento Overhead", "Flexão com Estabilidade de Tronco", "Agachamento", "Flexão"].some(n => item.nome.includes(n));
     const scoreOptions = isFMS ? [0, 1, 2, 3] : [1, 2, 3];
 
     return (
-      <div style={{ display: "flex", gap: "4px", alignItems: "center", paddingLeft: isFMS ? "36px" : "0px" }}>
+      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+        {isFMS && (
+          <span style={{ width: "32px", minWidth: "32px", display: "inline-block" }} />
+        )}
         {scoreOptions.map((val) => {
           const isSelected = currentScore === val;
           let bg = "var(--bg-hover)";
