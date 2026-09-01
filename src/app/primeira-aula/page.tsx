@@ -1456,7 +1456,7 @@ export default function PrimeiraAulaPage() {
     const scoreOptions = isFMS ? [0, 1, 2, 3] : [1, 2, 3];
 
     return (
-      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: "4px", alignItems: "center", paddingLeft: isFMS ? "36px" : "0px" }}>
         {scoreOptions.map((val) => {
           const isSelected = currentScore === val;
           let bg = "var(--bg-hover)";
@@ -1487,8 +1487,8 @@ export default function PrimeiraAulaPage() {
                 setList(next);
               }}
               style={{
-                width: "30px",
-                height: "30px",
+                width: isFMS ? "28px" : "30px",
+                height: isFMS ? "28px" : "30px",
                 borderRadius: "6px",
                 border,
                 background: bg,
