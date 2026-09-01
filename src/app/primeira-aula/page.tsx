@@ -2975,6 +2975,32 @@ export default function PrimeiraAulaPage() {
                 <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                   Frequência Semanal Recomendada
                 </label>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
+                  {["2x", "2x a 3x", "3x", "4x"].map((opt) => {
+                    const isSelected = recomendacaoSemana === opt;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setRecomendacaoSemana(opt)}
+                        style={{
+                          flex: 1,
+                          padding: "6px 4px",
+                          borderRadius: "6px",
+                          border: isSelected ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                          background: isSelected ? "var(--accent-primary)" : "var(--bg-card)",
+                          color: isSelected ? "#fff" : "var(--text-primary)",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
                 <input
                   type="text"
                   placeholder="ex: 2x a 3x"
@@ -3121,6 +3147,31 @@ export default function PrimeiraAulaPage() {
               <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                 Requer aporte nutricional conforme objetivo?
               </label>
+              <div style={{ display: "flex", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
+                {["Sim, conforme objetivo", "Não necessário", "Encaminhar ao nutricionista"].map((opt) => {
+                  const isSelected = aporteNutricional === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setAporteNutricional(opt)}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: isSelected ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                        background: isSelected ? "var(--accent-primary)" : "var(--bg-card)",
+                        color: isSelected ? "#fff" : "var(--text-primary)",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
               <input
                 type="text"
                 placeholder="ex: Sim / Não / Encaminhar ao nutricionista"
