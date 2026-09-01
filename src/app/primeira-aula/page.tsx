@@ -1328,7 +1328,7 @@ export default function PrimeiraAulaPage() {
     doc.setTextColor(51, 65, 85);
     doc.text("• Frequência Semanal:", 18, yPage2 + 11);
     doc.setFont("helvetica", "normal");
-    doc.text(`${ficha.recomendacaoSemana || "___"} na semana por no mínimo ${ficha.recomendacaoMinimo || "___"}`, 55, yPage2 + 11);
+    doc.text(`${ficha.recomendacaoSemana || "___"} na semana | Tempo de treino: ${ficha.recomendacaoMinimo || "___"}`, 55, yPage2 + 11);
 
     doc.setFont("helvetica", "bold");
     doc.text("• Recomendações fora do Treino:", 18, yPage2 + 16.5);
@@ -2985,11 +2985,37 @@ export default function PrimeiraAulaPage() {
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
-                  Tempo Mínimo na Semana
+                  Tempo de treino
                 </label>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
+                  {["3 meses", "6 meses", "1 ano"].map((opt) => {
+                    const isSelected = recomendacaoMinimo === opt;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setRecomendacaoMinimo(opt)}
+                        style={{
+                          flex: 1,
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          border: isSelected ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-medium)",
+                          background: isSelected ? "var(--accent-primary)" : "var(--bg-card)",
+                          color: isSelected ? "#fff" : "var(--text-primary)",
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
                 <input
                   type="text"
-                  placeholder="ex: 3 meses"
+                  placeholder="ex: 3 meses, 6 meses, 1 ano..."
                   value={recomendacaoMinimo}
                   onChange={(e) => setRecomendacaoMinimo(e.target.value)}
                   style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-medium)" }}
