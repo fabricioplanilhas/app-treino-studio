@@ -562,6 +562,7 @@ export default function TreinosPage() {
       categoria: "Core",
       series: "3",
       reps: "10",
+      intervalo: "",
       carga: "-"
     });
     setAlunoAtual(newAluno);
@@ -877,12 +878,13 @@ export default function TreinosPage() {
           ex.nome || '-',
           ex.series || '-',
           ex.reps || '-',
+          ex.intervalo || '-',
           ex.carga || '-'
         ]);
 
         autoTable(doc, {
           startY: y,
-          head: [['#', 'Categoria', 'Exercício', 'Séries', 'Reps', 'Carga']],
+          head: [['#', 'Categoria', 'Exercício', 'Séries', 'Reps', 'Int. Rec.', 'Carga']],
           body: tableData,
           theme: 'grid',
           headStyles: {
@@ -900,11 +902,12 @@ export default function TreinosPage() {
           },
           columnStyles: {
             0: { cellWidth: 8, halign: 'center' },
-            1: { cellWidth: 32 },
+            1: { cellWidth: 28 },
             2: { cellWidth: 'auto', fontStyle: 'bold' },
-            3: { cellWidth: 20, halign: 'center' },
-            4: { cellWidth: 20, halign: 'center' },
-            5: { cellWidth: 25, halign: 'center' }
+            3: { cellWidth: 16, halign: 'center' },
+            4: { cellWidth: 16, halign: 'center' },
+            5: { cellWidth: 18, halign: 'center' },
+            6: { cellWidth: 20, halign: 'center' }
           },
           margin: { left: 14, right: 14 }
         });
@@ -962,6 +965,7 @@ export default function TreinosPage() {
       categoria: "Forca",
       series: "3",
       reps: "10",
+      intervalo: "",
       carga: "-"
     });
 
@@ -1084,6 +1088,7 @@ export default function TreinosPage() {
              nome: "",
              series: "",
              reps: "",
+             intervalo: "",
              carga: ""
          }));
          setAlunoAtual(newAluno);
@@ -1916,6 +1921,16 @@ export default function TreinosPage() {
                         </div>
 
                         <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>INT. REC.</label>
+                            <input 
+                            value={ex.intervalo ?? ''} 
+                            onChange={(e) => handleExercicioChange(activeTab, exIdx, 'intervalo', e.target.value)}
+                            placeholder='Ex: 45"'
+                            style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
+                            />
+                        </div>
+
+                        <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>CARGA</label>
                             <input 
                             value={ex.carga ?? ''} 
@@ -2226,6 +2241,10 @@ export default function TreinosPage() {
                                                         <div style={{ flex: 1 }}>
                                                             <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>CATEGORIA</div>
                                                             <div style={{ color: '#475569' }}>{ex.categoria}</div>
+                                                        </div>
+                                                        <div style={{ width: '65px', textAlign: 'center' }}>
+                                                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>INT. REC.</div>
+                                                            <div style={{ color: '#475569' }}>{ex.intervalo || '-'}</div>
                                                         </div>
                                                         <div style={{ width: '70px', textAlign: 'center' }}>
                                                             <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>CARGA</div>

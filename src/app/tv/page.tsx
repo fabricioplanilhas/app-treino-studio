@@ -78,7 +78,7 @@ export default function TVPage() {
     isEditingRef.current = true;
   };
 
-  const handleLocalChange = (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+  const handleLocalChange = (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome'|'intervalo', valor: string) => {
     setAlunosAtivos(prev => prev.map(aluno => {
       if (aluno.id !== alunoId) return aluno;
       return {
@@ -97,7 +97,7 @@ export default function TVPage() {
     }));
   };
 
-  const handleBlurSave = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome', valor: string) => {
+  const handleBlurSave = async (alunoId: string, treinoId: string, exercicioId: string, campo: 'carga'|'reps'|'series'|'nome'|'intervalo', valor: string) => {
     isEditingRef.current = false;
     await mockDb.updateCampoExercicio(alunoId, treinoId, exercicioId, campo, valor);
   };
@@ -188,7 +188,7 @@ export default function TVPage() {
           }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: px(125) }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: px(165) }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: px(2), marginBottom: px(1) }}>
           <span style={{ fontSize: s(0.6), fontWeight: 600, color: 'var(--text-secondary)' }}>Séries</span>
           <input
@@ -213,6 +213,21 @@ export default function TVPage() {
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>INT.</span>
+            <input
+              value={ex.intervalo ?? ''}
+              onFocus={handleFocus}
+              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'intervalo', e.target.value)}
+              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'intervalo', e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', color: 'var(--accent-primary)',
+                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
+                width: px(44), outline: 'none'
+              }}
+              placeholder="-"
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
             <input
               value={ex.carga}
@@ -222,7 +237,7 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(62), outline: 'none'
+                width: px(54), outline: 'none'
               }}
               placeholder="-"
             />
@@ -239,7 +254,7 @@ export default function TVPage() {
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(48), outline: 'none'
+                width: px(44), outline: 'none'
               }}
               placeholder="-"
             />

@@ -14,6 +14,7 @@ export type Exercicio = {
   series: string;
   reps: string;
   carga: string;
+  intervalo?: string;
   limitesBlocos?: number[];
   historicoCargas?: RegistroCarga[];
 };
@@ -592,7 +593,7 @@ export const mockDb = {
     alunoId: string,
     treinoId: string,
     exercicioId: string,
-    campo: 'carga' | 'reps' | 'series' | 'nome',
+    campo: 'carga' | 'reps' | 'series' | 'nome' | 'intervalo',
     valor: string
   ): Promise<boolean> => {
     const aluno = await mockDb.getAlunoById(alunoId);
