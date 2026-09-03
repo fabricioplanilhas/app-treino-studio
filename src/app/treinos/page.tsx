@@ -1921,16 +1921,6 @@ export default function TreinosPage() {
                         </div>
 
                         <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>INT. REC.</label>
-                            <input 
-                            value={ex.intervalo ?? ''} 
-                            onChange={(e) => handleExercicioChange(activeTab, exIdx, 'intervalo', e.target.value)}
-                            placeholder='Ex: 45"'
-                            style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
-                            />
-                        </div>
-
-                        <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>CARGA</label>
                             <input 
                             value={ex.carga ?? ''} 
@@ -1947,6 +1937,16 @@ export default function TreinosPage() {
                             value={ex.reps ?? ''} 
                             onChange={(e) => handleExercicioChange(activeTab, exIdx, 'reps', e.target.value)}
                             placeholder={(ex.categoria || '').toUpperCase() === 'ISOMETRIA' ? 'Ex: 30"' : ''}
+                            style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
+                            />
+                        </div>
+
+                        <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>INT. REC.</label>
+                            <input 
+                            value={ex.intervalo ?? ''} 
+                            onChange={(e) => handleExercicioChange(activeTab, exIdx, 'intervalo', e.target.value)}
+                            placeholder='Ex: 45"'
                             style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', outline: 'none', textAlign: 'center', background: 'var(--bg-card)' }}
                             />
                         </div>
@@ -2242,10 +2242,6 @@ export default function TreinosPage() {
                                                             <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>CATEGORIA</div>
                                                             <div style={{ color: '#475569' }}>{ex.categoria}</div>
                                                         </div>
-                                                        <div style={{ width: '65px', textAlign: 'center' }}>
-                                                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>INT. REC.</div>
-                                                            <div style={{ color: '#475569' }}>{ex.intervalo || '-'}</div>
-                                                        </div>
                                                         <div style={{ width: '70px', textAlign: 'center' }}>
                                                             <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>CARGA</div>
                                                             <div style={{ color: '#475569', fontWeight: 'bold' }}>{ex.carga || '-'}</div>
@@ -2255,6 +2251,10 @@ export default function TreinosPage() {
                                                                 {(ex.categoria || '').toUpperCase() === 'ISOMETRIA' ? 'TEMPO' : 'REPS'}
                                                             </div>
                                                             <div style={{ color: '#475569' }}>{ex.reps || '-'}</div>
+                                                        </div>
+                                                        <div style={{ width: '65px', textAlign: 'center' }}>
+                                                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>INT. REC.</div>
+                                                            <div style={{ color: '#475569' }}>{ex.intervalo || '-'}</div>
                                                         </div>
                                                         <div style={{ width: '60px', textAlign: 'center' }}>
                                                             <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>SÉRIES</div>

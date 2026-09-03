@@ -213,21 +213,6 @@ export default function TVPage() {
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>INT.</span>
-            <input
-              value={ex.intervalo ?? ''}
-              onFocus={handleFocus}
-              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'intervalo', e.target.value)}
-              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'intervalo', e.target.value)}
-              style={{
-                background: 'transparent', border: 'none', color: 'var(--accent-primary)',
-                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
-                width: px(44), outline: 'none'
-              }}
-              placeholder="-"
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>CARGA</span>
             <input
               value={ex.carga}
@@ -251,6 +236,21 @@ export default function TVPage() {
               onFocus={handleFocus}
               onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
               onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'reps', e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', color: 'var(--accent-primary)',
+                fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
+                width: px(44), outline: 'none'
+              }}
+              placeholder="-"
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: s(0.45), color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>INT.</span>
+            <input
+              value={ex.intervalo ?? ''}
+              onFocus={handleFocus}
+              onChange={(e) => handleLocalChange(aluno.id, treino.id, ex.id, 'intervalo', e.target.value)}
+              onBlur={(e) => handleBlurSave(aluno.id, treino.id, ex.id, 'intervalo', e.target.value)}
               style={{
                 background: 'transparent', border: 'none', color: 'var(--accent-primary)',
                 fontSize: s(0.8), fontWeight: 700, textAlign: 'center',
