@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { mockDb, Aluno, FichaAvaliativa, ExercicioAvaliativo } from "@/lib/mockData";
-import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle, X, Download, RotateCcw } from "lucide-react";
+import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle, X, Download, RotateCcw, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
@@ -403,6 +403,254 @@ const INITIAL_FORCA: ExercicioAvaliativo[] = [
   { nome: "Puxada Neutra TRX", carga: "", reps: "8-10", obs: "" },
   { nome: "Pressão Vertical", carga: "", reps: "8-10", obs: "" },
 ];
+
+export interface FMSPrescricaoData {
+  nome: string;
+  categoria: "mobilidade" | "core" | "funcional";
+  prioridadeNum: number;
+  prioridadeLabel: string;
+  motivoBloqueio: string;
+  bloqueados: string[];
+  corretivos: string[];
+}
+
+export interface ItemBloqueioFMS {
+  teste: string;
+  motivoBadge: string;
+  motivoDesc: string;
+  exercicios: string[];
+  isDor: boolean;
+}
+
+export interface ItemCorretivoFMS {
+  teste: string;
+  prioridadeLabel: string;
+  prioridadeNum: number;
+  exercicios: string[];
+  isDor: boolean;
+}
+
+export interface RecomendacoesFMS {
+  avaliado: boolean;
+  totalAvaliados: number;
+  temBloqueios: boolean;
+  bloqueios: ItemBloqueioFMS[];
+  corretivos: ItemCorretivoFMS[];
+}
+
+export const FMS_PRESCRICAO_MAP: Record<string, FMSPrescricaoData> = {
+  "Agachamento Overhead": {
+    nome: "Agachamento Overhead",
+    categoria: "funcional",
+    prioridadeNum: 3,
+    prioridadeLabel: "Prioridade 3 • Padrão Funcional Global",
+    motivoBloqueio: "Falta de mobilidade de tornozelo/quadril ou extensão torácica, gerando sobrecarga na coluna lombar.",
+    bloqueados: [
+      "Agachamento livre com barra nas costas com carga",
+      "Agachamento frontal pesado com barra",
+      "Saltos e pliometria de alta intensidade (caixa alta, drop jumps)",
+      "Leg Press pesado com flexão lombar profunda"
+    ],
+    corretivos: [
+      "Mobilidade de tornozelo em cadeia fechada na parede ou com elástico",
+      "Agachamento Taça (Goblet Squat) com calcanhares elevados em anilha",
+      "Agachamento assistido nas fitas do TRX (foco em amplitude com coluna ereta)",
+      "Mobilidade torácica com rolo miofascial e extensão ativa"
+    ]
+  },
+  "Passo sobre a Barreira": {
+    nome: "Passo sobre a Barreira",
+    categoria: "funcional",
+    prioridadeNum: 3,
+    prioridadeLabel: "Prioridade 3 • Padrão Funcional Unipodal",
+    motivoBloqueio: "Instabilidade dinâmica em apoio unipodal e déficit nos estabilizadores pélvicos.",
+    bloqueados: [
+      "Passadas dinâmicas (lunges/afundos caminhando com carga)",
+      "Saltos e aterrissagens unipedais com carga ou impacto",
+      "Corridas com desacelerações e mudanças bruscas de direção"
+    ],
+    corretivos: [
+      "Ponte de glúteo unipodal no solo com ativação do core",
+      "Marcha estática com joelho a 90° e pausa de equilíbrio (3 a 5 seg)",
+      "Passo sobre elástico baixo com suporte de bastão para controle",
+      "Mobilização dinâmica de flexores de quadril em meio-ajoelhado"
+    ]
+  },
+  "Avanço em Linha": {
+    nome: "Avanço em Linha",
+    categoria: "funcional",
+    prioridadeNum: 3,
+    prioridadeLabel: "Prioridade 3 • Padrão Funcional em Base Aberta",
+    motivoBloqueio: "Perda de alinhamento no plano sagital e instabilidade toracolombar/pélvica.",
+    bloqueados: [
+      "Afundos/Lunges pesados com halteres ou barra livre",
+      "Saltos em tesoura (Split Jumps) e aterrissagens em avanço",
+      "Movimentos de rotação balística sob base dividida"
+    ],
+    corretivos: [
+      "Split Squat isométrico meio-ajoelhado com bastão vertical",
+      "Alongamento de flexores do quadril e reto femoral em meio-ajoelhado",
+      "Afundo reverso assistido com as mãos no TRX",
+      "Fortalecimento de abdutores/glúteo médio e estabilidade pélvica"
+    ]
+  },
+  "Mobilidade de Ombro": {
+    nome: "Mobilidade de Ombro",
+    categoria: "mobilidade",
+    prioridadeNum: 1,
+    prioridadeLabel: "Prioridade 1 • Mobilidade Articular Pura (Ombro/Tórax)",
+    motivoBloqueio: "Déficit escapulotorácico e glenoumeral, gerando alto risco de impacto subacromial.",
+    bloqueados: [
+      "Desenvolvimento acima da cabeça (Overhead Press) com halteres ou barra",
+      "Puxadas ou barra fixa com pegada aberta atrás da nuca",
+      "Movimentos de arremesso ou LPO (Snatches, Clean & Jerk)",
+      "Supino com amplitude exagerada descendo os cotovelos abaixo do banco"
+    ],
+    corretivos: [
+      "Liberação miofascial com bolinha no peitoral menor e latíssimo do dorso",
+      "Rotação torácica em quatro apoios (Open Book / T-Spine Rotation)",
+      "Deslize escapular na parede (Wall Slide com ativação do serrátil)",
+      "Passagens suaves de ombro com bastão em amplitude controlada"
+    ]
+  },
+  "Elevação da Perna Estendida Ativa": {
+    nome: "Elevação da Perna Estendida Ativa",
+    categoria: "mobilidade",
+    prioridadeNum: 1,
+    prioridadeLabel: "Prioridade 1 • Mobilidade Articular Pura (Cadeia Posterior/Quadril)",
+    motivoBloqueio: "Encurtamento de isquiotibiais e falta de dissociação lombo-pélvica.",
+    bloqueados: [
+      "Levantamento Terra tradicional pesado partindo do solo",
+      "Kettlebell Swings com carga alta e velocidade",
+      "Sprints e tiros de corrida em velocidade máxima",
+      "Abdominais com pernas estendidas suspensas na barra"
+    ],
+    corretivos: [
+      "Alongamento ativo-assistido de isquiotibiais com elástico (perna oposta estendida no chão)",
+      "Levantamento Terra Romeno (RDL) com amplitude reduzida partindo de blocos",
+      "Ativação de glúteos com ponte e dissociação ativa de quadril em decúbito dorsal",
+      "Exercício 90/90 de quadril na parede com respiração diafragmática"
+    ]
+  },
+  "Flexão com Estabilidade de Tronco": {
+    nome: "Flexão com Estabilidade de Tronco",
+    categoria: "core",
+    prioridadeNum: 2,
+    prioridadeLabel: "Prioridade 2 • Controle Motor e Core (Anti-Extensão)",
+    motivoBloqueio: "Incapacidade de estabilizar a coluna lombar contra a extensão (hiperlordose lombar compensatória).",
+    bloqueados: [
+      "Flexões de braço no solo sem apoio até a falha",
+      "Pranchas ventrais longas com colapso lombar",
+      "Supino muito pesado sem estabilidade sólida do core"
+    ],
+    corretivos: [
+      "Flexão de braços inclinada (mãos apoiadas na barra guiada ou banco elevado)",
+      "Prancha ventral isométrica curta (10 a 15s) com máxima contração de abdômen e glúteos",
+      "Deadbug (inseto morto) com coluna lombar totalmente colada ao solo",
+      "Rollout com bola suíça ou roda de abdômen com amplitude reduzida"
+    ]
+  },
+  "Estabilidade Rotatória": {
+    nome: "Estabilidade Rotatória",
+    categoria: "core",
+    prioridadeNum: 2,
+    prioridadeLabel: "Prioridade 2 • Controle Motor e Core (Anti-Rotação)",
+    motivoBloqueio: "Déficit de controle neuromuscular do tronco e estabilidade pélvica multiplanar.",
+    bloqueados: [
+      "Rotações balísticas de tronco sob alta carga (Woodchoppers pesados com cabo)",
+      "Giros russos (Russian Twists) com carga pesada e pés soltos",
+      "Movimentos de torção rápida combinados com flexão sob peso"
+    ],
+    corretivos: [
+      "Perdigueiro (Bird-Dog) diagonal estático com controle respiratório e pausa de 3s no topo",
+      "Pallof Press em posição meio-ajoelhada ou em pé (anti-rotação com elástico ou cabo)",
+      "Prancha lateral isométrica com apoio nos joelhos e alinhamento neutro",
+      "Caminhada do Fazendeiro unilateral (Suitcase Carry) com carga moderada"
+    ]
+  }
+};
+
+export const obterRecomendacoesFMS = (itens: ExercicioAvaliativo[]): RecomendacoesFMS => {
+  const bloqueios: ItemBloqueioFMS[] = [];
+  const corretivosMap = new Map<string, ItemCorretivoFMS>();
+  let totalAvaliados = 0;
+
+  itens.forEach((item) => {
+    const info = FMS_PRESCRICAO_MAP[item.nome];
+    if (!info) return;
+
+    const isUnilateral = item.scoreEsq !== undefined || item.scoreDir !== undefined || item.esq !== undefined;
+    let temDor = false;
+    let temAssimetria = false;
+    let temDisfuncao = false;
+    let motivoBadge = "";
+    let motivoDesc = "";
+
+    if (isUnilateral) {
+      const sE = item.scoreEsq;
+      const sD = item.scoreDir;
+      if (sE !== undefined || sD !== undefined) {
+        totalAvaliados++;
+      }
+
+      if (sE === 0 || sD === 0) {
+        temDor = true;
+        motivoBadge = "⛔ DOR (NOTA 0)";
+        motivoDesc = `Presença de dor relatada no teste ${sE === 0 ? "(Lado Esquerdo)" : ""} ${sD === 0 ? "(Lado Direito)" : ""}. Encaminhar para avaliação clínica.`;
+      } else if (sE !== undefined && sD !== undefined && sE !== sD) {
+        temAssimetria = true;
+        motivoBadge = `⚠️ ASSIMETRIA (ESQ: ${sE} vs DIR: ${sD})`;
+        motivoDesc = `Diferença entre os lados. Menor pontuação: ${Math.min(sE, sD)}. Corrigir a assimetria antes de sobrecarregar o padrão.`;
+      } else if (sE === 1 && sD === 1) {
+        temDisfuncao = true;
+        motivoBadge = "⚠️ DISFUNÇÃO (NOTA 1)";
+        motivoDesc = "Padrão de movimento incompleto ou compensatório em ambos os lados.";
+      }
+    } else {
+      if (item.score !== undefined) {
+        totalAvaliados++;
+      }
+      if (item.score === 0) {
+        temDor = true;
+        motivoBadge = "⛔ DOR (NOTA 0)";
+        motivoDesc = "Presença de dor relatada durante o teste. Encaminhar para avaliação clínica.";
+      } else if (item.score === 1) {
+        temDisfuncao = true;
+        motivoBadge = "⚠️ DISFUNÇÃO (NOTA 1)";
+        motivoDesc = "Padrão de movimento com disfunção ou incapacidade de execução do critério ideal.";
+      }
+    }
+
+    if (temDor || temAssimetria || temDisfuncao) {
+      bloqueios.push({
+        teste: info.nome,
+        motivoBadge,
+        motivoDesc: temDor ? motivoDesc : `${motivoDesc} ${info.motivoBloqueio}`,
+        exercicios: temDor ? ["Qualquer exercício ou movimento que reproduza a dor naquele segmento", ...info.bloqueados] : info.bloqueados,
+        isDor: temDor
+      });
+
+      corretivosMap.set(info.nome, {
+        teste: info.nome,
+        prioridadeLabel: temDor ? "🚨 URGENTE • Avaliação Clínica / Descarregamento" : info.prioridadeLabel,
+        prioridadeNum: temDor ? 0 : info.prioridadeNum,
+        exercicios: temDor ? ["Encaminhamento médico/fisioterapêutico (SFMA)", "Descarregar peso e evitar movimentos na zona de dor"] : info.corretivos,
+        isDor: temDor
+      });
+    }
+  });
+
+  const corretivos = Array.from(corretivosMap.values()).sort((a, b) => a.prioridadeNum - b.prioridadeNum);
+  bloqueios.sort((a, b) => (b.isDor ? 1 : 0) - (a.isDor ? 1 : 0));
+
+  return {
+    avaliado: totalAvaliados > 0,
+    totalAvaliados,
+    temBloqueios: bloqueios.length > 0,
+    bloqueios,
+    corretivos
+  };
+};
 
 export interface ClassificacaoFMS {
   total: number;
@@ -2605,6 +2853,215 @@ export default function PrimeiraAulaPage() {
                     <span><strong>3:</strong> Padrão Ideal</span>
                     <span style={{ marginLeft: "auto" }}><strong>Ponto de Corte:</strong> ≤ 14 pontos (Alto Risco)</span>
                   </div>
+
+                  {/* QUADRANTE DINÂMICO DE RECOMENDAÇÕES FMS: BLOQUEADOS & CORRETIVOS */}
+                  {(() => {
+                    const rec = obterRecomendacoesFMS(mobilidade);
+                    return (
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          borderTop: "1px solid var(--border-light)",
+                          paddingTop: "14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                          <div>
+                            <span style={{ fontSize: "0.85rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                              <Sparkles size={16} color="var(--accent-primary)" /> Conduta Corretiva & Restrições Baseadas no FMS
+                            </span>
+                            <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                              Prescrição clínica automática gerada em tempo real a partir das notas preenchidas nos testes acima.
+                            </span>
+                          </div>
+                          {rec.temBloqueios && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const textoCorretivos = rec.corretivos.map(c => `${c.teste}: ${c.exercicios.slice(0, 2).join(", ")}`).join(" | ");
+                                const atual = recomendacaoForaTreino ? `${recomendacaoForaTreino} + Corretivos FMS (${textoCorretivos})` : `Corretivos FMS: ${textoCorretivos}`;
+                                setRecomendacaoForaTreino(atual);
+                                alert("Corretivos FMS adicionados com sucesso ao campo 'Recomendações Fora do Treino'!");
+                              }}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                border: "1px solid var(--border-medium)",
+                                background: "var(--bg-card)",
+                                color: "var(--text-primary)",
+                                fontSize: "0.78rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                              }}
+                              title="Adicionar resumo dos corretivos prioritários ao campo Recomendações Fora do Treino"
+                            >
+                              <Copy size={14} /> Copiar Corretivos para Recomendações
+                            </button>
+                          )}
+                        </div>
+
+                        {!rec.avaliado ? (
+                          <div style={{ padding: "16px", background: "var(--bg-card)", borderRadius: "8px", border: "1px dashed var(--border-medium)", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                            ⚪ Preencha as pontuações dos testes acima para que o sistema analise em tempo real os exercícios a evitar e as recomendações corretivas prioritárias.
+                          </div>
+                        ) : (
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "14px" }}>
+                            {/* QUADRANTE 1: BLOQUEADOS / A EVITAR */}
+                            <div
+                              style={{
+                                background: "var(--bg-card)",
+                                borderRadius: "10px",
+                                border: "1.5px solid rgba(239, 68, 68, 0.45)",
+                                padding: "14px",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "10px",
+                                boxShadow: "0 2px 6px rgba(239, 68, 68, 0.04)"
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(239, 68, 68, 0.2)", paddingBottom: "8px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <span style={{ background: "#ef4444", color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 800 }}>
+                                    NÃO CARREGAR DISFUNÇÃO
+                                  </span>
+                                  <strong style={{ fontSize: "0.9rem", color: "#b91c1c" }}>
+                                    Exercícios Bloqueados / A Evitar
+                                  </strong>
+                                </div>
+                              </div>
+                              <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
+                                Pela regra do FMS, evite sobrecarga máxima, velocidade ou repetições até a fadiga nestes movimentos até que o padrão atinja Nota 2 simétrica.
+                              </p>
+
+                              {!rec.temBloqueios ? (
+                                <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "8px", padding: "14px", textAlign: "center" }}>
+                                  <div style={{ color: "#15803d", fontWeight: 800, fontSize: "0.9rem", marginBottom: "4px" }}>
+                                    🟢 Nenhum Exercício Bloqueado!
+                                  </div>
+                                  <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                                    O aluno não apresentou notas 0, notas 1 ou assimetrias nos testes avaliados. Padrões liberados para progressão normal de carga.
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                  {rec.bloqueios.map((b, bIdx) => (
+                                    <div
+                                      key={bIdx}
+                                      style={{
+                                        background: b.isDor ? "rgba(220, 38, 38, 0.08)" : "rgba(239, 68, 68, 0.04)",
+                                        border: `1px solid ${b.isDor ? "#ef4444" : "rgba(239, 68, 68, 0.25)"}`,
+                                        borderRadius: "8px",
+                                        padding: "10px 12px",
+                                      }}
+                                    >
+                                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
+                                        <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>
+                                          {b.teste}
+                                        </strong>
+                                        <span style={{ fontSize: "0.68rem", fontWeight: 800, background: b.isDor ? "#dc2626" : "rgba(239, 68, 68, 0.15)", color: b.isDor ? "#fff" : "#b91c1c", padding: "1px 6px", borderRadius: "4px" }}>
+                                          {b.motivoBadge}
+                                        </span>
+                                      </div>
+                                      <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", marginBottom: "6px", fontStyle: "italic" }}>
+                                        {b.motivoDesc}
+                                      </div>
+                                      <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "0.8rem", color: "#991b1b", lineHeight: "1.45" }}>
+                                        {b.exercicios.map((ex, exI) => (
+                                          <li key={exI}>
+                                            <strong>{ex}</strong>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* QUADRANTE 2: CORRETIVOS RECOMENDADOS */}
+                            <div
+                              style={{
+                                background: "var(--bg-card)",
+                                borderRadius: "10px",
+                                border: "1.5px solid rgba(59, 130, 246, 0.45)",
+                                padding: "14px",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "10px",
+                                boxShadow: "0 2px 6px rgba(59, 130, 246, 0.04)"
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(59, 130, 246, 0.2)", paddingBottom: "8px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <span style={{ background: "#2563eb", color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 800 }}>
+                                    HIERARQUIA OFICIAL FMS
+                                  </span>
+                                  <strong style={{ fontSize: "0.9rem", color: "#1d4ed8" }}>
+                                    Exercícios Corretivos Prioritários
+                                  </strong>
+                                </div>
+                              </div>
+                              <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
+                                Ordem de prescrição do FMS: Mobilidade Pura (1º) → Controle Motor e Core (2º) → Padrões Funcionais Globais (3º).
+                              </p>
+
+                              {rec.corretivos.length === 0 ? (
+                                <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "8px", padding: "14px", textAlign: "center" }}>
+                                  <div style={{ color: "#15803d", fontWeight: 800, fontSize: "0.9rem", marginBottom: "4px" }}>
+                                    ✨ Padrões Funcionais Preservados!
+                                  </div>
+                                  <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                                    Todos os testes avaliados estão funcionais. Mantenha a rotina de aquecimento dinâmico e mobilidade geral de manutenção.
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                  {rec.corretivos.map((c, cIdx) => (
+                                    <div
+                                      key={cIdx}
+                                      style={{
+                                        background: "rgba(59, 130, 246, 0.04)",
+                                        border: "1px solid rgba(59, 130, 246, 0.25)",
+                                        borderRadius: "8px",
+                                        padding: "10px 12px",
+                                      }}
+                                    >
+                                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
+                                        <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>
+                                          {c.teste}
+                                        </strong>
+                                        <span style={{ fontSize: "0.68rem", fontWeight: 800, background: c.isDor ? "rgba(220, 38, 38, 0.15)" : "rgba(37, 99, 235, 0.12)", color: c.isDor ? "#b91c1c" : "#1d4ed8", padding: "1px 6px", borderRadius: "4px" }}>
+                                          {c.prioridadeLabel}
+                                        </span>
+                                      </div>
+                                      <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "0.8rem", color: "#1e3a8a", lineHeight: "1.45" }}>
+                                        {c.exercicios.map((ex, exI) => (
+                                          <li key={exI}>
+                                            <span style={{ color: "var(--text-primary)" }}>{ex}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", textAlign: "center", fontStyle: "italic", marginTop: "2px" }}>
+                          💡 Dica FMS: Quando o aluno for reavaliado e alcançar Nota 2 simétrica, o movimento é desbloqueado e liberado para receber carga no treino.
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}
