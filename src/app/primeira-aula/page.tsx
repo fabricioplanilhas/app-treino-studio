@@ -1452,7 +1452,7 @@ export default function PrimeiraAulaPage() {
     }
 
     const currentScore = list[index].score;
-    const isFMS = ["Agachamento Overhead", "Flexão com Estabilidade de Tronco", "Agachamento", "Flexão"].some(n => item.nome.includes(n));
+    const isFMS = ["Agachamento Overhead", "Flexão com Estabilidade de Tronco"].includes(item.nome);
     const scoreOptions = isFMS ? [0, 1, 2, 3] : [1, 2, 3];
 
     return (
