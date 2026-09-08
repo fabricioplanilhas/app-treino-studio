@@ -3124,35 +3124,48 @@ export default function PrimeiraAulaPage() {
                               style={{
                                 background: "var(--bg-card)",
                                 borderRadius: "10px",
-                                border: "1.5px solid rgba(234, 88, 12, 0.35)",
+                                border: rec.temBloqueios
+                                  ? "1.5px solid rgba(234, 88, 12, 0.35)"
+                                  : "1.5px solid rgba(16, 185, 129, 0.35)",
                                 padding: "14px",
                                 display: "flex",
                                 flexDirection: "column",
                                 gap: "10px",
-                                boxShadow: "0 2px 6px rgba(234, 88, 12, 0.04)"
+                                boxShadow: rec.temBloqueios
+                                  ? "0 2px 6px rgba(234, 88, 12, 0.04)"
+                                  : "0 2px 6px rgba(16, 185, 129, 0.04)"
                               }}
                             >
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(234, 88, 12, 0.2)", paddingBottom: "8px" }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: rec.temBloqueios ? "1px solid rgba(234, 88, 12, 0.2)" : "1px solid rgba(16, 185, 129, 0.2)", paddingBottom: "8px" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <span style={{ background: "#ea580c", color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 800 }}>
-                                    PROTEÇÃO & PROGRESSÃO FMS
+                                  <span style={{ 
+                                    background: rec.temBloqueios ? "#ea580c" : "#10b981", 
+                                    color: "#fff", 
+                                    padding: "2px 8px", 
+                                    borderRadius: "4px", 
+                                    fontSize: "0.7rem", 
+                                    fontWeight: 800 
+                                  }}>
+                                    {rec.temBloqueios ? "PROTEÇÃO & PROGRESSÃO FMS" : "PADRÕES LIBERADOS"}
                                   </span>
-                                  <strong style={{ fontSize: "0.9rem", color: "#c2410c" }}>
-                                    Exercícios a Evitar Temporariamente
+                                  <strong style={{ fontSize: "0.9rem", color: rec.temBloqueios ? "#c2410c" : "#15803d" }}>
+                                    {rec.temBloqueios ? "Exercícios a Evitar Temporariamente" : "Nenhum Exercício Bloqueado"}
                                   </strong>
                                 </div>
                               </div>
                               <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
-                                Pela metodologia do FMS, evite sobrecarga pesada ou movimentos balísticos até a fadiga nestes padrões até que o movimento atinja Nota 2 simétrica.
+                                {rec.temBloqueios
+                                  ? "Pela metodologia do FMS, evite sobrecarga pesada ou movimentos balísticos até a fadiga nestes padrões até que o movimento atinja Nota 2 simétrica."
+                                  : "Excelente! O atleta atingiu o critério de aprovação e segurança do FMS (Nota 2 ou superior simétrica em todos os testes). Todos os padrões de movimento estão 100% liberados para sobrecarga e progressão de treino."}
                               </p>
 
                               {!rec.temBloqueios ? (
                                 <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "8px", padding: "14px", textAlign: "center" }}>
                                   <div style={{ color: "#15803d", fontWeight: 800, fontSize: "0.9rem", marginBottom: "4px" }}>
-                                    🟢 Nenhum Exercício Bloqueado!
+                                    🟢 Todos os Padrões Seguros para Treinar!
                                   </div>
                                   <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                                    O aluno não apresentou notas 0, notas 1 ou assimetrias nos testes avaliados. Padrões liberados para progressão normal de carga.
+                                    Sem notas 0 (dor), sem notas 1 (inabilidade) e sem assimetrias bilaterais. Treino liberado com progressão normal de carga.
                                   </div>
                                 </div>
                               ) : (
@@ -3263,7 +3276,9 @@ export default function PrimeiraAulaPage() {
                         )}
 
                         <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", textAlign: "center", fontStyle: "italic", marginTop: "2px" }}>
-                          💡 Dica FMS: Quando o aluno for reavaliado e alcançar Nota 2 simétrica, o movimento é desbloqueado e liberado para receber carga no treino.
+                          {rec.temBloqueios
+                            ? "💡 Dica FMS: Quando o aluno for reavaliado e alcançar Nota 2 simétrica, o movimento é desbloqueado e liberado para receber carga no treino."
+                            : "💡 Diretriz FMS: Movimentos com Nota 2 ou 3 possuem controle motor e mobilidade suficientes para receber sobrecarga progressiva com total segurança."}
                         </div>
                       </div>
                     );
