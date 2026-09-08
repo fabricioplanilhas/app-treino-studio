@@ -17,7 +17,7 @@ export default function Home() {
           Criar e Editar Treinos
         </Link>
         <Link href="/tv" className="premium-btn-outline" style={{ padding: '16px 24px', fontSize: '1.1rem' }}>
-          <Dumbbell size={24} />
+          <Dumbbell size={24} color="#ef4444" />
           Tela da TV
         </Link>
         <Link href="/primeira-aula" className="premium-btn" style={{ padding: '16px 24px', fontSize: '1.1rem', background: '#10b981' }}>
