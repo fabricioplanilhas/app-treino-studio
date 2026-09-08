@@ -1000,6 +1000,7 @@ export type FichaAvaliativa = {
   clube?: string;
   posicao?: string;
   responsavel?: string;
+  treinador?: string;
   dataNascimento?: string;
   seriesMobilidade: string;
   mobilidade: ExercicioAvaliativo[];

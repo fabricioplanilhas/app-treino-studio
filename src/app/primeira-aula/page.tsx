@@ -780,6 +780,7 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
 export interface FichaFormState {
   fichaId: string;
   nomeAluno: string;
+  treinador: string;
   clube: string;
   posicao: string;
   responsavel: string;
@@ -806,6 +807,7 @@ const LAST_TAB_KEY = "ficha_last_tab_v2";
 const createDefaultFichaState = (tipo: "Adulto" | "Atleta"): FichaFormState => ({
   fichaId: "",
   nomeAluno: "",
+  treinador: "",
   clube: "",
   posicao: "",
   responsavel: "",
@@ -828,6 +830,7 @@ const createDefaultFichaState = (tipo: "Adulto" | "Atleta"): FichaFormState => (
 // Verificação de formulário vazio para não enviar dados em branco ao Supabase Free
 const isFichaFormEmpty = (form: FichaFormState, tipo: "Adulto" | "Atleta"): boolean => {
   if (form.nomeAluno.trim().length > 0) return false;
+  if (form.treinador.trim().length > 0) return false;
   if (form.clube.trim().length > 0) return false;
   if (form.responsavel.trim().length > 0) return false;
   if (form.posicao.trim().length > 0) return false;
@@ -1098,6 +1101,7 @@ export default function PrimeiraAulaPage() {
   const {
     fichaId,
     nomeAluno,
+    treinador,
     clube,
     posicao,
     responsavel,
@@ -1119,6 +1123,7 @@ export default function PrimeiraAulaPage() {
 
   const setFichaId = (val: string) => updateField("fichaId", val);
   const setNomeAluno = (val: string) => updateField("nomeAluno", val);
+  const setTreinador = (val: string) => updateField("treinador", val);
   const setClube = (val: string) => updateField("clube", val);
   const setPosicao = (val: string) => updateField("posicao", val);
   const setResponsavel = (val: string) => updateField("responsavel", val);
@@ -1254,6 +1259,7 @@ export default function PrimeiraAulaPage() {
     const stateObj: FichaFormState = {
       fichaId: ficha.id,
       nomeAluno: ficha.nomeAluno,
+      treinador: ficha.treinador || "",
       clube: ficha.clube || "",
       posicao: ficha.posicao || "",
       responsavel: ficha.responsavel || "",
@@ -1291,6 +1297,7 @@ export default function PrimeiraAulaPage() {
       id: f.fichaId || `ficha_${Date.now()}`,
       alunoId: f.alunoSelecionadoId,
       nomeAluno: f.nomeAluno.trim() || "Aluno sem nome",
+      treinador: f.treinador?.trim() || undefined,
       data: f.dataAvaliacao || new Date().toLocaleDateString("pt-BR"),
       tipo,
       clube: tipo === "Atleta" ? f.clube.trim() : undefined,
@@ -1412,14 +1419,14 @@ export default function PrimeiraAulaPage() {
 
     // Título Principal
     doc.setFillColor(34, 139, 34);
-    doc.roundedRect(14, 40, 182, 8, 2, 2, "F");
+    doc.roundedRect(14, 46, 182, 8, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11.5);
     const tipoStr = `1ª AULA ${ficha.tipo.toUpperCase()} - TREINAMENTO`;
-    doc.text(tipoStr, 105, 45.5, { align: "center" });
+    doc.text(tipoStr, 105, 51.5, { align: "center" });
 
-    let currentY = 52;
+    let currentY = 57;
 
     if (ficha.tipo === "Atleta") {
       doc.setTextColor(30, 41, 59);
@@ -1428,34 +1435,41 @@ export default function PrimeiraAulaPage() {
       // Box de identificação do Atleta
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(14, 50, 182, 16, 2, 2, "FD");
+      doc.roundedRect(14, 57, 182, 17, 2, 2, "FD");
+
+      // Linha 1: ATLETA (col 1), POSIÇÃO (col 2), DATA AVALIAÇÃO (col 3)
+      doc.setFont("helvetica", "bold");
+      doc.text("ATLETA:", 18, 62.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 34, 62.5);
 
       doc.setFont("helvetica", "bold");
-      doc.text("ATLETA:", 18, 55);
+      doc.text("POSIÇÃO:", 86, 62.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 34, 55);
+      doc.text(`${(ficha.posicao || "-").toUpperCase()}`, 103, 62.5);
 
       doc.setFont("helvetica", "bold");
-      doc.text("DATA AVALIAÇÃO:", 130, 55);
+      doc.text("DATA AVALIAÇÃO:", 145, 62.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.data}`, 162, 55);
+      doc.text(`${ficha.data}`, 176, 62.5);
+
+      // Linha 2: CLUBE (col 1), TREINADOR RESP. (col 2), NASCIMENTO (col 3)
+      doc.setFont("helvetica", "bold");
+      doc.text("CLUBE:", 18, 69.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${(ficha.clube || "-").toUpperCase()}`, 32, 69.5);
 
       doc.setFont("helvetica", "bold");
-      doc.text("CLUBE:", 18, 60);
+      doc.text("TREINADOR RESP.:", 86, 69.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`${(ficha.clube || "-").toUpperCase()}`, 32, 60);
+      doc.text(`${ficha.treinador ? ficha.treinador.toUpperCase() : "____________________"}`, 117, 69.5);
 
       doc.setFont("helvetica", "bold");
-      doc.text("POSIÇÃO:", 90, 60);
+      doc.text("NASCIMENTO:", 145, 69.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`${(ficha.posicao || "-").toUpperCase()}`, 107, 60);
+      doc.text(`${ficha.dataNascimento || "-"}`, 170, 69.5);
 
-      doc.setFont("helvetica", "bold");
-      doc.text("NASCIMENTO:", 140, 60);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.dataNascimento || "-"}`, 165, 60);
-
-      currentY = 70;
+      currentY = 78;
     } else {
       doc.setTextColor(30, 41, 59);
       doc.setFontSize(9);
@@ -1463,19 +1477,24 @@ export default function PrimeiraAulaPage() {
       // Box de identificação Adulto
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(14, 50, 182, 10, 2, 2, "FD");
+      doc.roundedRect(14, 57, 182, 16, 2, 2, "FD");
 
       doc.setFont("helvetica", "bold");
-      doc.text("NOME E SOBRENOME:", 18, 56.5);
+      doc.text("NOME E SOBRENOME:", 18, 63);
       doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 58, 56.5);
+      doc.text(`${ficha.nomeAluno.toUpperCase()}`, 58, 63);
 
       doc.setFont("helvetica", "bold");
-      doc.text("DATA:", 145, 56.5);
+      doc.text("DATA:", 145, 63);
       doc.setFont("helvetica", "normal");
-      doc.text(`${ficha.data}`, 157, 56.5);
+      doc.text(`${ficha.data}`, 157, 63);
 
-      currentY = 64;
+      doc.setFont("helvetica", "bold");
+      doc.text("TREINADOR RESPONSÁVEL:", 18, 69);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${ficha.treinador ? ficha.treinador.toUpperCase() : "__________________________________________"}`, 65, 69);
+
+      currentY = 77;
     }
 
     // Seção 1: MOBILIDADE AVALIATIVA (FMS)
@@ -1646,7 +1665,7 @@ export default function PrimeiraAulaPage() {
       console.error("Logo PDF error", e);
     }
 
-    let yPage2 = 42;
+    let yPage2 = 46;
 
     if (ficha.tipo === "Atleta" && ficha.potencia) {
       doc.setFont("helvetica", "bold");
@@ -1950,6 +1969,7 @@ export default function PrimeiraAulaPage() {
   const historicoFiltrado = historicoFichas.filter((f) =>
     f.nomeAluno.toLowerCase().includes(buscaHistorico.toLowerCase()) ||
     f.data.includes(buscaHistorico) ||
+    (f.treinador && f.treinador.toLowerCase().includes(buscaHistorico.toLowerCase())) ||
     (f.clube && f.clube.toLowerCase().includes(buscaHistorico.toLowerCase())) ||
     (f.posicao && f.posicao.toLowerCase().includes(buscaHistorico.toLowerCase())) ||
     (f.responsavel && f.responsavel.toLowerCase().includes(buscaHistorico.toLowerCase()))
@@ -2206,6 +2226,7 @@ export default function PrimeiraAulaPage() {
                     </div>
                     <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginTop: "4px" }}>
                       Data: {ficha.data}
+                      {ficha.treinador && <span> | Treinador: <strong>{ficha.treinador}</strong></span>}
                       {ficha.clube && <span> | Clube: <strong>{ficha.clube}</strong></span>}
                       {ficha.posicao && <span> | Posição: <strong>{ficha.posicao}</strong></span>}
                       {ficha.responsavel && <span> | Responsável: <strong>{ficha.responsavel}</strong></span>}
@@ -2269,7 +2290,7 @@ export default function PrimeiraAulaPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "2fr 1fr auto",
+                gridTemplateColumns: "1.8fr 1.2fr 1fr auto",
                 gap: "16px",
                 alignItems: "end",
               }}
@@ -2316,6 +2337,26 @@ export default function PrimeiraAulaPage() {
                     </select>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  TREINADOR RESPONSÁVEL
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nome do treinador..."
+                  value={treinador}
+                  onChange={(e) => setTreinador(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-medium)",
+                    fontSize: "1rem",
+                    outline: "none",
+                  }}
+                />
               </div>
 
               <div>
