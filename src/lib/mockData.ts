@@ -336,7 +336,13 @@ function alunoToRow(aluno: Aluno) {
 }
 
 // Purga automática de alunos na lixeira há mais de 60 dias para economizar espaço do Supabase Free Plan
+let lastPurgeExecution = 0;
 const autoPurgeLixeira = async (): Promise<void> => {
+  const now = Date.now();
+  // Limita a verificação a no máximo 1 vez a cada 24 horas para não consumir requisições do Supabase Free
+  if (now - lastPurgeExecution < 24 * 60 * 60 * 1000) return;
+  lastPurgeExecution = now;
+
   try {
     const hoje = new Date();
     const limiteDias = 60;
@@ -751,14 +757,36 @@ export const mockDb = {
     }
   },
 
-  // ─── RASCUNHOS DE FICHA AVALIATIVA (Supabase Cloud Sync) ─────
+  // ─── RASCUNHOS DE FICHA AVALIATIVA (Supabase Cloud Sync - Otimizado Free Plan) ─────
+
+  getRascunhosFichas: async (): Promise<{ adulto: Record<string, unknown> | null; atleta: Record<string, unknown> | null }> => {
+    try {
+      // 1 única requisição com projeção mínima de colunas para economizar requisições e egress da conta Free
+      const { data, error } = await supabase
+        .from('bases_treino')
+        .select('id, exercicios')
+        .in('id', ['rascunho_ficha_adulto', 'rascunho_ficha_atleta']);
+
+      if (!error && data) {
+        const rowAdulto = data.find((r: Record<string, unknown>) => r.id === 'rascunho_ficha_adulto');
+        const rowAtleta = data.find((r: Record<string, unknown>) => r.id === 'rascunho_ficha_atleta');
+        return {
+          adulto: (rowAdulto?.exercicios as Record<string, unknown>) || null,
+          atleta: (rowAtleta?.exercicios as Record<string, unknown>) || null,
+        };
+      }
+    } catch (err) {
+      console.error('Erro ao buscar rascunhos em lote no Supabase:', err);
+    }
+    return { adulto: null, atleta: null };
+  },
 
   getRascunhoFicha: async (tipo: 'Adulto' | 'Atleta'): Promise<Record<string, unknown> | null> => {
     const rascunhoId = `rascunho_ficha_${tipo.toLowerCase()}`;
     try {
       const { data, error } = await supabase
         .from('bases_treino')
-        .select('*')
+        .select('id, exercicios')
         .eq('id', rascunhoId)
         .maybeSingle();
 
@@ -772,6 +800,7 @@ export const mockDb = {
   },
 
   salvarRascunhoFicha: async (tipo: 'Adulto' | 'Atleta', rascunho: Record<string, unknown>): Promise<void> => {
+    if (!rascunho || Object.keys(rascunho).length === 0) return;
     const rascunhoId = `rascunho_ficha_${tipo.toLowerCase()}`;
     const nomeAluno = (rascunho.nomeAluno as string) || '';
     try {

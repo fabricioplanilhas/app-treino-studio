@@ -825,6 +825,30 @@ const createDefaultFichaState = (tipo: "Adulto" | "Atleta"): FichaFormState => (
   aporteNutricional: "Sim, conforme objetivo",
 });
 
+// Verificação de formulário vazio para não enviar dados em branco ao Supabase Free
+const isFichaFormEmpty = (form: FichaFormState, tipo: "Adulto" | "Atleta"): boolean => {
+  if (form.nomeAluno.trim().length > 0) return false;
+  if (form.clube.trim().length > 0) return false;
+  if (form.responsavel.trim().length > 0) return false;
+  if (form.posicao.trim().length > 0) return false;
+  if (form.recomendacaoForaTreino.trim().length > 0) return false;
+
+  const hasMob = form.mobilidade.some(m => m.score !== undefined || m.scoreEsq !== undefined || m.scoreDir !== undefined);
+  if (hasMob) return false;
+
+  const hasForca = form.forcaFuncional.some(f => (f.carga && f.carga.trim().length > 0) || f.score !== undefined);
+  if (hasForca) return false;
+
+  if (tipo === "Atleta") {
+    const hasAque = form.aquecimento?.some(a => a.score !== undefined);
+    if (hasAque) return false;
+    const hasPot = form.potencia?.some(p => p.score !== undefined);
+    if (hasPot) return false;
+  }
+
+  return true;
+};
+
 export default function PrimeiraAulaPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"Menu" | "Adulto" | "Atleta" | "Historico">("Menu");
@@ -843,6 +867,12 @@ export default function PrimeiraAulaPage() {
   const isCloudReadyRef = useRef(false);
   const saveTimeoutAdultoRef = useRef<NodeJS.Timeout | null>(null);
   const saveTimeoutAtletaRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Controle de diff para não enviar requisições repetidas ao Supabase Free
+  const lastSavedAdultoJsonRef = useRef<string>("");
+  const lastSavedAtletaJsonRef = useRef<string>("");
+  const hadRemoteAdultoDraftRef = useRef(false);
+  const hadRemoteAtletaDraftRef = useRef(false);
 
   // Estados independentes e persistentes para Adulto e Atleta
   const [formAdulto, setFormAdulto] = useState<FichaFormState>(() => createDefaultFichaState("Adulto"));
@@ -883,36 +913,57 @@ export default function PrimeiraAulaPage() {
         }
       }
 
-      // 2. Busca e mescla rascunho na nuvem (Supabase) para continuidade cross-device
+      // 2. Busca e mescla rascunho na nuvem em UMA ÚNICA chamada em lote para economizar cota do Supabase Free
       try {
-        const [cloudAdulto, cloudAtleta] = await Promise.all([
-          mockDb.getRascunhoFicha("Adulto"),
-          mockDb.getRascunhoFicha("Atleta"),
-        ]);
+        const { adulto: cloudAdulto, atleta: cloudAtleta } = await mockDb.getRascunhosFichas();
 
         if (isMounted) {
           if (cloudAdulto && typeof cloudAdulto === "object") {
+            hadRemoteAdultoDraftRef.current = true;
             const cloudTime = (cloudAdulto.updatedAt as number) || 0;
             const localTime = (localAdulto?.updatedAt as number) || 0;
-            // Usa o mais recente, ou da nuvem se contiver aluno preenchido
             if (cloudTime >= localTime || (!localAdulto?.nomeAluno && cloudAdulto.nomeAluno)) {
               setFormAdulto(prev => ({ ...prev, ...cloudAdulto }));
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { updatedAt: _u, ...cleanAdulto } = cloudAdulto;
+              lastSavedAdultoJsonRef.current = JSON.stringify(cleanAdulto);
               if (typeof window !== "undefined") {
                 localStorage.setItem(DRAFT_KEY_ADULTO, JSON.stringify({ ...localAdulto, ...cloudAdulto }));
               }
+            } else if (localAdulto) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { updatedAt: _u, ...cleanAdulto } = localAdulto;
+              lastSavedAdultoJsonRef.current = JSON.stringify(cleanAdulto);
             }
+          } else if (localAdulto) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { updatedAt: _u, ...cleanAdulto } = localAdulto;
+            lastSavedAdultoJsonRef.current = JSON.stringify(cleanAdulto);
           }
 
           if (cloudAtleta && typeof cloudAtleta === "object") {
+            hadRemoteAtletaDraftRef.current = true;
             const cloudTime = (cloudAtleta.updatedAt as number) || 0;
             const localTime = (localAtleta?.updatedAt as number) || 0;
             if (cloudTime >= localTime || (!localAtleta?.nomeAluno && cloudAtleta.nomeAluno)) {
               setFormAtleta(prev => ({ ...prev, ...cloudAtleta }));
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { updatedAt: _u, ...cleanAtleta } = cloudAtleta;
+              lastSavedAtletaJsonRef.current = JSON.stringify(cleanAtleta);
               if (typeof window !== "undefined") {
                 localStorage.setItem(DRAFT_KEY_ATLETA, JSON.stringify({ ...localAtleta, ...cloudAtleta }));
               }
+            } else if (localAtleta) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { updatedAt: _u, ...cleanAtleta } = localAtleta;
+              lastSavedAtletaJsonRef.current = JSON.stringify(cleanAtleta);
             }
+          } else if (localAtleta) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { updatedAt: _u, ...cleanAtleta } = localAtleta;
+            lastSavedAtletaJsonRef.current = JSON.stringify(cleanAtleta);
           }
+
           setCloudSyncStatus("saved");
         }
       } catch (err) {
@@ -930,7 +981,7 @@ export default function PrimeiraAulaPage() {
     };
   }, []);
 
-  // Salva no localStorage e na nuvem sempre que formAdulto mudar
+  // Salva no localStorage (imediato) e na nuvem (debounced 2.5s com verificação de diff e trava de formulário vazio)
   useEffect(() => {
     if (!isHydrated) return;
     if (typeof window !== "undefined") {
@@ -943,19 +994,41 @@ export default function PrimeiraAulaPage() {
 
     if (!isCloudReadyRef.current) return;
     if (saveTimeoutAdultoRef.current) clearTimeout(saveTimeoutAdultoRef.current);
+
     saveTimeoutAdultoRef.current = setTimeout(async () => {
+      // Se formulário está vazio, não consome requisições com Supabase Free
+      if (isFichaFormEmpty(formAdulto, "Adulto")) {
+        if (hadRemoteAdultoDraftRef.current) {
+          hadRemoteAdultoDraftRef.current = false;
+          lastSavedAdultoJsonRef.current = "";
+          await mockDb.limparRascunhoFicha("Adulto");
+        }
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { updatedAt: _u, ...cleanForm } = (formAdulto as unknown as Record<string, unknown>);
+      const currentJson = JSON.stringify(cleanForm);
+
+      // Se não houve alteração real, poupa requisição no Supabase Free
+      if (currentJson === lastSavedAdultoJsonRef.current) {
+        return;
+      }
+
       try {
         setCloudSyncStatus("saving");
         await mockDb.salvarRascunhoFicha("Adulto", { ...formAdulto, updatedAt: Date.now() });
+        lastSavedAdultoJsonRef.current = currentJson;
+        hadRemoteAdultoDraftRef.current = true;
         setCloudSyncStatus("saved");
       } catch (e) {
         console.error("Erro ao salvar rascunho adulto na nuvem:", e);
         setCloudSyncStatus("error");
       }
-    }, 700);
+    }, 2500);
   }, [formAdulto, isHydrated]);
 
-  // Salva no localStorage e na nuvem sempre que formAtleta mudar
+  // Salva no localStorage e na nuvem sempre que formAtleta mudar (otimizado)
   useEffect(() => {
     if (!isHydrated) return;
     if (typeof window !== "undefined") {
@@ -968,16 +1041,36 @@ export default function PrimeiraAulaPage() {
 
     if (!isCloudReadyRef.current) return;
     if (saveTimeoutAtletaRef.current) clearTimeout(saveTimeoutAtletaRef.current);
+
     saveTimeoutAtletaRef.current = setTimeout(async () => {
+      if (isFichaFormEmpty(formAtleta, "Atleta")) {
+        if (hadRemoteAtletaDraftRef.current) {
+          hadRemoteAtletaDraftRef.current = false;
+          lastSavedAtletaJsonRef.current = "";
+          await mockDb.limparRascunhoFicha("Atleta");
+        }
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { updatedAt: _u, ...cleanForm } = (formAtleta as unknown as Record<string, unknown>);
+      const currentJson = JSON.stringify(cleanForm);
+
+      if (currentJson === lastSavedAtletaJsonRef.current) {
+        return;
+      }
+
       try {
         setCloudSyncStatus("saving");
         await mockDb.salvarRascunhoFicha("Atleta", { ...formAtleta, updatedAt: Date.now() });
+        lastSavedAtletaJsonRef.current = currentJson;
+        hadRemoteAtletaDraftRef.current = true;
         setCloudSyncStatus("saved");
       } catch (e) {
         console.error("Erro ao salvar rascunho atleta na nuvem:", e);
         setCloudSyncStatus("error");
       }
-    }, 700);
+    }, 2500);
   }, [formAtleta, isHydrated]);
 
   const carregarHistorico = async () => {
@@ -1082,6 +1175,8 @@ export default function PrimeiraAulaPage() {
     const defaultState = createDefaultFichaState(tipo);
     if (tipo === "Atleta") {
       setFormAtleta(defaultState);
+      lastSavedAtletaJsonRef.current = "";
+      hadRemoteAtletaDraftRef.current = false;
       if (typeof window !== "undefined") {
         try {
           localStorage.removeItem(DRAFT_KEY_ATLETA);
@@ -1094,6 +1189,8 @@ export default function PrimeiraAulaPage() {
       }
     } else {
       setFormAdulto(defaultState);
+      lastSavedAdultoJsonRef.current = "";
+      hadRemoteAdultoDraftRef.current = false;
       if (typeof window !== "undefined") {
         try {
           localStorage.removeItem(DRAFT_KEY_ADULTO);
