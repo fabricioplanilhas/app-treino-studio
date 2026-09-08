@@ -655,7 +655,7 @@ export const obterRecomendacoesFMS = (itens: ExercicioAvaliativo[]): Recomendaco
 export interface ClassificacaoFMS {
   total: number;
   max: number;
-  nivel: "excelente" | "adequado" | "alto_risco" | "dor" | "aberto";
+  nivel: "excelente" | "adequado" | "otimizacao" | "dor" | "aberto";
   titulo: string;
   descricao: string;
   cor: string;
@@ -709,7 +709,7 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
       max: 21,
       nivel: "dor",
       titulo: "Presença de Dor (Alerta Clínico / Stop)",
-      descricao: "O aluno relatou dor durante a execução do teste ou nos testes de exclusão (Clearing Tests). Nota 0 aplicada. Encaminhamento para avaliação médica/fisioterapêutica recomendado.",
+      descricao: "O aluno relatou dor durante a execução do teste ou nos testes de exclusão (Clearing Tests). Nota 0 aplicada. Encaminhamento para avaliação médica/fisioterapêutica recomendado antes do treino.",
       cor: "#dc2626",
       bgCor: "rgba(220, 38, 38, 0.12)",
       badge: "⛔ Presença de Dor (Nota 0)",
@@ -738,11 +738,11 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
       total,
       max: 21,
       nivel: "excelente",
-      titulo: "Excelente / Funcionalidade Ótima",
-      descricao: "Padrões de movimento simétricos e de alta qualidade (18 a 21 pontos). Liberado para progressões de força máxima, potência e alto desempenho.",
+      titulo: "Padrão Excelente / Alto Desempenho Funcional",
+      descricao: "Padrões de movimento simétricos e de alta qualidade (18 a 21 pontos). Base motora sólida, liberado para progressões de força máxima, potência e alto rendimento.",
       cor: "#10b981",
       bgCor: "rgba(16, 185, 129, 0.12)",
-      badge: "🟢 Excelente (18 a 21 pts) - Baixo Risco",
+      badge: "🟢 Excelente (18 a 21 pts) • Base Sólida",
       temDor: false,
       assimetrias,
     };
@@ -753,11 +753,11 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
       total,
       max: 21,
       nivel: "adequado",
-      titulo: "Adequado / Risco Moderado",
-      descricao: "Movimento funcional aceitável para o treinamento diário (15 a 17 pontos). Recomendado incluir exercícios corretivos para pequenos desequilíbrios.",
+      titulo: "Padrão Funcional Aceitável / Desenvolvimento Contínuo",
+      descricao: "Movimento funcional aceitável para o treinamento diário (15 a 17 pontos). Recomendado incluir rotinas de manutenção e corretivos para refinar pequenos desequilíbrios.",
       cor: "#f59e0b",
       bgCor: "rgba(245, 158, 11, 0.12)",
-      badge: "🟡 Adequado (15 a 17 pts) - Risco Moderado",
+      badge: "🟡 Funcional Adequado (15 a 17 pts)",
       temDor: false,
       assimetrias,
     };
@@ -766,12 +766,12 @@ export const calcularClassificacaoFMS = (itens: ExercicioAvaliativo[]): Classifi
   return {
     total,
     max: 21,
-    nivel: "alto_risco",
-    titulo: "Disfuncional / Alto Risco de Lesão (Ponto de Corte FMS)",
-    descricao: "Pontuação igual ou inferior a 14 pontos (Ponto de Corte Científico do FMS). Prioridade total em exercícios corretivos, mobilidade e estabilidade antes de sobrecargas elevadas.",
-    cor: "#ef4444",
-    bgCor: "rgba(239, 68, 68, 0.12)",
-    badge: "🔴 Alto Risco de Lesão (<= 14 pts)",
+    nivel: "otimizacao",
+    titulo: "Necessita Otimização de Movimento / Janela de Desenvolvimento",
+    descricao: "Pontuação ≤ 14 pontos (Ponto de corte oficial FMS para linha de base com compensações). Janela de oportunidade prioritária para lapidação de mobilidade, controle motor e estabilidade funcional antes de sobrecargas elevadas.",
+    cor: "#f59e0b",
+    bgCor: "rgba(245, 158, 11, 0.12)",
+    badge: "🟠 Necessita Otimização (≤ 14 pts)",
     temDor: false,
     assimetrias,
   };
@@ -1560,8 +1560,9 @@ export default function PrimeiraAulaPage() {
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(203, 213, 225);
     } else {
-      doc.setFillColor(254, 242, 242);
-      doc.setDrawColor(248, 113, 113);
+      // <= 14 pts (Necessita Otimização - cor âmbar suave, não vermelho alarmista)
+      doc.setFillColor(255, 251, 235);
+      doc.setDrawColor(252, 211, 77);
     }
 
     doc.roundedRect(14, currentY, 182, boxHeight, 2, 2, "FD");
@@ -1569,11 +1570,11 @@ export default function PrimeiraAulaPage() {
     let textY = currentY + 4.5;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
-    if (diagFMS.temDor || (diagFMS.total <= 14 && diagFMS.nivel !== "aberto")) {
+    if (diagFMS.temDor) {
       doc.setTextColor(185, 28, 28);
     } else if (diagFMS.total >= 18) {
       doc.setTextColor(21, 128, 61);
-    } else if (diagFMS.total >= 15) {
+    } else if (diagFMS.total >= 15 || diagFMS.nivel === "otimizacao") {
       doc.setTextColor(180, 83, 9);
     } else {
       doc.setTextColor(71, 85, 105);
@@ -3052,11 +3053,11 @@ export default function PrimeiraAulaPage() {
 
                   {/* Legenda de Pontuação FMS */}
                   <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "0.75rem", color: "var(--text-secondary)", borderTop: "1px solid var(--border-light)", paddingTop: "10px" }}>
-                    <span><strong>0:</strong> Dor / Stop</span>
-                    <span><strong>1:</strong> Disfunção</span>
-                    <span><strong>2:</strong> Compensação / Prancha</span>
+                    <span><strong>0:</strong> Dor / Alerta Clínico</span>
+                    <span><strong>1:</strong> Padrão Incompleto</span>
+                    <span><strong>2:</strong> Padrão com Compensação</span>
                     <span><strong>3:</strong> Padrão Ideal</span>
-                    <span style={{ marginLeft: "auto" }}><strong>Ponto de Corte:</strong> ≤ 14 pontos (Alto Risco)</span>
+                    <span style={{ marginLeft: "auto" }}><strong>Linha de Base FMS:</strong> ≤ 14 pts (Otimização) | 15-17 pts (Funcional) | 18-21 pts (Excelente)</span>
                   </div>
 
                   {/* QUADRANTE DINÂMICO DE RECOMENDAÇÕES FMS: BLOQUEADOS & CORRETIVOS */}
@@ -3123,26 +3124,26 @@ export default function PrimeiraAulaPage() {
                               style={{
                                 background: "var(--bg-card)",
                                 borderRadius: "10px",
-                                border: "1.5px solid rgba(239, 68, 68, 0.45)",
+                                border: "1.5px solid rgba(234, 88, 12, 0.35)",
                                 padding: "14px",
                                 display: "flex",
                                 flexDirection: "column",
                                 gap: "10px",
-                                boxShadow: "0 2px 6px rgba(239, 68, 68, 0.04)"
+                                boxShadow: "0 2px 6px rgba(234, 88, 12, 0.04)"
                               }}
                             >
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(239, 68, 68, 0.2)", paddingBottom: "8px" }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(234, 88, 12, 0.2)", paddingBottom: "8px" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <span style={{ background: "#ef4444", color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 800 }}>
-                                    NÃO CARREGAR DISFUNÇÃO
+                                  <span style={{ background: "#ea580c", color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 800 }}>
+                                    PROTEÇÃO & PROGRESSÃO FMS
                                   </span>
-                                  <strong style={{ fontSize: "0.9rem", color: "#b91c1c" }}>
-                                    Exercícios Bloqueados / A Evitar
+                                  <strong style={{ fontSize: "0.9rem", color: "#c2410c" }}>
+                                    Exercícios a Evitar Temporariamente
                                   </strong>
                                 </div>
                               </div>
                               <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
-                                Pela regra do FMS, evite sobrecarga máxima, velocidade ou repetições até a fadiga nestes movimentos até que o padrão atinja Nota 2 simétrica.
+                                Pela metodologia do FMS, evite sobrecarga pesada ou movimentos balísticos até a fadiga nestes padrões até que o movimento atinja Nota 2 simétrica.
                               </p>
 
                               {!rec.temBloqueios ? (
