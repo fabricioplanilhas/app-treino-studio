@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { mockDb, Aluno, FichaAvaliativa, ExercicioAvaliativo } from "@/lib/mockData";
-import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle, X, Download, RotateCcw, Copy } from "lucide-react";
+import { ArrowLeft, Save, Printer, Dumbbell, FileText, Search, Trash2, CheckCircle2, UserCheck, Plus, Sparkles, ChevronDown, ChevronUp, BookOpen, AlertTriangle, HelpCircle, X, Download, RotateCcw, Copy, Cloud } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
@@ -839,24 +839,34 @@ export default function PrimeiraAulaPage() {
   const [showModalLimpar, setShowModalLimpar] = useState(false);
   const [limpandoSaving, setLimpandoSaving] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const isCloudReadyRef = useRef(false);
+  const saveTimeoutAdultoRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutAtletaRef = useRef<NodeJS.Timeout | null>(null);
 
   // Estados independentes e persistentes para Adulto e Atleta
   const [formAdulto, setFormAdulto] = useState<FichaFormState>(() => createDefaultFichaState("Adulto"));
   const [formAtleta, setFormAtleta] = useState<FichaFormState>(() => createDefaultFichaState("Atleta"));
 
-  // Carregar rascunhos do localStorage no mount
+  // Carregar rascunhos do localStorage e da nuvem (Supabase) no mount
   useEffect(() => {
+    let isMounted = true;
     (async () => {
       const dataAlunos = await mockDb.getAlunos();
-      setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
+      if (isMounted) setAlunosList(dataAlunos.filter(a => a.status !== "deletado"));
       await carregarHistorico();
 
+      let localAdulto: Record<string, unknown> | null = null;
+      let localAtleta: Record<string, unknown> | null = null;
+
+      // 1. Carrega rápido do cache local (instantâneo)
       if (typeof window !== "undefined") {
         try {
           const rawAdulto = localStorage.getItem(DRAFT_KEY_ADULTO);
           if (rawAdulto) {
             const parsed = JSON.parse(rawAdulto);
             if (parsed && typeof parsed === "object") {
+              localAdulto = parsed;
               setFormAdulto(prev => ({ ...prev, ...parsed }));
             }
           }
@@ -864,6 +874,7 @@ export default function PrimeiraAulaPage() {
           if (rawAtleta) {
             const parsed = JSON.parse(rawAtleta);
             if (parsed && typeof parsed === "object") {
+              localAtleta = parsed;
               setFormAtleta(prev => ({ ...prev, ...parsed }));
             }
           }
@@ -871,11 +882,55 @@ export default function PrimeiraAulaPage() {
           console.error("Erro ao carregar rascunhos do localStorage:", e);
         }
       }
-      setIsHydrated(true);
+
+      // 2. Busca e mescla rascunho na nuvem (Supabase) para continuidade cross-device
+      try {
+        const [cloudAdulto, cloudAtleta] = await Promise.all([
+          mockDb.getRascunhoFicha("Adulto"),
+          mockDb.getRascunhoFicha("Atleta"),
+        ]);
+
+        if (isMounted) {
+          if (cloudAdulto && typeof cloudAdulto === "object") {
+            const cloudTime = (cloudAdulto.updatedAt as number) || 0;
+            const localTime = (localAdulto?.updatedAt as number) || 0;
+            // Usa o mais recente, ou da nuvem se contiver aluno preenchido
+            if (cloudTime >= localTime || (!localAdulto?.nomeAluno && cloudAdulto.nomeAluno)) {
+              setFormAdulto(prev => ({ ...prev, ...cloudAdulto }));
+              if (typeof window !== "undefined") {
+                localStorage.setItem(DRAFT_KEY_ADULTO, JSON.stringify({ ...localAdulto, ...cloudAdulto }));
+              }
+            }
+          }
+
+          if (cloudAtleta && typeof cloudAtleta === "object") {
+            const cloudTime = (cloudAtleta.updatedAt as number) || 0;
+            const localTime = (localAtleta?.updatedAt as number) || 0;
+            if (cloudTime >= localTime || (!localAtleta?.nomeAluno && cloudAtleta.nomeAluno)) {
+              setFormAtleta(prev => ({ ...prev, ...cloudAtleta }));
+              if (typeof window !== "undefined") {
+                localStorage.setItem(DRAFT_KEY_ATLETA, JSON.stringify({ ...localAtleta, ...cloudAtleta }));
+              }
+            }
+          }
+          setCloudSyncStatus("saved");
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar rascunhos da nuvem:", err);
+      } finally {
+        if (isMounted) {
+          setIsHydrated(true);
+          isCloudReadyRef.current = true;
+        }
+      }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Salva no localStorage sempre que formAdulto mudar
+  // Salva no localStorage e na nuvem sempre que formAdulto mudar
   useEffect(() => {
     if (!isHydrated) return;
     if (typeof window !== "undefined") {
@@ -885,9 +940,22 @@ export default function PrimeiraAulaPage() {
         console.error("Erro ao salvar rascunho adulto:", e);
       }
     }
+
+    if (!isCloudReadyRef.current) return;
+    if (saveTimeoutAdultoRef.current) clearTimeout(saveTimeoutAdultoRef.current);
+    saveTimeoutAdultoRef.current = setTimeout(async () => {
+      try {
+        setCloudSyncStatus("saving");
+        await mockDb.salvarRascunhoFicha("Adulto", { ...formAdulto, updatedAt: Date.now() });
+        setCloudSyncStatus("saved");
+      } catch (e) {
+        console.error("Erro ao salvar rascunho adulto na nuvem:", e);
+        setCloudSyncStatus("error");
+      }
+    }, 700);
   }, [formAdulto, isHydrated]);
 
-  // Salva no localStorage sempre que formAtleta mudar
+  // Salva no localStorage e na nuvem sempre que formAtleta mudar
   useEffect(() => {
     if (!isHydrated) return;
     if (typeof window !== "undefined") {
@@ -897,6 +965,19 @@ export default function PrimeiraAulaPage() {
         console.error("Erro ao salvar rascunho atleta:", e);
       }
     }
+
+    if (!isCloudReadyRef.current) return;
+    if (saveTimeoutAtletaRef.current) clearTimeout(saveTimeoutAtletaRef.current);
+    saveTimeoutAtletaRef.current = setTimeout(async () => {
+      try {
+        setCloudSyncStatus("saving");
+        await mockDb.salvarRascunhoFicha("Atleta", { ...formAtleta, updatedAt: Date.now() });
+        setCloudSyncStatus("saved");
+      } catch (e) {
+        console.error("Erro ao salvar rascunho atleta na nuvem:", e);
+        setCloudSyncStatus("error");
+      }
+    }, 700);
   }, [formAtleta, isHydrated]);
 
   const carregarHistorico = async () => {
@@ -997,7 +1078,7 @@ export default function PrimeiraAulaPage() {
   const setRecomendacaoForaTreino = (val: string) => updateField("recomendacaoForaTreino", val);
   const setAporteNutricional = (val: string) => updateField("aporteNutricional", val);
 
-  const resetForm = (tipo: "Adulto" | "Atleta" = "Adulto") => {
+  const resetForm = async (tipo: "Adulto" | "Atleta" = "Adulto") => {
     const defaultState = createDefaultFichaState(tipo);
     if (tipo === "Atleta") {
       setFormAtleta(defaultState);
@@ -1006,12 +1087,22 @@ export default function PrimeiraAulaPage() {
           localStorage.removeItem(DRAFT_KEY_ATLETA);
         } catch {}
       }
+      try {
+        await mockDb.limparRascunhoFicha("Atleta");
+      } catch (e) {
+        console.error("Erro ao limpar rascunho atleta na nuvem:", e);
+      }
     } else {
       setFormAdulto(defaultState);
       if (typeof window !== "undefined") {
         try {
           localStorage.removeItem(DRAFT_KEY_ADULTO);
         } catch {}
+      }
+      try {
+        await mockDb.limparRascunhoFicha("Adulto");
+      } catch (e) {
+        console.error("Erro ao limpar rascunho adulto na nuvem:", e);
       }
     }
   };
@@ -1157,7 +1248,7 @@ export default function PrimeiraAulaPage() {
       handleGerarPDF(ficha);
       
       // Limpa os campos e o rascunho
-      resetForm(tipo);
+      await resetForm(tipo);
       setShowModalLimpar(false);
       alert(`Ficha de ${ficha.nomeAluno} salva no histórico, PDF exportado e formulário reiniciado com sucesso!`);
     } catch (err) {
@@ -1168,9 +1259,9 @@ export default function PrimeiraAulaPage() {
     }
   };
 
-  const handleApenasLimpar = () => {
+  const handleApenasLimpar = async () => {
     const tipo = activeTab === "Atleta" ? "Atleta" : "Adulto";
-    resetForm(tipo);
+    await resetForm(tipo);
     setShowModalLimpar(false);
   };
 
@@ -1803,6 +1894,23 @@ export default function PrimeiraAulaPage() {
                 ? "Selecione o tipo de avaliação ou consulte o histórico"
                 : `Avaliação de 1ª Aula (${activeTab.toUpperCase()})`}
             </p>
+            {activeTab !== "Menu" && activeTab !== "Historico" && (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>
+                {cloudSyncStatus === "saving" ? (
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                    <Cloud size={14} className="animate-pulse" color="#3b82f6" /> Salvando na nuvem...
+                  </span>
+                ) : cloudSyncStatus === "error" ? (
+                  <span style={{ fontSize: "0.8rem", color: "#ef4444", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                    <Cloud size={14} color="#ef4444" /> Salvo localmente (tentando sincronizar na nuvem...)
+                  </span>
+                ) : (
+                  <span style={{ fontSize: "0.8rem", color: "#10b981", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                    <Cloud size={14} color="#10b981" /> Rascunho sincronizado entre dispositivos
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
@@ -1846,8 +1954,8 @@ export default function PrimeiraAulaPage() {
               Ficha avaliativa com testes de mobilidade física e força funcional para alunos adultos.
             </p>
             {formAdulto.nomeAluno.trim() ? (
-              <div style={{ marginTop: "14px", display: "inline-block", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
-                ● Rascunho salvo ({formAdulto.nomeAluno})
+              <div style={{ marginTop: "14px", display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
+                <Cloud size={14} /> Rascunho salvo na nuvem ({formAdulto.nomeAluno})
               </div>
             ) : null}
             <button className="premium-btn" style={{ marginTop: "20px", width: "100%", justifyContent: "center" }}>
@@ -1890,8 +1998,8 @@ export default function PrimeiraAulaPage() {
               Ficha completa com testes de mobilidade, aquecimento de pista, potência e força funcional.
             </p>
             {formAtleta.nomeAluno.trim() ? (
-              <div style={{ marginTop: "14px", display: "inline-block", background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
-                ● Rascunho salvo ({formAtleta.nomeAluno})
+              <div style={{ marginTop: "14px", display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", padding: "4px 12px", borderRadius: "12px", fontSize: "0.8rem", fontWeight: 700 }}>
+                <Cloud size={14} /> Rascunho salvo na nuvem ({formAtleta.nomeAluno})
               </div>
             ) : null}
             <button className="premium-btn" style={{ marginTop: "20px", width: "100%", justifyContent: "center", background: "#3b82f6" }}>

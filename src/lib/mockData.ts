@@ -504,6 +504,7 @@ export const mockDb = {
       .from('bases_treino')
       .select('*')
       .not('id', 'like', 'ficha_%')
+      .not('id', 'like', 'rascunho_%')
       .order('nome');
     if (error) {
       console.error('Erro ao buscar bases:', error);
@@ -747,6 +748,49 @@ export const mockDb = {
       await supabase.from('bases_treino').delete().eq('id', fichaId);
     } catch (err) {
       console.error('Erro ao deletar ficha no Supabase:', err);
+    }
+  },
+
+  // ─── RASCUNHOS DE FICHA AVALIATIVA (Supabase Cloud Sync) ─────
+
+  getRascunhoFicha: async (tipo: 'Adulto' | 'Atleta'): Promise<Record<string, unknown> | null> => {
+    const rascunhoId = `rascunho_ficha_${tipo.toLowerCase()}`;
+    try {
+      const { data, error } = await supabase
+        .from('bases_treino')
+        .select('*')
+        .eq('id', rascunhoId)
+        .maybeSingle();
+
+      if (!error && data && data.exercicios) {
+        return data.exercicios as Record<string, unknown>;
+      }
+    } catch (err) {
+      console.error(`Erro ao buscar rascunho ${tipo} no Supabase:`, err);
+    }
+    return null;
+  },
+
+  salvarRascunhoFicha: async (tipo: 'Adulto' | 'Atleta', rascunho: Record<string, unknown>): Promise<void> => {
+    const rascunhoId = `rascunho_ficha_${tipo.toLowerCase()}`;
+    const nomeAluno = (rascunho.nomeAluno as string) || '';
+    try {
+      await supabase.from('bases_treino').upsert({
+        id: rascunhoId,
+        nome: `[RASCUNHO ${tipo.toUpperCase()}] ${nomeAluno || 'Em andamento'}`,
+        exercicios: rascunho,
+      }, { onConflict: 'id' });
+    } catch (err) {
+      console.error(`Erro ao salvar rascunho ${tipo} no Supabase:`, err);
+    }
+  },
+
+  limparRascunhoFicha: async (tipo: 'Adulto' | 'Atleta'): Promise<void> => {
+    const rascunhoId = `rascunho_ficha_${tipo.toLowerCase()}`;
+    try {
+      await supabase.from('bases_treino').delete().eq('id', rascunhoId);
+    } catch (err) {
+      console.error(`Erro ao limpar rascunho ${tipo} no Supabase:`, err);
     }
   },
 
